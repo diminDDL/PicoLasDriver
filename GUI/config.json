@@ -1,0 +1,270 @@
+{
+    "LDP-CW 20-50":{
+        "MaxCurrent_A": 20.0,
+        "CurrentStep_A": 0.1,
+        "MaxVoltage_V": 50.0,
+        "VoltageStep_V": 0.1,
+        "CC": true,
+        "CV": false,
+        "CP": false,
+        "MinPulseWidth_us": 1000,
+        "MaxPulseWidth_us": 2000000,
+        "protocol":{
+            "name":"RS232",
+            "connection":{
+                "port":"/dev/ttyAMA0",
+                "type":"serial",
+                "baudrate":115200,
+                "bytesize":8,
+                "parity":"E",
+                "stopbits":1
+            },
+            "set_current":{
+                "command":"scur",
+                "parameter":"float",
+                "answer":"",
+                "description":"Sets the pulse current to the indicated value. A dot is used as decimal point. No more then one decimal place is used!"
+            },
+            "get_current":{
+                "command":"gcur",
+                "parameter":"",
+                "answer":"float",
+                "description":"Outputs the present output current"
+            },
+            "get_min_current":{
+                "command":"gcurmin",
+                "parameter":"",
+                "answer":"float",
+                "description":"Outputs the minimum output current"
+            },
+            "get_max_current":{
+                "command":"gcurmax",
+                "parameter":"",
+                "answer":"float",
+                "description":"Outputs the maximum output current"
+            },
+            "set_current_limit":{
+                "command":"scurlimit",
+                "parameter":"float",
+                "answer":"float",
+                "description":"Sets the current limiter to the given value in A. A dot is used as decimal point. No more then one decimal place is used!"
+            },
+            "get_current_limit":{
+                "command":"gcurlimit",
+                "parameter":"",
+                "answer":"float",
+                "description":"Outputs the actual current limiter value"
+            },
+            "get_min_current_limit":{
+                "command":"gcurlimitmin",
+                "parameter":"",
+                "answer":"float",
+                "description":"Outputs the minimum current limiter value"
+            },
+            "get_max_current_limit":{
+                "command":"gcurlimitmax",
+                "parameter":"",
+                "answer":"float",
+                "description":"Outputs the maximum current limiter value"
+            },
+            "output_enable":{
+                "command":"on",
+                "parameter":"",
+                "answer":"",
+                "description":"Activates the output"
+            },
+            "output_disable":{
+                "command":"off",
+                "parameter":"",
+                "answer":"",
+                "description":"Deactivates the output"
+            },
+            "set_external_current_control":{
+                "command":"curext",
+                "parameter":"",
+                "answer":"",
+                "description":"Use external current setpoint"
+            },
+            "set_internal_current_control":{
+                "command":"curint",
+                "parameter":"",
+                "answer":"",
+                "description":"Use internal current setpoint"
+            },
+            "get_error":{
+                "command":"gerr",
+                "parameter":"",
+                "answer":"32bit",
+                "description":"Outputs the ERROR register"
+            },
+            "get_error_txt":{
+                "command":"gerrtxt",
+                "parameter":"",
+                "answer":"error text",
+                "description":"Description of every pending error"
+            },
+            "set_lstat":{
+                "command":"slstat",
+                "parameter":"32bit",
+                "answer":"",
+                "description":"Sets the LSTAT register to the value"
+            },
+            "get_lstat":{
+                "command":"glstat",
+                "parameter":"",
+                "answer":"32bit",
+                "description":"Outputs the LSTAT register"
+            },
+            "get_serial_num":{
+                "command":"gserial",
+                "parameter":"",
+                "answer":"Serial number",
+                "description":"Returns the device serial number"
+            },
+            "get_name":{
+                "command":"gname",
+                "parameter":"",
+                "answer":"Device name",
+                "description":"Returns the devices internal name"
+            },
+            "get_hw_version":{
+                "command":"ghwver",
+                "parameter":"",
+                "answer":"Hardware version",
+                "description":"Prints out the hardware version"
+            },
+            "get_sw_version":{
+                "command":"gswver",
+                "parameter":"",
+                "answer":"Software version",
+                "description":"Prints out the software version"
+            },
+            "get_settings":{
+                "command":"ps",
+                "parameter":"",
+                "answer":"Current settings",
+                "description":"Prints out an overview of all settings"
+            },
+            "load_defaults":{
+                "command":"loaddefault",
+                "parameter":"",
+                "answer":"",
+                "description":"Loads previously saved settings"
+            },
+            "save_defaults":{
+                "command":"savedefault",
+                "parameter":"",
+                "answer":"",
+                "description":"Saves the current settings as defaults"
+            },
+            "set_p":{
+                "command":"sp",
+                "parameter":"32bit",
+                "answer":"",
+                "description":"Sets the parameter of the P-controller"
+            },
+            "get_p":{
+                "command":"gp",
+                "parameter":"",
+                "answer":"P value",
+                "description":"Returns the parameter of the P-controller"
+            },
+            "get_min_p":{
+                "command":"gpmin",
+                "parameter":"",
+                "answer":"Minimum P value",
+                "description":"Returns the minimum parameter of the P-controller"
+            },
+            "get_max_p":{
+                "command":"gpmax",
+                "parameter":"",
+                "answer":"Maximum P value",
+                "description":"Returns the maximum parameter of the P-controller"
+            },
+            "set_i":{
+                "command":"si",
+                "parameter":"32bit",
+                "answer":"",
+                "description":"Sets the parameter of the I-controller"
+            },
+            "get_i":{
+                "command":"gi",
+                "parameter":"",
+                "answer":"I value",
+                "description":"Returns the parameter of the I-controller"
+            },
+            "get_min_i":{
+                "command":"gimin",
+                "parameter":"",
+                "answer":"Minimum I value",
+                "description":"Returns the minimum parameter of the I-controller"
+            },
+            "get_max_i":{
+                "command":"gimax",
+                "parameter":"",
+                "answer":"Maximum I value",
+                "description":"Returns the maximum parameter of the I-controller"
+            },
+            "set_external_enable":{
+                "command":"enable_ext",
+                "parameter":"",
+                "answer":"",
+                "description":"Switches the driver to external enable"
+            },
+            "set_internal_enable":{
+                "command":"enable_int",
+                "parameter":"",
+                "answer":"",
+                "description":"Switches the driver to internal enable"
+            },
+            "driver_enable":{
+                "command":"enable",
+                "parameter":"",
+                "answer":"",
+                "description":"Enables the driver (when internal enable is used)"
+            },
+            "driver_disable":{
+                "command":"disable",
+                "parameter":"",
+                "answer":"",
+                "description":"Disables the driver (when internal enable is used)"
+            },
+            "set_external_scaling":{
+                "command":"ext_scale",
+                "parameter":"bool",
+                "answer":"",
+                "description":"Sets the scaling of the external current setpoint"
+            },
+            "get_temperature":{
+                "command":"gtemp",
+                "parameter":"",
+                "answer":"float",
+                "description":"Returns the actual measured PCB temperature in °C"
+            },
+            "get_hysteresis_temperature":{
+                "command":"gtemphys",
+                "parameter":"",
+                "answer":"float",
+                "description":"Returns the re-enable temperature after an overtemperature shutdown in °C"
+            },
+            "get_shutdown_temperature":{
+                "command":"gtempoff",
+                "parameter":"",
+                "answer":"float",
+                "description":"Returns the shutdown temperature in °C"
+            },
+            "get_vcc":{
+                "command":"gvcc",
+                "parameter":"",
+                "answer":"float",
+                "description":"Returns the actual measured supply voltage"
+            },
+            "get_diode_voltage":{
+                "command":"gudiode",
+                "parameter":"",
+                "answer":"float",
+                "description":"Returns the actual measured compliance voltage"
+            }
+        }
+    }
+}
