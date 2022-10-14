@@ -9,6 +9,7 @@
         "CP": false,
         "MinPulseWidth_us": 1000,
         "MaxPulseWidth_us": 2000000,
+        "MaxFrequency_Hz": 1000,
         "protocol":{
             "name":"RS232",
             "connection":{

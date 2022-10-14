@@ -1,6 +1,7 @@
 import asyncio
 import tkinter as tk
 from random import randrange as rr
+import si_prefix as si
 
 def deg_color(deg, d_per_tick, color):
     deg += d_per_tick
@@ -10,12 +11,22 @@ def deg_color(deg, d_per_tick, color):
     return deg, color
 
 class GUI:
-    def __init__(self, loop, interval=1/120, debug=False):
+    def __init__(self, loop, version, config, driver, interval=1/60, debug=False):
         self.debug = debug
+        self.version = version
+        self.config = config
+        self.driver = driver
+        self.maxCurent = self.config[self.driver]['MaxCurrent_A']
+        self.minPuseWidth = self.config[self.driver]['MinPulseWidth_us']/1000000
+        self.maxPulseWidth = self.config[self.driver]['MaxPulseWidth_us']/1000000
+        self.maxFrequency = self.config[self.driver]['MaxFrequency_Hz']
+        self.setCurrent = 0.0
+        self.setPuseWidth = 0.0
+        self.setFrequency = 0.0
         self.root = tk.Tk()
         self.loop = loop
         self.tasks = []
-        self.tasks.append(loop.create_task(self.rotator(1/60, 2)))
+        self.tasks.append(loop.create_task(self.mainloop()))
         self.tasks.append(loop.create_task(self.updater(interval)))
 
         # used for development on computer, sets the screen size to 800 x 480 pixels
@@ -29,19 +40,12 @@ class GUI:
         self.root.title("PicoLas controller window")
         self.root.resizable(False, False)
         self.root.attributes("-topmost", True)
-        # self.root.overrideredirect(True) # maybe used when you don't want the toolbar, but we use fullscreen so it's not needed
-        self.root.after(1000, self.stayAlive)
+        self.createMainWindow(version)
+        # self.root.overrideredirect(True) # maybe used when you don't want the toolbar, but we use full screen so it's not needed
+        self.root.after(1000, self.comm)
          
-    async def rotator(self, interval, d_per_tick):
-        canvas = tk.Canvas(self.root, height=600, width=600)
-        canvas.pack()
-        deg = 0
-        color = 'black'
-        arc = canvas.create_arc(100, 100, 500, 500, style=tk.CHORD,
-                                start=0, extent=deg, fill=color)
-        while await asyncio.sleep(interval, True):
-            deg, color = deg_color(deg, d_per_tick, color)
-            canvas.itemconfigure(arc, extent=deg, fill=color)
+    async def mainloop(self):
+        pass
 
     async def updater(self, interval):
         while True:
@@ -54,18 +58,41 @@ class GUI:
             task.cancel()
         self.loop.stop()
         self.root.destroy()
-
-    async def displayVersion(self, version):
-        self.root.title("PicoLas controller window - version " + version)
-        # TODO adjust the cords later
-        tk.Label(self.root, text="Version: " + version).place(x=0, y=0)
-
-    def stayAlive(self):
+        
+    def comm(self):
         # to be replaced with communication with the laser controller
         # print("stay alive")
-        self.root.after(1000, self.stayAlive)
+        self.root.after(1000, self.comm)
 
-    async def createMainWindow(self):
+    def createMainWindow(self, version):
         # to be replaced with the main window
-        self.mainWindow = tk.Frame(self.root)
-        tk.Label(self.root, text="Current limit\n[0.1-20A]")
+        self.root.title("PicoLas controller window - version " + version)
+
+        self.root.columnconfigure(0, weight=1)
+        self.root.columnconfigure(1, weight=1)
+        self.root.columnconfigure(2, weight=1)
+        self.root.columnconfigure(3, weight=1)
+
+        version_label = tk.Label(self.root, text="V" + version, fg="#bdbdbd")
+        version_label.grid(column=0, row=0, sticky=tk.NW)
+        version_label = tk.Label(self.root, text="Using driver: " + self.driver, fg="#8f8f8f")
+        version_label.grid(column=1, row=0, sticky=tk.NW)
+        current_limit_label = tk.Label(self.root, text=f"Current limit\n[0 - {si.si_format(self.maxCurent)}A]")
+        current_limit_label.grid(column=0, row=1, sticky=tk.N, padx=5, pady=5)
+        pulse_duration_label = tk.Label(self.root, text=f"Pulse duration\n[{si.si_format(self.minPuseWidth)}s - {si.si_format(self.maxPulseWidth)}s]")
+        pulse_duration_label.grid(column=0, row=2, sticky=tk.N, padx=5, pady=5)
+        pulse_frequency_label = tk.Label(self.root, text=f"Pulse frequency\n[0 Hz - {si.si_format(self.maxFrequency)}Hz]")
+        pulse_frequency_label.grid(column=0, row=3, sticky=tk.N, padx=5, pady=5)
+        # TODO add photo diode readout and status display in this column
+        self.setCurrentSrt = tk.Variable()
+        self.setCurrentSrt.set('Value set:\n0.0A')
+        current_limit = tk.Label(self.root, textvariable=self.setCurrentSrt, fg="#ffffff", bg="#ff8c00")
+        current_limit.grid(column=1, row=1, sticky=tk.N, padx=10, pady=5)
+        self.setPulseWidthSrt = tk.Variable()
+        self.setPulseWidthSrt.set('Value set:\n0.0s')
+        pulse_duration = tk.Label(self.root, textvariable=self.setPulseWidthSrt, fg="#ffffff", bg="#ff8c00")
+        pulse_duration.grid(column=1, row=2, sticky=tk.N, padx=10, pady=5)
+        self.setFrequencySrt = tk.Variable()
+        self.setFrequencySrt.set('Value set:\n0.0Hz')
+        pulse_frequency = tk.Label(self.root, textvariable=self.setFrequencySrt, fg="#ffffff", bg="#ff8c00")
+        pulse_frequency.grid(column=1, row=3, sticky=tk.N, padx=10, pady=5)
