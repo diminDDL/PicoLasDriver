@@ -48,13 +48,14 @@ class GUI:
             self.root.bind("<Escape>", self.close)
             self.root.focus_force()
         else:
-            # self.root.attributes("-fullscreen", True) # this doesn't work on raspbian
             width= self.root.winfo_screenwidth()               
             height= self.root.winfo_screenheight()               
             self.root.geometry("%dx%d" % (width, height))
+            #self.root.attributes("-type", "splash")
             self.root.bind("<Control-slash>", self.close)
             self.root.focus_force()
-            #self.root.overrideredirect(True)
+            self.root.config(cursor="none")
+            self.root.overrideredirect(True)
 
         self.root.title("PicoLas controller window")
         self.root.resizable(False, False)
