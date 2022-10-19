@@ -46,15 +46,20 @@ class GUI:
             self.Xres = 800
             self.Yres = 480
             self.root.bind("<Escape>", self.close)
+            self.root.focus_force()
         else:
-            self.root.attributes("-fullscreen", True)
+            # self.root.attributes("-fullscreen", True) # this doesn't work on raspbian
+            width= self.root.winfo_screenwidth()               
+            height= self.root.winfo_screenheight()               
+            self.root.geometry("%dx%d" % (width, height))
             self.root.bind("<Control-slash>", self.close)
+            self.root.focus_force()
+            #self.root.overrideredirect(True)
 
         self.root.title("PicoLas controller window")
         self.root.resizable(False, False)
         self.root.attributes("-topmost", True)
         self.createMainWindow(version)
-        # self.root.overrideredirect(True) # maybe used when you don't want the toolbar, but we use full screen so it's not needed
         self.root.after(1000, self.comm)
 
     async def mainloop(self):
@@ -85,7 +90,7 @@ class GUI:
 
     def adjustValues(self, command=None, pressedTime=0):
         # change values, command provides a string describing what should change
-        print("timeDelta: " + str(pressedTime - self.GUIlastCall) + " acceleration: " + str(self.GUIcallAcceleration) + " callNumber: " + str(self.GUIcallNumber))
+        # print("timeDelta: " + str(pressedTime - self.GUIlastCall) + " acceleration: " + str(self.GUIcallAcceleration) + " callNumber: " + str(self.GUIcallNumber))
         if pressedTime - self.GUIlastCall >= self.GUIcallAcceleration:
             if pressedTime - self.GUIlastCall <= 250:
                 self.GUIcallNumber += 1
