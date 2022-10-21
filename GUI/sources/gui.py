@@ -22,15 +22,20 @@ class GUI:
         self.maxPulseWidth = self.config[self.driver]['MaxPulseWidth_us']/1000000
         self.maxFrequency = self.config[self.driver]['MaxFrequency_Hz']
         self.setCurrent = 0.0
-        self.setPuseWidth = 0.0
+        self.setPulseWidth = self.minPuseWidth
         self.setFrequency = 0.0
+        self.setPulseMode = False
+        self.globalPulseCoutner = 0
+        self.localPulseCoutner = 0
         self.root = tk.Tk()
         self.setCurrentSrt = tk.Variable()
-        self.setCurrentSrt.set('Value set:\n0.0A')
         self.setPulseWidthSrt = tk.Variable()
-        self.setPulseWidthSrt.set('Value set:\n0.0s')
         self.setFrequencySrt = tk.Variable()
-        self.setFrequencySrt.set('Value set:\n0.0Hz')
+        self.setPulseModeSrt = tk.Variable()
+        self.globalPulseCounterLabel = tk.Variable()
+        self.globalPulseCounterLabel.set('Global pulse\n counter:\n' + '0')
+        self.localPulseCounterLabel = tk.Variable()
+        self.localPulseCounterLabel.set('Pulse counter:\n' + '0')
         self.loop = loop
         self.tasks = []
         self.tasks.append(loop.create_task(self.mainloop()))
@@ -55,7 +60,7 @@ class GUI:
             self.root.bind("<Control-slash>", self.close)
             self.root.focus_force()
             self.root.config(cursor="none")
-            self.root.overrideredirect(True)
+            # TODO turn back on self.root.overrideredirect(True)
 
         self.root.title("PicoLas controller window")
         self.root.resizable(False, False)
@@ -83,12 +88,6 @@ class GUI:
         # print("stay alive")
         self.root.after(1000, self.comm)
 
-    def updateDisplayValues(self):
-        # update the display values
-        self.setCurrentSrt.set("Value set:\n" + str(si.si_format(self.setCurrent, precision=1)) + "A")
-        self.setPulseWidthSrt.set("Value set:\n" + str(si.si_format(self.setPuseWidth, precision=3)) + "s")
-        self.setFrequencySrt.set("Value set:\n" + str(si.si_format(self.setFrequency, precision=0)) + "Hz")
-
     def adjustValues(self, command=None, pressedTime=0):
         # change values, command provides a string describing what should change
         # print("timeDelta: " + str(pressedTime - self.GUIlastCall) + " acceleration: " + str(self.GUIcallAcceleration) + " callNumber: " + str(self.GUIcallNumber))
@@ -105,25 +104,25 @@ class GUI:
                 if self.setCurrent > self.maxCurent:
                     self.setCurrent = self.maxCurent
                     #TODO implement color changes
-                    self.current_limit_up.configure()
+                    #self.current_limit_up.configure()
             elif command == "currentDown":
                 self.setCurrent -= 0.1
                 if self.setCurrent < 0:
                     self.setCurrent = 0
             elif command == "pulseWidthUp":
                 if self.GUIcallNumber >= 50:
-                    self.setPuseWidth += round(self.GUIcallNumber/50000, 3)
+                    self.setPulseWidth += round(self.GUIcallNumber/50000, 3)
                 else:
-                    self.setPuseWidth += 0.001
-                if self.setPuseWidth > self.maxPulseWidth:
-                    self.setPuseWidth = self.maxPulseWidth
+                    self.setPulseWidth += 0.001
+                if self.setPulseWidth > self.maxPulseWidth:
+                    self.setPulseWidth = self.maxPulseWidth
             elif command == "pulseWidthDown":
                 if self.GUIcallNumber >= 50:
-                    self.setPuseWidth -= round(self.GUIcallNumber/50000, 3)
+                    self.setPulseWidth -= round(self.GUIcallNumber/50000, 3)
                 else:
-                    self.setPuseWidth -= 0.001
-                if self.setPuseWidth < self.minPuseWidth:
-                    self.setPuseWidth = self.minPuseWidth
+                    self.setPulseWidth -= 0.001
+                if self.setPulseWidth < self.minPuseWidth:
+                    self.setPulseWidth = self.minPuseWidth
             elif command == "frequencyUp":
                 if self.GUIcallNumber >= 50:
                     self.setFrequency += round(self.GUIcallNumber/50, 0)
@@ -139,6 +138,10 @@ class GUI:
                 if self.setFrequency < 0:
                     self.setFrequency = 0
         
+        self.updateDisplayValues()
+
+    def togglePulseMode(self):
+        self.setPulseMode = not self.setPulseMode
         self.updateDisplayValues()
 
     def createMainWindow(self, version):
@@ -169,7 +172,6 @@ class GUI:
         self.pulse_frequency_label.grid(column=0, row=3, sticky="nsew", padx=5, pady=5)
         # TODO add photo diode readout and status display in this column
         # value displays
-
         self.current_limit = tk.Label(self.root, textvariable=self.setCurrentSrt, fg="#ffffff", bg="#ff8c00", font=("Arial", 15))
         self.current_limit.grid(column=1, row=1, sticky="nsew", padx=10, pady=5)
 
@@ -178,16 +180,48 @@ class GUI:
 
         self.pulse_frequency = tk.Label(self.root, textvariable=self.setFrequencySrt, fg="#ffffff", bg="#ff8c00", font=("Arial", 15))
         self.pulse_frequency.grid(column=1, row=3, sticky="nsew", padx=10, pady=5)
+        
         # buttons to change the values
-        self.current_limit_up = tk.Button(self.root, text="+", command= lambda: self.adjustValues("currentUp", pressedTime=round(time.time() * 1000)), repeatinterval=10, repeatdelay=300, font=("Arial", 20, "bold"), fg="#ffffff", bg="#00dd00", activebackground="#00ff00", activeforeground="#ffffff")
+        self.current_limit_up = tk.Button(self.root, text="+", width=2, command= lambda: self.adjustValues("currentUp", pressedTime=round(time.time() * 1000)), repeatinterval=10, repeatdelay=300, font=("TkFixedFont", 20, "bold"), fg="#ffffff", bg="#00dd00", activebackground="#00ff00", activeforeground="#ffffff")
         self.current_limit_up.grid(column=2, row=1, sticky="nsew", padx=5, pady=5)
-        self.current_limit_down = tk.Button(self.root, text="-", command= lambda: self.adjustValues("currentDown", pressedTime=round(time.time() * 1000)), repeatinterval=10, repeatdelay=300, font=("Arial", 20, "bold"), fg="#ffffff", bg="#dd0000", activebackground="#ff0000", activeforeground="#ffffff")
+
+        self.current_limit_down = tk.Button(self.root, text="-", width=2, command= lambda: self.adjustValues("currentDown", pressedTime=round(time.time() * 1000)), repeatinterval=10, repeatdelay=300, font=("TkFixedFont", 20, "bold"), fg="#ffffff", bg="#dd0000", activebackground="#ff0000", activeforeground="#ffffff")
         self.current_limit_down.grid(column=3, row=1, sticky="nsew", padx=5, pady=5)
-        self.pulse_duration_up = tk.Button(self.root, text="+", command= lambda: self.adjustValues("pulseWidthUp", pressedTime=round(time.time() * 1000)), repeatinterval=10, repeatdelay=300, font=("Arial", 20, "bold"), fg="#ffffff", bg="#00dd00", activebackground="#00ff00", activeforeground="#ffffff")
+
+        self.pulse_duration_up = tk.Button(self.root, text="+", width=2, command= lambda: self.adjustValues("pulseWidthUp", pressedTime=round(time.time() * 1000)), repeatinterval=10, repeatdelay=300, font=("TkFixedFont", 20, "bold"), fg="#ffffff", bg="#00dd00", activebackground="#00ff00", activeforeground="#ffffff")
         self.pulse_duration_up.grid(column=2, row=2, sticky="nsew", padx=5, pady=5)
-        self.pulse_duration_down = tk.Button(self.root, text="-", command= lambda: self.adjustValues("pulseWidthDown", pressedTime=round(time.time() * 1000)), repeatinterval=10, repeatdelay=300, font=("Arial", 20, "bold"), fg="#ffffff", bg="#dd0000", activebackground="#ff0000", activeforeground="#ffffff")
+
+        self.pulse_duration_down = tk.Button(self.root, text="-", width=2, command= lambda: self.adjustValues("pulseWidthDown", pressedTime=round(time.time() * 1000)), repeatinterval=10, repeatdelay=300, font=("TkFixedFont", 20, "bold"), fg="#ffffff", bg="#dd0000", activebackground="#ff0000", activeforeground="#ffffff")
         self.pulse_duration_down.grid(column=3, row=2, sticky="nsew", padx=5, pady=5)
-        self.pulse_frequency_up = tk.Button(self.root, text="+", command= lambda: self.adjustValues("frequencyUp", pressedTime=round(time.time() * 1000)), repeatinterval=10, repeatdelay=300, font=("Arial", 20, "bold"), fg="#ffffff", bg="#00dd00", activebackground="#00ff00", activeforeground="#ffffff")
+
+        self.pulse_frequency_up = tk.Button(self.root, text="+", width=2, command= lambda: self.adjustValues("frequencyUp", pressedTime=round(time.time() * 1000)), repeatinterval=10, repeatdelay=300, font=("TkFixedFont", 20, "bold"), fg="#ffffff", bg="#00dd00", activebackground="#00ff00", activeforeground="#ffffff")
         self.pulse_frequency_up.grid(column=2, row=3, sticky="nsew", padx=5, pady=5)
-        self.pulse_frequency_down = tk.Button(self.root, text="-", command= lambda: self.adjustValues("frequencyDown", pressedTime=round(time.time() * 1000)), repeatinterval=10, repeatdelay=300, font=("Arial", 20, "bold"), fg="#ffffff", bg="#dd0000", activebackground="#ff0000", activeforeground="#ffffff")
+
+        self.pulse_frequency_down = tk.Button(self.root, text="-", width=2, command= lambda: self.adjustValues("frequencyDown", pressedTime=round(time.time() * 1000)), repeatinterval=10, repeatdelay=300, font=("TkFixedFont", 20, "bold"), fg="#ffffff", bg="#dd0000", activebackground="#ff0000", activeforeground="#ffffff")
         self.pulse_frequency_down.grid(column=3, row=3, sticky="nsew", padx=5, pady=5)
+
+        # pulse mode button
+        self.pulse_mode = tk.Button(self.root, textvariable=self.setPulseModeSrt, command=lambda: self.togglePulseMode(), font=("Arial", 15), fg="#ffffff", bg="black", activebackground="#454545", activeforeground="#ffffff")
+        self.pulse_mode.grid(column=4, row=3, sticky="nsew", padx=5, pady=5)
+        # pulse counter indicators
+        self.pulse_number_label = tk.Label(self.root, textvariable=self.globalPulseCounterLabel, fg="#bdbdbd", bg="black")
+        self.pulse_number_label.grid(column=4, row=1, sticky="nsew", padx=9, pady=5)
+
+        self.pulse_number = tk.Label(self.root, textvariable=self.localPulseCounterLabel, fg="#bdbdbd", bg="black")
+        self.pulse_number.grid(column=4, row=2, sticky="nsew", padx=9, pady=5)
+        
+        self.updateDisplayValues()
+
+        
+    def updateDisplayValues(self):
+        # update the display values
+        self.setCurrentSrt.set("Value set:\n" + str(round(self.setCurrent, 1)) + "A")
+        if self.setPulseWidth <= 1: 
+            self.setPulseWidthSrt.set("Value set:\n" + str(si.si_format(self.setPulseWidth, precision=0)) + "s")
+        else:
+            self.setPulseWidthSrt.set("Value set:\n" + str(si.si_format(self.setPulseWidth, precision=3)) + "s")
+        self.setFrequencySrt.set("Value set:\n" + str(si.si_format(self.setFrequency, precision=0)) + "Hz")
+        # update the pulse mode
+        self.setPulseModeSrt.set(f"Pulse mode:\n{'Pulsed' if self.setPulseMode else 'Single'}")
+        self.pulse_mode.configure(textvariable=self.setPulseModeSrt, bg='green' if self.setPulseMode else 'black')
+        
