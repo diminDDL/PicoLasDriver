@@ -28,19 +28,23 @@ class GUI:
         self.globalPulseCoutner = 0
         self.localPulseCoutner = 0
         self.ADCReadoutValue = 0
+        self.gpio_0 = False
+        self.gpio_1 = False
+        self.gpio_2 = False
+        self.gpio_3 = False
         self.root = tk.Tk()
         self.setCurrentSrt = tk.Variable()
         self.setPulseWidthSrt = tk.Variable()
         self.setFrequencySrt = tk.Variable()
         self.setPulseModeSrt = tk.Variable()
         self.ADCReadoutStr = tk.Variable()
-        self.ADCReadoutStr.set("Photodiode Readout:\n 0")
+        self.ADCReadoutStr.set("Photodiode:\n 0")
         self.globalPulseCounterLabel = tk.Variable()
         self.globalPulseCounterLabel.set('Global pulse\n counter:\n' + '0')
         self.localPulseCounterLabel = tk.Variable()
         self.localPulseCounterLabel.set('Pulse counter:\n' + '0')
-        self.errorReadoutStr = tk.Variable()
-        self.errorReadoutStr.set('Error Readout:\n' + 'None')
+        self.errorReadout = "No Errors"
+        self.errorReadoutOld = ""
 
         self.loop = loop
         self.tasks = []
@@ -90,8 +94,10 @@ class GUI:
         self.root.destroy()
         
     def comm(self):
-        # to be replaced with communication with the laser controller
-        # print("stay alive")
+        # communication with the laser controller will go here
+
+        # update the UI and restart the keep alive function
+        self.updateDisplayValues()
         self.root.after(1000, self.comm)
 
     def adjustValues(self, command=None, pressedTime=0):
@@ -151,11 +157,24 @@ class GUI:
         self.setPulseMode = not self.setPulseMode
         self.updateDisplayValues()
 
+    def gpioButton(self, gpio):
+        # TODO implement
+        match gpio:
+            case 0:
+                self.gpio_0 = not self.gpio_0
+            case 1:
+                self.gpio_1 = not self.gpio_1
+            case 2:
+                self.gpio_2 = not self.gpio_2
+            case 3:
+                self.gpio_3 = not self.gpio_3
+        self.updateDisplayValues()
+
     def createMainWindow(self, version):
         # to be replaced with the main window
         self.root.title("PicoLas controller window - version " + version)
 
-        colNum = 5
+        colNum = 6
         rowNum = 8
 
         for i in range(colNum):
@@ -166,10 +185,10 @@ class GUI:
         
 
         # general labels
-        self.version_label = tk.Label(self.root, text="V" + version, fg="#bdbdbd")
+        self.version_label = tk.Label(self.root, text="V" + version, fg="#bdbdbd", font=("Arial", 8))
         self.version_label.grid(column=0, row=0, sticky=tk.NW)
-        self.version_label = tk.Label(self.root, text="Using driver: " + self.driver, fg="#8f8f8f")
-        self.version_label.grid(column=1, row=0, sticky=tk.NW)
+        self.version_label = tk.Label(self.root, text="Using driver: " + self.driver, fg="#8f8f8f", font=("Arial", 8))
+        self.version_label.grid(column=2, row=0, sticky=tk.N)
         
         # labels for the variables
         self.current_limit_label = tk.Label(self.root, text=f"Current limit\n[0 - {si.si_format(self.maxCurent)}A]", font=("Arial", 15))
@@ -184,50 +203,70 @@ class GUI:
         self.adc_label.grid(column=0, row=4, sticky="nsew", padx=5, pady=5)
 
         # Error readout
-        self.error_text = tk.Text(self.root, height=3, width=20, font=("Arial", 15), fg="white", bg="black", wrap=tk.WORD)
+        self.error_text = tk.Text(self.root, height=3, width=20, font=("Arial", 15), fg="white", bg="black", wrap=tk.WORD, state=tk.DISABLED)
         self.error_text.grid(column=0, row=5, sticky="nsew", padx=5, pady=5)
-        #self.error_label = tk.Label(self.root, textvariable=self.errorReadoutStr, font=("Arial", 15), fg="white", bg="black")
-        #self.error_label.grid(column=0, row=5, sticky="nsew", padx=5, pady=5)
+        # create a scroll bar and associate it with the error text
+        self.error_scrollbar = tk.Scrollbar(self.root, command=self.error_text.yview)
+        self.error_scrollbar.grid(column=1, row=5, sticky="wns", pady=5)
+        self.error_text['yscrollcommand'] = self.error_scrollbar.set
 
         # value displays
         self.current_limit = tk.Label(self.root, textvariable=self.setCurrentSrt, fg="#ffffff", bg="#ff8c00", font=("Arial", 15))
-        self.current_limit.grid(column=1, row=1, sticky="nsew", padx=10, pady=5)
+        self.current_limit.grid(column=1, columnspan=2, row=1, sticky="nsew", padx=10, pady=5)
 
         self.pulse_duration = tk.Label(self.root, textvariable=self.setPulseWidthSrt, fg="#ffffff", bg="#ff8c00", font=("Arial", 15))
-        self.pulse_duration.grid(column=1, row=2, sticky="nsew", padx=10, pady=5)
+        self.pulse_duration.grid(column=1, columnspan=2, row=2, sticky="nsew", padx=10, pady=5)
 
         self.pulse_frequency = tk.Label(self.root, textvariable=self.setFrequencySrt, fg="#ffffff", bg="#ff8c00", font=("Arial", 15))
-        self.pulse_frequency.grid(column=1, row=3, sticky="nsew", padx=10, pady=5)
+        self.pulse_frequency.grid(column=1, columnspan=2, row=3, sticky="nsew", padx=10, pady=5)
         
+        # 4 GPIO buttons
+        self.gpioFrame = tk.Frame(self.root)
+        self.gpioFrame.columnconfigure(4, weight=1)
+        self.gpioFrame.rowconfigure(1, weight=1)
+        self.gpioFrame.grid(column=2, columnspan=4, row=4, sticky="nsew", padx=10, pady=5)
+
+        self.gpio_button_0 = tk.Button(self.gpioFrame, text="IO1", command=lambda: self.gpioButton(0), font=("Arial", 12), fg="#ffffff", bg="black", activebackground="black", activeforeground="#ffffff")
+        self.gpio_button_0.grid(column=0, row=0, padx=5, pady=5)
+
+        self.gpio_button_1 = tk.Button(self.gpioFrame, text="IO2", command=lambda: self.gpioButton(1), font=("Arial", 12), fg="#ffffff", bg="black", activebackground="black", activeforeground="#ffffff")
+        self.gpio_button_1.grid(column=1, row=0, padx=5, pady=5)
+
+        self.gpio_button_2 = tk.Button(self.gpioFrame, text="IO3", command=lambda: self.gpioButton(2), font=("Arial", 12), fg="#ffffff", bg="black", activebackground="black", activeforeground="#ffffff")
+        self.gpio_button_2.grid(column=2, row=0, padx=5, pady=5)
+
+        self.gpio_button_3 = tk.Button(self.gpioFrame, text="IO4", command=lambda: self.gpioButton(3), font=("Arial", 12), fg="#ffffff", bg="black", activebackground="black", activeforeground="#ffffff")
+        self.gpio_button_3.grid(column=3, row=0, padx=5, pady=5)
+
         # buttons to change the values
         self.current_limit_up = tk.Button(self.root, text="+", width=2, command= lambda: self.adjustValues("currentUp", pressedTime=round(time.time() * 1000)), repeatinterval=10, repeatdelay=300, font=("TkFixedFont", 20, "bold"), fg="#ffffff", bg="#00dd00", activebackground="#00dd00", activeforeground="#ffffff")
-        self.current_limit_up.grid(column=2, row=1, sticky="nsew", padx=5, pady=5)
+        self.current_limit_up.grid(column=3, row=1, sticky="nsew", padx=5, pady=5)
 
         self.current_limit_down = tk.Button(self.root, text="-", width=2, command= lambda: self.adjustValues("currentDown", pressedTime=round(time.time() * 1000)), repeatinterval=10, repeatdelay=300, font=("TkFixedFont", 20, "bold"), fg="#ffffff", bg="#dd0000", activebackground="#dd0000", activeforeground="#ffffff")
-        self.current_limit_down.grid(column=3, row=1, sticky="nsew", padx=5, pady=5)
+        self.current_limit_down.grid(column=4, row=1, sticky="nsew", padx=5, pady=5)
 
         self.pulse_duration_up = tk.Button(self.root, text="+", width=2, command= lambda: self.adjustValues("pulseWidthUp", pressedTime=round(time.time() * 1000)), repeatinterval=10, repeatdelay=300, font=("TkFixedFont", 20, "bold"), fg="#ffffff", bg="#00dd00", activebackground="#00dd00", activeforeground="#ffffff")
-        self.pulse_duration_up.grid(column=2, row=2, sticky="nsew", padx=5, pady=5)
+        self.pulse_duration_up.grid(column=3, row=2, sticky="nsew", padx=5, pady=5)
 
         self.pulse_duration_down = tk.Button(self.root, text="-", width=2, command= lambda: self.adjustValues("pulseWidthDown", pressedTime=round(time.time() * 1000)), repeatinterval=10, repeatdelay=300, font=("TkFixedFont", 20, "bold"), fg="#ffffff", bg="#dd0000", activebackground="#dd0000", activeforeground="#ffffff")
-        self.pulse_duration_down.grid(column=3, row=2, sticky="nsew", padx=5, pady=5)
+        self.pulse_duration_down.grid(column=4, row=2, sticky="nsew", padx=5, pady=5)
 
         self.pulse_frequency_up = tk.Button(self.root, text="+", width=2, command= lambda: self.adjustValues("frequencyUp", pressedTime=round(time.time() * 1000)), repeatinterval=10, repeatdelay=300, font=("TkFixedFont", 20, "bold"), fg="#ffffff", bg="#00dd00", activebackground="#00dd00", activeforeground="#ffffff")
-        self.pulse_frequency_up.grid(column=2, row=3, sticky="nsew", padx=5, pady=5)
+        self.pulse_frequency_up.grid(column=3, row=3, sticky="nsew", padx=5, pady=5)
 
         self.pulse_frequency_down = tk.Button(self.root, text="-", width=2, command= lambda: self.adjustValues("frequencyDown", pressedTime=round(time.time() * 1000)), repeatinterval=10, repeatdelay=300, font=("TkFixedFont", 20, "bold"), fg="#ffffff", bg="#dd0000", activebackground="#dd0000", activeforeground="#ffffff")
-        self.pulse_frequency_down.grid(column=3, row=3, sticky="nsew", padx=5, pady=5)
+        self.pulse_frequency_down.grid(column=4, row=3, sticky="nsew", padx=5, pady=5)
 
         # pulse mode button
         self.pulse_mode = tk.Button(self.root, textvariable=self.setPulseModeSrt, command=lambda: self.togglePulseMode(), font=("Arial", 15), fg="#ffffff", bg="black", activebackground="black", activeforeground="#ffffff")
-        self.pulse_mode.grid(column=4, row=3, sticky="nsew", padx=5, pady=5)
+        self.pulse_mode.grid(column=5, row=3, sticky="nsew", padx=5, pady=5)
 
         # pulse counter indicators
         self.pulse_number_label = tk.Label(self.root, textvariable=self.globalPulseCounterLabel, fg="#bdbdbd", bg="black")
-        self.pulse_number_label.grid(column=4, row=1, sticky="nsew", padx=9, pady=5)
+        self.pulse_number_label.grid(column=5, row=1, sticky="nsew", padx=9, pady=5)
 
         self.pulse_number = tk.Label(self.root, textvariable=self.localPulseCounterLabel, fg="#bdbdbd", bg="black")
-        self.pulse_number.grid(column=4, row=2, sticky="nsew", padx=9, pady=5)
+        self.pulse_number.grid(column=5, row=2, sticky="nsew", padx=9, pady=5)
         
         self.updateDisplayValues()
 
@@ -244,4 +283,17 @@ class GUI:
         # update the pulse mode
         self.setPulseModeSrt.set(f"Pulse mode:\n{'Pulsed' if self.setPulseMode else 'Single'}")
         self.pulse_mode.configure(textvariable=self.setPulseModeSrt, bg='green' if self.setPulseMode else 'black', activebackground='green' if self.setPulseMode else 'black')
+        # update the GPIO buttons
+        self.gpio_button_0.configure(bg='green' if self.gpio_0 else 'black', activebackground='green' if self.gpio_0 else 'black')
+        self.gpio_button_1.configure(bg='green' if self.gpio_1 else 'black', activebackground='green' if self.gpio_1 else 'black')
+        self.gpio_button_2.configure(bg='green' if self.gpio_2 else 'black', activebackground='green' if self.gpio_2 else 'black')
+        self.gpio_button_3.configure(bg='green' if self.gpio_3 else 'black', activebackground='green' if self.gpio_3 else 'black')
+        
+        # if the self.errorReadout changed update the error label
+        if self.errorReadout != self.errorReadoutOld:
+            self.errorReadoutOld = self.errorReadout
+            self.error_text.configure(state=tk.NORMAL)
+            self.error_text.delete(1.0, tk.END)
+            self.error_text.insert(tk.END, self.errorReadout)
+            self.error_text.configure(state=tk.DISABLED)
         
