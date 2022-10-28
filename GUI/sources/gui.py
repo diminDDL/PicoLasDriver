@@ -240,18 +240,18 @@ class GUI:
         self.gpioFrame = tk.Frame(self.root)
         self.gpioFrame.columnconfigure(4, weight=1)
         self.gpioFrame.rowconfigure(1, weight=1)
-        self.gpioFrame.grid(column=2, columnspan=4, row=4, sticky="nsew", padx=10, pady=5)
+        self.gpioFrame.grid(column=2, columnspan=4, row=4, sticky="nsew", padx=5, pady=5)
 
-        self.gpio_button_0 = tk.Button(self.gpioFrame, text="IO1", command=lambda: self.gpioButton(0), font=("Arial", 12), fg="#ffffff", bg="black", activebackground="black", activeforeground="#ffffff")
-        self.gpio_button_0.grid(column=0, row=0, padx=5, pady=5)
+        self.gpio_button_0 = tk.Button(self.gpioFrame, text="\nIO1\n", command=lambda: self.gpioButton(0), font=("Arial", 12), fg="#ffffff", bg="black", activebackground="black", activeforeground="#ffffff")
+        self.gpio_button_0.grid(column=0, row=0, padx=(15, 5), pady=5)
 
-        self.gpio_button_1 = tk.Button(self.gpioFrame, text="IO2", command=lambda: self.gpioButton(1), font=("Arial", 12), fg="#ffffff", bg="black", activebackground="black", activeforeground="#ffffff")
+        self.gpio_button_1 = tk.Button(self.gpioFrame, text="\nIO2\n", command=lambda: self.gpioButton(1), font=("Arial", 12), fg="#ffffff", bg="black", activebackground="black", activeforeground="#ffffff")
         self.gpio_button_1.grid(column=1, row=0, padx=5, pady=5)
 
-        self.gpio_button_2 = tk.Button(self.gpioFrame, text="IO3", command=lambda: self.gpioButton(2), font=("Arial", 12), fg="#ffffff", bg="black", activebackground="black", activeforeground="#ffffff")
+        self.gpio_button_2 = tk.Button(self.gpioFrame, text="\nIO3\n", command=lambda: self.gpioButton(2), font=("Arial", 12), fg="#ffffff", bg="black", activebackground="black", activeforeground="#ffffff")
         self.gpio_button_2.grid(column=2, row=0, padx=5, pady=5)
 
-        self.gpio_button_3 = tk.Button(self.gpioFrame, text="IO4", command=lambda: self.gpioButton(3), font=("Arial", 12), fg="#ffffff", bg="black", activebackground="black", activeforeground="#ffffff")
+        self.gpio_button_3 = tk.Button(self.gpioFrame, text="\nIO4\n", command=lambda: self.gpioButton(3), font=("Arial", 12), fg="#ffffff", bg="black", activebackground="black", activeforeground="#ffffff")
         self.gpio_button_3.grid(column=3, row=0, padx=5, pady=5)
 
         # buttons to change the values
