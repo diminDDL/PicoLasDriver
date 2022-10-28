@@ -23,7 +23,8 @@ if "-h" in sys.argv or "--help" in sys.argv:
         -h | --help: show this help message and exit
         -c | --console: run a simple serial console to configure the driver
         -v | --version: show the version of the program and exit
-        -m "driver model" | --model "driver model": provide the model of the driver to use (must be in the config.json file)""")
+        -m "driver model" | --model "driver model": provide the model of the driver to use (must be in the config.json file)
+        -f | --fullscreen: run the program in fullscreen mode without any way of escaping it""")
     sys.exit(0)
 if "-c" in sys.argv or "--console" in sys.argv:
     print("console mode not implemented yet")
@@ -48,10 +49,15 @@ if "-m" in sys.argv or "--model" in sys.argv:
     driverModel.strip("\"")
     print("Using driver model: " + driverModel)
 
+if "-f" in sys.argv or "--fullscreen" in sys.argv:
+    fullscreen = True
+else:
+    fullscreen = False
+
 # run the program if this is this file being executed
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    window = gui.GUI(loop=loop, version=version, config=config, driver=driverModel, debug=debug)
+    window = gui.GUI(loop=loop, version=version, config=config, driver=driverModel, debug=debug, fullscreen=fullscreen)
     loop.run_forever()
     loop.close()
     

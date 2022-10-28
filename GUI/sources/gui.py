@@ -13,7 +13,7 @@ def deg_color(deg, d_per_tick, color):
     return deg, color
 
 class GUI:
-    def __init__(self, loop, version, config, driver, interval=1/60, debug=False):
+    def __init__(self, loop, version, config, driver, interval=1/60, debug=False, fullscreen=False):
         self.debug = debug
         self.version = version
         self.config = config
@@ -76,11 +76,13 @@ class GUI:
             width= self.root.winfo_screenwidth()               
             height= self.root.winfo_screenheight()               
             self.root.geometry("%dx%d" % (width, height))
-            #self.root.attributes("-type", "splash")
+            if fullscreen:
+                self.root.attributes("-type", "splash")
             self.root.bind("<Control-slash>", self.close)
             self.root.focus_force()
             self.root.config(cursor="none")
-            # TODO turn back on self.root.overrideredirect(True)
+            if fullscreen:
+                self.root.overrideredirect(True)
 
         self.root.title("PicoLas controller window")
         self.root.resizable(False, False)
