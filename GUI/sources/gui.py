@@ -176,15 +176,14 @@ class GUI:
 
     def gpioButton(self, gpio):
         if not self.locked:
-            match gpio:
-                case 0:
-                    self.gpio_0 = not self.gpio_0
-                case 1:
-                    self.gpio_1 = not self.gpio_1
-                case 2:
-                    self.gpio_2 = not self.gpio_2
-                case 3:
-                    self.gpio_3 = not self.gpio_3
+            if gpio == 0:
+                self.gpio_0 = not self.gpio_0
+            elif gpio == 1:
+                self.gpio_1 = not self.gpio_1
+            elif gpio == 2:
+                self.gpio_2 = not self.gpio_2
+            elif gpio == 3:
+                self.gpio_3 = not self.gpio_3
         self.updateDisplayValues()
 
     def createMainWindow(self, version):
