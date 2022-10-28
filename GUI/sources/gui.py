@@ -3,6 +3,7 @@ import tkinter as tk
 from random import randrange as rr
 import si_prefix as si
 import time
+import os
 
 def deg_color(deg, d_per_tick, color):
     deg += d_per_tick
@@ -45,6 +46,15 @@ class GUI:
         self.localPulseCounterLabel.set('Pulse counter:\n' + '0')
         self.errorReadout = "No Errors"
         self.errorReadoutOld = ""
+        self.globalEnable = False
+
+        # read the ./sources/assets/ folder and copy the images into a dictionary with the file name as key
+        self.images = {}
+        for file in os.listdir("./sources/assets/"):
+            if file.endswith(".png"):
+
+                self.images[file[:-4]] = tk.PhotoImage(file="./sources/assets/" + file).subsample(3, 3)
+        self.locked = False
 
         self.loop = loop
         self.tasks = []
@@ -112,62 +122,69 @@ class GUI:
                 self.GUIcallNumber = 1
                 self.GUIcallAcceleration = 100
             self.GUIlastCall = pressedTime
-            if command == "currentUp":
+            if command == "currentUp" and not self.locked:
                 self.setCurrent += self.config[self.driver]['CurrentStep_A']
                 if self.setCurrent > self.maxCurent:
                     self.setCurrent = self.maxCurent
                     #TODO implement color changes
                     #self.current_limit_up.configure()
-            elif command == "currentDown":
+            elif command == "currentDown" and not self.locked:
                 self.setCurrent -= self.config[self.driver]['CurrentStep_A']
                 if self.setCurrent < self.config[self.driver]['CurrentStep_A']:
                     self.setCurrent = 0
-            elif command == "pulseWidthUp":
+            elif command == "pulseWidthUp" and not self.locked:
                 if self.GUIcallNumber >= callNumberThreshold:
                     self.setPulseWidth += round(self.GUIcallNumber/(callNumberThreshold * 1000), 3)
                 else:
                     self.setPulseWidth += 0.001
                 if self.setPulseWidth > self.maxPulseWidth:
                     self.setPulseWidth = self.maxPulseWidth
-            elif command == "pulseWidthDown":
+            elif command == "pulseWidthDown" and not self.locked:
                 if self.GUIcallNumber >= callNumberThreshold:
                     self.setPulseWidth -= round(self.GUIcallNumber/(callNumberThreshold * 1000), 3)
                 else:
                     self.setPulseWidth -= 0.001
                 if self.setPulseWidth < self.minPuseWidth:
                     self.setPulseWidth = self.minPuseWidth
-            elif command == "frequencyUp":
+            elif command == "frequencyUp" and not self.locked:
                 if self.GUIcallNumber >= callNumberThreshold:
                     self.setFrequency += round(self.GUIcallNumber/callNumberThreshold, 0)
                 else:
                     self.setFrequency += 1
                 if self.setFrequency > self.maxFrequency:
                     self.setFrequency = self.maxFrequency
-            elif command == "frequencyDown":
+            elif command == "frequencyDown" and not self.locked:
                 if self.GUIcallNumber >= callNumberThreshold:
                     self.setFrequency -= round(self.GUIcallNumber/callNumberThreshold, 0)
                 else:
                     self.setFrequency -= 1
                 if self.setFrequency < 0:
                     self.setFrequency = 0
+            elif command == "lock":
+                if self.GUIcallNumber == 6:
+                    self.locked = not self.locked
+            elif command == "enable" and not self.locked:
+                self.globalEnable = not self.globalEnable
+            
         
         self.updateDisplayValues()
 
     def togglePulseMode(self):
-        self.setPulseMode = not self.setPulseMode
+        if not self.locked:
+            self.setPulseMode = not self.setPulseMode
         self.updateDisplayValues()
 
     def gpioButton(self, gpio):
-        # TODO implement
-        match gpio:
-            case 0:
-                self.gpio_0 = not self.gpio_0
-            case 1:
-                self.gpio_1 = not self.gpio_1
-            case 2:
-                self.gpio_2 = not self.gpio_2
-            case 3:
-                self.gpio_3 = not self.gpio_3
+        if not self.locked:
+            match gpio:
+                case 0:
+                    self.gpio_0 = not self.gpio_0
+                case 1:
+                    self.gpio_1 = not self.gpio_1
+                case 2:
+                    self.gpio_2 = not self.gpio_2
+                case 3:
+                    self.gpio_3 = not self.gpio_3
         self.updateDisplayValues()
 
     def createMainWindow(self, version):
@@ -268,6 +285,14 @@ class GUI:
         self.pulse_number = tk.Label(self.root, textvariable=self.localPulseCounterLabel, fg="#bdbdbd", bg="black")
         self.pulse_number.grid(column=5, row=2, sticky="nsew", padx=9, pady=5)
         
+        # lock button to lock the values
+        self.lock_button = tk.Button(self.root, image=self.images["unlocked"], command=lambda: self.adjustValues("lock", pressedTime=round(time.time() * 1000)), repeatinterval=10, repeatdelay=300, fg="#ffffff", bg="green", activebackground="green", activeforeground="#ffffff")
+        self.lock_button.grid(column=5, row=4, sticky="nsew", padx=5, pady=5)
+
+        # global enable button
+        self.enable_button = tk.Button(self.root, text="DISABLED", command=lambda: self.adjustValues("enable", pressedTime=round(time.time() * 1000)), fg="#ffffff", bg="red", activebackground="red", activeforeground="#ffffff")
+        self.enable_button.grid(column=2, columnspan=4, row=5, sticky="nsew", padx=5, pady=5)
+
         self.updateDisplayValues()
 
         
@@ -297,3 +322,8 @@ class GUI:
             self.error_text.insert(tk.END, self.errorReadout)
             self.error_text.configure(state=tk.DISABLED)
         
+        # update the locked button image
+        self.lock_button.configure(image=self.images["locked" if self.locked else "unlocked"], activebackground="red" if self.locked else "green", background="red" if self.locked else "green")
+
+        # update the enable button
+        self.enable_button.configure(text="ENABLED" if self.globalEnable else "DISABLED", bg="green" if self.globalEnable else "red", activebackground="green" if self.globalEnable else "red")
