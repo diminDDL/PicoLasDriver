@@ -1,6 +1,7 @@
 import sys
 import json
 import sources.gui as gui
+import sources.iointerface as ioint
 import asyncio
 
 debug = False
@@ -57,7 +58,8 @@ else:
 # run the program if this is this file being executed
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    window = gui.GUI(loop=loop, version=version, config=config, driver=driverModel, debug=debug, fullscreen=fullscreen)
+    io = ioint.IOInterface(debug, config, driverModel)
+    window = gui.GUI(loop=loop, version=version, config=config, driver=driverModel, io=io, debug=debug, fullscreen=fullscreen)
     loop.run_forever()
     loop.close()
     

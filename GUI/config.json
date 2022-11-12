@@ -13,12 +13,12 @@
         "protocol":{
             "name":"RS232",
             "connection":{
-                "port":"/dev/ttyAMA0",
                 "type":"serial",
                 "baudrate":115200,
-                "bytesize":8,
+                "bits":8,
                 "parity":"E",
-                "stopbits":1
+                "stopbits":1,
+                "magic":"0x41"
             },
             "set_current":{
                 "command":"scur",
