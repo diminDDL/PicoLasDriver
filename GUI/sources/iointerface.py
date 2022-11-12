@@ -36,9 +36,10 @@ class IOInterface:
                 #print(bytearray.fromhex(self.conf[self.driver]["protocol"]["connection"]["magic"].strip("0x")))
                 # write "test" to serial
                 s = serial.Serial(port, 115200, timeout=1, stopbits=serial.STOPBITS_ONE, parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS)
+                sleep(3)
                 s.write(b"testtesttesttest\n\r")
                 sleep(0.1)
-                res = s.read(2)
+                res = s.read(10)
                 sleep(0.1)
                 if self.debug:
                     print("Received: " + str(res))
