@@ -12,17 +12,6 @@ class IOInterface:
         self.conf = config
         self.debug = debug
         self.driver = driver
-        self.baudrate = self.conf[self.driver]["protocol"]["connection"]["baudrate"]
-        self.bits = self.conf[self.driver]["protocol"]["connection"]["bits"]
-        self.parity = self.conf[self.driver]["protocol"]["connection"]["parity"]
-        self.stopbits = self.conf[self.driver]["protocol"]["connection"]["stopbits"]
-        # print debug info
-        if self.debug:
-            print("Driver model: " + self.driver)
-            print("Baudrate: " + str(self.baudrate))
-            print("Bits: " + str(self.bits))
-            print("Parity: " + self.parity)
-            print("Stopbits: " + str(self.stopbits))
 
         # scan for all serial ports
         ports = self.get_serial_ports()
@@ -30,22 +19,65 @@ class IOInterface:
             print("Found ports: " + str(ports))
         # connect to each port using the baudrate and timeout specified in the config file and send the magic number
         for port in ports:
-            #try:
-            if True:
-                #s.write(bytearray.fromhex(self.conf[self.driver]["protocol"]["connection"]["magic"].strip("0x")))
-                #print(bytearray.fromhex(self.conf[self.driver]["protocol"]["connection"]["magic"].strip("0x")))
-                # write "test" to serial
-                s = serial.Serial(port, 115200, timeout=1, stopbits=serial.STOPBITS_ONE, parity=serial.PARITY_NONE, bytesize=serial.EIGHTBITS)
-                sleep(3)
-                s.write(b"testtesttesttest\n\r")
-                sleep(0.1)
-                res = s.read(10)
-                sleep(0.1)
-                if self.debug:
-                    print("Received: " + str(res))
-                s.close()
-            #except serial.SerialException:
-            #    print("Error connecting to port: " + port)
+            try:
+                match self.conf[self.driver]["protocol"]["name"]:
+                    case "RS232":
+                        self.baudrate = int(self.conf[self.driver]["protocol"]["connection"]["baudrate"])
+                        self.bits = int(self.conf[self.driver]["protocol"]["connection"]["bits"])
+                        self.parity = self.conf[self.driver]["protocol"]["connection"]["parity"]
+                        self.stopbits = int(self.conf[self.driver]["protocol"]["connection"]["stopbits"])
+                        match self.bits:
+                            case 5:
+                                self.bits = serial.FIVEBITS
+                            case 6:
+                                self.bits = serial.SIXBITS
+                            case 7:
+                                self.bits = serial.SEVENBITS
+                            case 8:
+                                self.bits = serial.EIGHTBITS
+                            case _:
+                                raise ValueError("Invalid bits value")
+                        match self.parity:
+                            case "N":
+                                self.parity = serial.PARITY_NONE
+                            case "E":
+                                self.parity = serial.PARITY_EVEN
+                            case "O":
+                                self.parity = serial.PARITY_ODD
+                            case _:
+                                raise ValueError("Invalid parity value")
+                        match self.stopbits:
+                            case 1:
+                                self.stopbits = serial.STOPBITS_ONE
+                            case 2:
+                                self.stopbits = serial.STOPBITS_TWO
+                            case _:
+                                raise ValueError("Invalid stopbits value")
+                        # print debug info
+                        if self.debug:
+                            print("Driver model: " + self.driver)
+                            print("Baudrate: " + str(self.baudrate))
+                            print("Bits: " + str(self.bits))
+                            print("Parity: " + str(self.parity))
+                            print("Stopbits: " + str(self.stopbits))
+                        s = serial.Serial(port, self.baudrate, timeout=1, stopbits=self.stopbits, parity=self.parity, bytesize=self.bits)
+                        sleep(3)
+                        # s.write(b"testtesttesttest\n\r")
+                        magic = int(self.conf[self.driver]["protocol"]["connection"]["magic"][2::], 16)
+                        print(magic)
+                        s.write("")
+                        sleep(0.1)
+                        res = s.read(10)
+                        sleep(0.1)
+                        if self.debug:
+                            print("Received: " + str(res))
+                        s.close()
+                    case "RS485":
+                        print("Not implemented")
+                    case _:
+                        print("Unknown protocol")
+            except:
+                print(f"Could not connect to board on port: {port}")
 
     def execute(self, command: str, args):
         # execute a command

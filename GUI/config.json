@@ -18,7 +18,7 @@
                 "bits":8,
                 "parity":"E",
                 "stopbits":1,
-                "magic":"0x41"
+                "magic":"0xB0BA"
             },
             "set_current":{
                 "command":"scur",
