@@ -21,7 +21,12 @@ bool outputEnabled = false;                     // output enabled flag
 String enableOutputCommand = "enab";            // string representation of the enable output command
 String disableOutputCommand = "disa";           // string representation of the disable output command
 bool lockState = false;                         // lock state of the driver and UI (locked = true, unlocked = false)
-
+String lockCommand = "lock";                    // string representation of the lock command
+String unlockCommand = "unlo";                  // string representation of the unlock command
+bool analogMode = false;                        // analog mode flag
+String analogModeCommand = "anmo";              // string representation of the analog mode command
+String digitalModeCommand = "dimo";             // string representation of the digital mode command
+String getModeCommand = "gmod";                 // string representation of the get mode command
 // data structure: 
 // get commands: <command>\n
 // return values: <value>\r\n<00>\r\n
