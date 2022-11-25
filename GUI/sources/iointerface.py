@@ -5,7 +5,7 @@ from time import sleep
 
 
 class IOInterface:
-    def __init__(self, debug: bool, config: dict, driver: str, platform: str):
+    def __init__(self, debug: bool, config: dict, driver: str, platform: str, loop):
         # if config is empty throw an error
         if not config:
             raise ValueError("Config is empty")
@@ -13,7 +13,18 @@ class IOInterface:
         self.debug = debug
         self.driver = driver
         self.platform = platform
+        if self.conf[self.driver]["protocol"]["connection"]["type"] == "serial":
+            self.baudrate = int(self.conf[self.driver]["protocol"]["connection"]["baudrate"])
+            self.bits = int(self.conf[self.driver]["protocol"]["connection"]["bits"])
+            self.parity = self.conf[self.driver]["protocol"]["connection"]["parity"]
+            self.stopbits = int(self.conf[self.driver]["protocol"]["connection"]["stopbits"])
 
+        self.loop = loop
+        loop.run_in_executor(None, self.init_comms)
+
+        self.commandQueue = [] # a string command queue that will be executed in order
+
+    def init_comms(self):
         # scan for all serial ports
         ports = self.get_serial_ports()
         if self.debug:
@@ -23,10 +34,6 @@ class IOInterface:
             try:
                 match self.conf[self.driver]["protocol"]["name"]:
                     case "RS232":
-                        self.baudrate = int(self.conf[self.driver]["protocol"]["connection"]["baudrate"])
-                        self.bits = int(self.conf[self.driver]["protocol"]["connection"]["bits"])
-                        self.parity = self.conf[self.driver]["protocol"]["connection"]["parity"]
-                        self.stopbits = int(self.conf[self.driver]["protocol"]["connection"]["stopbits"])
                         match self.bits:
                             case 5:
                                 self.bits = serial.FIVEBITS
@@ -77,10 +84,6 @@ class IOInterface:
                         print("Not implemented")
                     case "BOB":
                         if self.conf[self.driver]["protocol"]["connection"]["type"] == "serial":
-                            self.baudrate = int(self.conf[self.driver]["protocol"]["connection"]["baudrate"])
-                            self.bits = int(self.conf[self.driver]["protocol"]["connection"]["bits"])
-                            self.parity = self.conf[self.driver]["protocol"]["connection"]["parity"]
-                            self.stopbits = int(self.conf[self.driver]["protocol"]["connection"]["stopbits"])
                             match self.bits:
                                 case 5:
                                     self.bits = serial.FIVEBITS
@@ -116,11 +119,11 @@ class IOInterface:
                                 print("Parity: " + str(self.parity))
                                 print("Stopbits: " + str(self.stopbits))
                             s = serial.Serial(port, self.baudrate, timeout=1, stopbits=self.stopbits, parity=self.parity, bytesize=self.bits)
-                            sleep(3)
+                            sleep(0.5)
                             # s.write(b"testtesttesttest\n\r")
                             magic = int(self.conf[self.driver]["protocol"]["connection"]["magic"][2::], 16)
-                            print(magic)
-                            s.write("")
+                            bytes_val = magic.to_bytes(2, byteorder='big') # convert the magic number to bytes
+                            s.write(bytes_val)
                             sleep(0.1)
                             res = s.read(10)
                             sleep(0.1)

@@ -291,6 +291,36 @@
                     "parameter":"",
                     "answer":"64bit",
                     "description":"Returns the pulse frequency in Hz"
+                },
+                "lock_all":{
+                    "command":"lock",
+                    "parameter":"",
+                    "answer":"",
+                    "description":"Locks all settings"
+                },
+                "unlock_all":{
+                    "command":"unlo",
+                    "parameter":"",
+                    "answer":"",
+                    "description":"Unlocks all settings"
+                },
+                "set_analog_mode":{
+                    "command":"anmo",
+                    "parameter":"",
+                    "answer":"",
+                    "description":"Sets the analog mode"
+                },
+                "set_digital_mode":{
+                    "command":"dimo",
+                    "parameter":"",
+                    "answer":"",
+                    "description":"Sets the digital mode"
+                },
+                "get_mode":{
+                    "command":"gmod",
+                    "parameter":"",
+                    "answer":"bool",
+                    "description":"Returns the current mode, 0 digital, 1 analog"
                 }
             }
         }
@@ -365,6 +395,36 @@
                     "parameter":"",
                     "answer":"64bit",
                     "description":"Returns the pulse frequency in Hz"
+                },
+                "lock_all":{
+                    "command":"lock",
+                    "parameter":"",
+                    "answer":"",
+                    "description":"Locks all settings"
+                },
+                "unlock_all":{
+                    "command":"unlo",
+                    "parameter":"",
+                    "answer":"",
+                    "description":"Unlocks all settings"
+                },
+                "set_analog_mode":{
+                    "command":"anmo",
+                    "parameter":"",
+                    "answer":"",
+                    "description":"Sets the analog mode"
+                },
+                "set_digital_mode":{
+                    "command":"dimo",
+                    "parameter":"",
+                    "answer":"",
+                    "description":"Sets the digital mode"
+                },
+                "get_mode":{
+                    "command":"gmod",
+                    "parameter":"",
+                    "answer":"bool",
+                    "description":"Returns the current mode, 0 digital, 1 analog"
                 }
             }
         }
