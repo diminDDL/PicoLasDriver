@@ -68,18 +68,6 @@
                 "answer":"float",
                 "description":"Outputs the maximum current limiter value"
             },
-            "output_enable":{
-                "command":"on",
-                "parameter":"",
-                "answer":"",
-                "description":"Activates the output"
-            },
-            "output_disable":{
-                "command":"off",
-                "parameter":"",
-                "answer":"",
-                "description":"Deactivates the output"
-            },
             "set_external_current_control":{
                 "command":"curext",
                 "parameter":"",
@@ -265,6 +253,119 @@
                 "parameter":"",
                 "answer":"float",
                 "description":"Returns the actual measured compliance voltage"
+            },
+            "io_commands":{
+                "platform":"Arduino DUE",
+                "output_enable":{
+                    "command":"enab",
+                    "parameter":"",
+                    "answer":"",
+                    "description":"Activates the output"
+                },
+                "output_disable":{
+                    "command":"disa",
+                    "parameter":"",
+                    "answer":"",
+                    "description":"Deactivates the output"
+                },
+                "set_pulse_duration":{
+                    "command":"spdu",
+                    "parameter":"64bit",
+                    "answer":"",
+                    "description":"Sets the pulse duration in µs"
+                },
+                "get_pulse_duration":{
+                    "command":"gpdu",
+                    "parameter":"",
+                    "answer":"64bit",
+                    "description":"Returns the pulse duration in µs"
+                },
+                "set_pulse_frequency":{
+                    "command":"spfr",
+                    "parameter":"64bit",
+                    "answer":"",
+                    "description":"Sets the pulse frequency in Hz"
+                },
+                "get_pulse_frequency":{
+                    "command":"gpfr",
+                    "parameter":"",
+                    "answer":"64bit",
+                    "description":"Returns the pulse frequency in Hz"
+                }
+            }
+        }
+    },
+    "LDP-C 40-05":{
+        "MaxCurrent_A": 40.0,
+        "CurrentStep_A": 0.1,
+        "MaxVoltage_V": 5.0,
+        "VoltageStep_V": 0.1,
+        "CC": true,
+        "CV": false,
+        "CP": false,
+        "MinPulseWidth_us": 1000,
+        "MaxPulseWidth_us": 2000000,
+        "MaxFrequency_Hz": 1000,
+        "protocol":{
+            "name":"BOB",
+            "connection":{
+                "type":"serial",
+                "baudrate":115200,
+                "bits":8,
+                "parity":"E",
+                "stopbits":1,
+                "magic":"0xB0BB"
+            },
+            "set_current":{
+                "command":"scur",
+                "parameter":"float",
+                "answer":"",
+                "description":"Sets the pulse current to the indicated value. A dot is used as decimal point. No more then one decimal place is used!"
+            },
+            "get_current":{
+                "command":"gcur",
+                "parameter":"",
+                "answer":"float",
+                "description":"Outputs the present output current"
+            },
+            "io_commands":{
+                "platform":"Arduino DUE",
+                "output_enable":{
+                    "command":"enab",
+                    "parameter":"",
+                    "answer":"",
+                    "description":"Activates the output"
+                },
+                "output_disable":{
+                    "command":"disa",
+                    "parameter":"",
+                    "answer":"",
+                    "description":"Deactivates the output"
+                },
+                "set_pulse_duration":{
+                    "command":"spdu",
+                    "parameter":"64bit",
+                    "answer":"",
+                    "description":"Sets the pulse duration in µs"
+                },
+                "get_pulse_duration":{
+                    "command":"gpdu",
+                    "parameter":"",
+                    "answer":"64bit",
+                    "description":"Returns the pulse duration in µs"
+                },
+                "set_pulse_frequency":{
+                    "command":"spfr",
+                    "parameter":"64bit",
+                    "answer":"",
+                    "description":"Sets the pulse frequency in Hz"
+                },
+                "get_pulse_frequency":{
+                    "command":"gpfr",
+                    "parameter":"",
+                    "answer":"64bit",
+                    "description":"Returns the pulse frequency in Hz"
+                }
             }
         }
     }

@@ -6,7 +6,9 @@ import asyncio
 
 debug = False
 version = "0.0.1"
-driverModel = "LDP-CW 20-50"
+#driverModel = "LDP-CW 20-50"
+driverModel = "LDP-C 40-05"
+platform = "Arduiono DUE"
 
 # open the config.json file and read the settings
 f = open("config.json", "r")
@@ -25,7 +27,8 @@ if "-h" in sys.argv or "--help" in sys.argv:
         -c | --console: run a simple serial console to configure the driver
         -v | --version: show the version of the program and exit
         -m "driver model" | --model "driver model": provide the model of the driver to use (must be in the config.json file)
-        -f | --fullscreen: run the program in fullscreen mode without any way of escaping it""")
+        -f | --fullscreen: run the program in fullscreen mode without any way of escaping it
+        -p "platform" | --platform "platform": provide the platform of the driver to use (must be in the config.json file)""")
     sys.exit(0)
 if "-c" in sys.argv or "--console" in sys.argv:
     print("console mode not implemented yet")
@@ -50,6 +53,21 @@ if "-m" in sys.argv or "--model" in sys.argv:
     driverModel.strip("\"")
     print("Using driver model: " + driverModel)
 
+if "-p" in sys.argv or "--platform" in sys.argv:
+    try:
+        platform = sys.argv[sys.argv.index("-p") + 1]
+    except IndexError:
+        print("Error: no platform provided")
+        sys.exit(1)
+    except ValueError:
+        try:
+            platform = sys.argv[sys.argv.index("--platform") + 1]
+        except IndexError:
+            print("Error: no platform provided")
+            sys.exit(1)
+    platform.strip("\"")
+    print("Using platform: " + platform)
+
 if "-f" in sys.argv or "--fullscreen" in sys.argv:
     fullscreen = True
 else:
@@ -58,8 +76,8 @@ else:
 # run the program if this is this file being executed
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    io = ioint.IOInterface(debug, config, driverModel)
-    window = gui.GUI(loop=loop, version=version, config=config, driver=driverModel, io=io, debug=debug, fullscreen=fullscreen)
+    io = ioint.IOInterface(debug, config, driverModel, platform)
+    window = gui.GUI(loop=loop, version=version, config=config, driver=driverModel, platform=platform, io=io, debug=debug, fullscreen=fullscreen)
     loop.run_forever()
     loop.close()
     

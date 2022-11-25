@@ -13,11 +13,12 @@ def deg_color(deg, d_per_tick, color):
     return deg, color
 
 class GUI:
-    def __init__(self, loop, version, config, driver, io, interval=1/60, debug=False, fullscreen=False):
+    def __init__(self, loop, version, config, driver, platform, io, interval=1/60, debug=False, fullscreen=False):
         self.debug = debug
         self.version = version
         self.config = config
         self.driver = driver
+        self.platform = platform
         self.io = io
         self.maxCurent = self.config[self.driver]['MaxCurrent_A']
         self.minPuseWidth = self.config[self.driver]['MinPulseWidth_us']/1000000

@@ -5,13 +5,14 @@ from time import sleep
 
 
 class IOInterface:
-    def __init__(self, debug: bool, config: dict, driver: str):
+    def __init__(self, debug: bool, config: dict, driver: str, platform: str):
         # if config is empty throw an error
         if not config:
             raise ValueError("Config is empty")
         self.conf = config
         self.debug = debug
         self.driver = driver
+        self.platform = platform
 
         # scan for all serial ports
         ports = self.get_serial_ports()
@@ -74,6 +75,60 @@ class IOInterface:
                         s.close()
                     case "RS485":
                         print("Not implemented")
+                    case "BOB":
+                        if self.conf[self.driver]["protocol"]["connection"]["type"] == "serial":
+                            self.baudrate = int(self.conf[self.driver]["protocol"]["connection"]["baudrate"])
+                            self.bits = int(self.conf[self.driver]["protocol"]["connection"]["bits"])
+                            self.parity = self.conf[self.driver]["protocol"]["connection"]["parity"]
+                            self.stopbits = int(self.conf[self.driver]["protocol"]["connection"]["stopbits"])
+                            match self.bits:
+                                case 5:
+                                    self.bits = serial.FIVEBITS
+                                case 6:
+                                    self.bits = serial.SIXBITS
+                                case 7:
+                                    self.bits = serial.SEVENBITS
+                                case 8:
+                                    self.bits = serial.EIGHTBITS
+                                case _:
+                                    raise ValueError("Invalid bits value")
+                            match self.parity:
+                                case "N":
+                                    self.parity = serial.PARITY_NONE
+                                case "E":
+                                    self.parity = serial.PARITY_EVEN
+                                case "O":
+                                    self.parity = serial.PARITY_ODD
+                                case _:
+                                    raise ValueError("Invalid parity value")
+                            match self.stopbits:
+                                case 1:
+                                    self.stopbits = serial.STOPBITS_ONE
+                                case 2:
+                                    self.stopbits = serial.STOPBITS_TWO
+                                case _:
+                                    raise ValueError("Invalid stopbits value")
+                            # print debug info
+                            if self.debug:
+                                print("Driver model: " + self.driver)
+                                print("Baudrate: " + str(self.baudrate))
+                                print("Bits: " + str(self.bits))
+                                print("Parity: " + str(self.parity))
+                                print("Stopbits: " + str(self.stopbits))
+                            s = serial.Serial(port, self.baudrate, timeout=1, stopbits=self.stopbits, parity=self.parity, bytesize=self.bits)
+                            sleep(3)
+                            # s.write(b"testtesttesttest\n\r")
+                            magic = int(self.conf[self.driver]["protocol"]["connection"]["magic"][2::], 16)
+                            print(magic)
+                            s.write("")
+                            sleep(0.1)
+                            res = s.read(10)
+                            sleep(0.1)
+                            if self.debug:
+                                print("Received: " + str(res))
+                            s.close()
+                        else: 
+                            print("Not implemented")
                     case _:
                         print("Unknown protocol")
             except:
