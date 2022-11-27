@@ -20,7 +20,7 @@ class IOInterface:
             self.stopbits = int(self.conf[self.driver]["protocol"]["connection"]["stopbits"])
 
         self.loop = loop
-        loop.run_in_executor(None, self.init_comms)
+        self.loop.run_in_executor(None, self.init_comms)
 
         self.commandQueue = [] # a string command queue that will be executed in order
 

@@ -60,7 +60,6 @@ class GUI:
 
         self.loop = loop
         self.tasks = []
-        self.tasks.append(loop.create_task(self.mainloop()))
         self.tasks.append(loop.create_task(self.updater(interval)))
 
         self.GUIlastCall = 0
@@ -91,9 +90,6 @@ class GUI:
         self.root.attributes("-topmost", True)
         self.createMainWindow(version)
         self.root.after(1000, self.comm)
-
-    async def mainloop(self):
-        pass
 
     async def updater(self, interval):
         while True:
