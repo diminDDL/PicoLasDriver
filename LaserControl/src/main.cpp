@@ -73,7 +73,7 @@ void parser(char str[]){
     if (pch != NULL){
         // split the string into two parts by the " " character
         char * command = strtok(str, " ");
-        char * value = strtok(str, " ");
+        char * value = strtok(NULL, " ");
         // print the command and value
         Serial.print("Command: ");
         Serial.println(command);
