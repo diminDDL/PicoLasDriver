@@ -270,27 +270,33 @@
                 },
                 "set_pulse_duration":{
                     "command":"spdu",
-                    "parameter":"64bit",
+                    "parameter":"32bit",
                     "answer":"",
                     "description":"Sets the pulse duration in µs"
                 },
                 "get_pulse_duration":{
                     "command":"gpdu",
                     "parameter":"",
-                    "answer":"64bit",
+                    "answer":"32bit",
                     "description":"Returns the pulse duration in µs"
                 },
                 "set_pulse_frequency":{
                     "command":"spfr",
-                    "parameter":"64bit",
+                    "parameter":"32bit",
                     "answer":"",
                     "description":"Sets the pulse frequency in Hz"
                 },
                 "get_pulse_frequency":{
                     "command":"gpfr",
                     "parameter":"",
-                    "answer":"64bit",
+                    "answer":"32bit",
                     "description":"Returns the pulse frequency in Hz"
+                },
+                "get_global_pulse_count":{
+                    "command":"gpsc",
+                    "parameter":"",
+                    "answer":"64bit",
+                    "description":"Returns the number of total pulses ever generated"
                 },
                 "lock_all":{
                     "command":"lock",
@@ -374,27 +380,33 @@
                 },
                 "set_pulse_duration":{
                     "command":"spdu",
-                    "parameter":"64bit",
+                    "parameter":"32bit",
                     "answer":"",
                     "description":"Sets the pulse duration in µs"
                 },
                 "get_pulse_duration":{
                     "command":"gpdu",
                     "parameter":"",
-                    "answer":"64bit",
+                    "answer":"32bit",
                     "description":"Returns the pulse duration in µs"
                 },
                 "set_pulse_frequency":{
                     "command":"spfr",
-                    "parameter":"64bit",
+                    "parameter":"32bit",
                     "answer":"",
                     "description":"Sets the pulse frequency in Hz"
                 },
                 "get_pulse_frequency":{
                     "command":"gpfr",
                     "parameter":"",
-                    "answer":"64bit",
+                    "answer":"32bit",
                     "description":"Returns the pulse frequency in Hz"
+                },
+                "get_global_pulse_count":{
+                    "command":"gpsc",
+                    "parameter":"",
+                    "answer":"64bit",
+                    "description":"Returns the number of total pulses ever generated"
                 },
                 "lock_all":{
                     "command":"lock",
