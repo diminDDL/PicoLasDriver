@@ -5,6 +5,7 @@
 #define SERIAL_BAUD_RATE 115200
 #define SERIAL_MODE SERIAL_8E1
 #define FORWARD_PORT Serial1    // when in digital mode all the communication will be forwarded to this port
+#define EOL "\r\n"              // end of line characters
 
 // variables that need to be remembered between power cycles
 uint64_t globalPulseCount = 0;                          // counts the total number of pulses sent do the driver
@@ -23,18 +24,23 @@ const String enableOutputCommand = "enab";              // string representation
 bool lockState = false;                                 // lock state of the driver and UI (locked = true, unlocked = false)
 const String lockCommand = "lock";                      // string representation of the lock command
 bool analogMode = false;                                // analog mode flag
-const String analogModeCommand = "anmo";                // string representation of the analog mode command
+const String setAnalogModeCommand = "anmo";             // string representation of the analog mode command
+const String getAnalogModeCommand = "gamo";             // string representation of the analog mode command
 const String getModeCommand = "gmod";                   // string representation of the get mode command
 // data structure: 
 // get commands: <command>\n
 // return values: <value>\r\n<00>\r\n
 // set commands: <command> <value>\n
 // return values: <value>\r\n<00>\r\n
+// the \r\n are defined in EOL
 
 // other variables
-char incomingByte = 0;    // for incoming serial data
+char incomingByte = 0;      // for incoming serial data
 char hostBuffer[32];
 char driverBuffer[32];
+bool error1 = false;        // Not implemented (should be used to read error states of the driver)
+bool error2 = false;
+char errorStr[] = "00";
 
 unsigned long serialTimeout = 0;
 bool newData = false;
@@ -42,6 +48,23 @@ bool newData = false;
 void setup() {
     Serial.begin(SERIAL_BAUD_RATE, SERIAL_MODE);
     FORWARD_PORT.begin(SERIAL_BAUD_RATE, SERIAL_MODE);
+}
+
+void printErrorStr(){
+    // set the error string
+    if (error1){
+        errorStr[0] = '1';
+    } else {
+        errorStr[0] = '0';
+    }
+    if (error2){
+        errorStr[1] = '1';
+    } else {
+        errorStr[1] = '0';
+    }
+    // print the error string
+    Serial.print(errorStr);
+    Serial.print(EOL);
 }
 
 void print_big_int(uint64_t value)
@@ -93,116 +116,120 @@ void parser(char str[]){
             }
         }
     }
-    // if it exists that means it's a set command
+    // if the space is in the message that means it's a set command (get commands don't have spaces)
     if (pch != NULL){
-        // split the string into two parts by the " " character
+        // split the string into command and value by the " " character, also remove all whitespace
         char * command = strtok(str, " ");
         char * value = strtok(NULL, " ");
-        // print the command and value
-        // Serial.print("Command: ");
-        // Serial.println(command);
-        // Serial.print("Value: ");
-        // Serial.println(value);
+
         // check if the command is known
         if (strcmp(command, setCurrentCommand.c_str()) == 0){
             // set the current
             setCurrent = atof(value);
-            Serial.print("Current set to: ");
-            Serial.println(setCurrent);
+            Serial.print(setCurrent);
+            Serial.print(EOL);
+            printErrorStr();
         } else if (strcmp(command, setPulseDurationCommand.c_str()) == 0){
             // set the pulse duration
             setPulseDuration = atol(value);
-            Serial.print("Pulse duration set to: ");
-            Serial.println(setPulseDuration);
+            Serial.print(setPulseDuration);
+            Serial.print(EOL);
+            printErrorStr();
         } else if (strcmp(command, setPulseFrequencyCommand.c_str()) == 0){
             // set the pulse frequency
             setPulseFrequency = atol(value);
-            Serial.print("Pulse frequency set to: ");
-            Serial.println(setPulseFrequency);
+            Serial.print(setPulseFrequency);
+            Serial.print(EOL);
+            printErrorStr();
         } else if (strcmp(command, enableOutputCommand.c_str()) == 0){
-            // enable the output
+            // enable the output, 1 = enable, 0 = disable if the string is invalid it will still return 0 this disabling the output if the host sends an invalid values
             if (atoi(value) == 1){
                 outputEnabled = true;
-                Serial.println("Output enabled");
-            } else if (atoi(value) == 0){
+            } else if (atoi(value) == 0){           // TODO compare this and the thing below
                 outputEnabled = false;
-                Serial.println("Output disabled");
-            } else {
-                Serial.println("Invalid value");
             }
+            Serial.print(outputEnabled, DEC);
+            Serial.print(EOL);
+            printErrorStr();
         } else if (strcmp(command, lockCommand.c_str()) == 0){
             // lock the driver
             if (strcmp(value, "1") == 0){
                 lockState = true;
-                Serial.println("Driver locked");
             } else if (strcmp(value, "0") == 0){
                 lockState = false;
-                Serial.println("Driver unlocked");
-            } else {
-                Serial.println("Invalid value");
             }
-        } else if (strcmp(command, analogModeCommand.c_str()) == 0){
+            Serial.print(lockState, DEC);
+            Serial.print(EOL);
+            printErrorStr();
+        } else if (strcmp(command, setAnalogModeCommand.c_str()) == 0){
             // set the driver to analog mode
-            analogMode = true;
-            Serial.println("Analog mode enabled");
+            if (strcmp(value, "1") == 0){
+                analogMode = true;
+            } else if (strcmp(value, "0") == 0){
+                analogMode = false;
+            }
+            Serial.print(analogMode, DEC);
+            Serial.print(EOL);
+            printErrorStr();
         } else {
             // unknown command
-            Serial.println("Unknown set command");
+            Serial.print("UC");
+            Serial.print(EOL);
+            printErrorStr();
         }
-
-
     }else{
-        // it's a get command
+        // if it's a get command perhaps
         // remove all whitespace and new line characters
         char * command = strtok(str, " \r\n");
-        // print the command
-        Serial.print("Command: ");
-        Serial.println(command);
         // check if the command is known
         if (strcmp(str, getGlobalPulseCountCommand.c_str()) == 0){
             // get the global pulse count
-            Serial.print("Global pulse count: ");
             print_big_int(globalPulseCount);
-            Serial.println();
+            Serial.print(EOL);
+            printErrorStr();
         } else if (strcmp(str, getCurrentCommand.c_str()) == 0){
             // get the current
-            Serial.print("Current: ");
-            Serial.println(setCurrent);
+            Serial.print(setCurrent);
+            Serial.print(EOL);
+            printErrorStr();
         } else if (strcmp(str, getPulseDurationCommand.c_str()) == 0){
             // get the pulse duration
-            Serial.print("Pulse duration: ");
-            Serial.println(setPulseDuration);
+            Serial.print(setPulseDuration);
+            Serial.print(EOL);
+            printErrorStr();
         } else if (strcmp(str, getPulseFrequencyCommand.c_str()) == 0){
             // get the pulse frequency
-            Serial.print("Pulse frequency: ");
-            Serial.println(setPulseFrequency);
+            Serial.print(setPulseFrequency);
+            Serial.print(EOL);
+            printErrorStr();
         } else if (strcmp(str, getModeCommand.c_str()) == 0){
             // get the mode
-            if (analogMode){
-                Serial.println("Analog mode");
-            }else{
-                Serial.println("Digital mode");
-            }
+            Serial.print(analogMode, DEC);
+            Serial.print(EOL);
+            printErrorStr();
         } else {
             // unknown command
-            Serial.println("Unknown get command");
+            Serial.print("UC");
+            Serial.print(EOL);
+            printErrorStr();
         }
     }
-    // Serial.println();
+    // TODO test cahnges
+    Serial.println();
     // print all the new values
-    // Serial.print("Current: ");
-    // Serial.println(setCurrent);
-    // Serial.print("Pulse duration: ");
-    // print_big_int(setPulseDuration);
-    // Serial.println();
-    // Serial.print("Pulse frequency: ");
-    // Serial.println(setPulseFrequency);
-    // Serial.print("Output enabled: ");
-    // Serial.println(outputEnabled);
-    // Serial.print("Lock state: ");
-    // Serial.println(lockState);
-    // Serial.print("Analog mode: ");
-    // Serial.println(analogMode);
+    Serial.print("Current: ");
+    Serial.println(setCurrent);
+    Serial.print("Pulse duration: ");
+    print_big_int(setPulseDuration);
+    Serial.println();
+    Serial.print("Pulse frequency: ");
+    Serial.println(setPulseFrequency);
+    Serial.print("Output enabled: ");
+    Serial.println(outputEnabled);
+    Serial.print("Lock state: ");
+    Serial.println(lockState);
+    Serial.print("Analog mode: ");
+    Serial.println(analogMode);
 
 }
 
