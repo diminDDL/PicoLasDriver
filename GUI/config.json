@@ -327,6 +327,18 @@
                     "parameter":"",
                     "answer":"bool",
                     "description":"Returns the current mode, 0 digital, 1 analog"
+                },
+                "set_max_current":{
+                    "command":"smcu",
+                    "parameter":"float",
+                    "answer":"",
+                    "description":"Sets the maximum current to the indicated value. A dot is used as decimal point."
+                },
+                "get_max_current":{
+                    "command":"gmcu",
+                    "parameter":"",
+                    "answer":"float",
+                    "description":"Outputs the maximum current"
                 }
             }
         }
@@ -356,7 +368,7 @@
                 "command":"scur",
                 "parameter":"float",
                 "answer":"",
-                "description":"Sets the pulse current to the indicated value. A dot is used as decimal point. No more then one decimal place is used!"
+                "description":"Sets the pulse current to the indicated value. A dot is used as decimal point."
             },
             "get_current":{
                 "command":"gcur",
@@ -437,6 +449,18 @@
                     "parameter":"",
                     "answer":"bool",
                     "description":"Returns the current mode, 0 digital, 1 analog"
+                },
+                "set_max_current":{
+                    "command":"smcu",
+                    "parameter":"float",
+                    "answer":"",
+                    "description":"Sets the maximum current to the indicated value. A dot is used as decimal point."
+                },
+                "get_max_current":{
+                    "command":"gmcu",
+                    "parameter":"",
+                    "answer":"float",
+                    "description":"Outputs the maximum current"
                 }
             }
         }

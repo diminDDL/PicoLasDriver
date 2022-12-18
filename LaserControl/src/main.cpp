@@ -6,6 +6,7 @@
 #define SERIAL_MODE SERIAL_8E1
 #define FORWARD_PORT Serial1    // when in digital mode all the communication will be forwarded to this port
 #define EOL "\r\n"              // end of line characters
+# define DAC_PIN DAC0           // DAC pin
 
 // variables that need to be remembered between power cycles
 uint64_t globalPulseCount = 0;                          // counts the total number of pulses sent do the driver
@@ -13,6 +14,9 @@ const String getGlobalPulseCountCommand = "gpsc";       // string representation
 float setCurrent = 0.0;                                 // current set by the user in Amperes
 const String setCurrentCommand = "scur";                // string representation of the set current command
 const String getCurrentCommand = "gcur";                // string representation of the get current command
+float maxCurrent = 0.0;                                 // max current set by the user in Amperes
+const String setMaxCurrentCommand = "smcu";             // string representation of the set max current command
+const String getMaxCurrentCommand = "gmcu";             // string representation of the get max current command
 uint32_t setPulseDuration = 0;                          // pulse duration set by the user (in microseconds)
 const String setPulseDurationCommand = "spdu";          // string representation of the set pulse duration command
 const String getPulseDurationCommand = "gpdu";          // string representation of the get pulse duration command
@@ -47,7 +51,9 @@ bool newData = false;
 
 void setup() {
     Serial.begin(SERIAL_BAUD_RATE, SERIAL_MODE);
-    FORWARD_PORT.begin(SERIAL_BAUD_RATE, SERIAL_MODE);
+    FORWARD_PORT.begin(SERIAL_BAUD_RATE, SERIAL_MODE);  
+    pinMode(DAC_PIN, OUTPUT);
+    analogWriteResolution(12);
 }
 
 void printErrorStr(){
@@ -129,6 +135,12 @@ void parser(char str[]){
             Serial.print(setCurrent);
             Serial.print(EOL);
             printErrorStr();
+        } else if (strcmp(command, setMaxCurrentCommand.c_str()) == 0){
+            // set the max current
+            maxCurrent = atof(value);
+            Serial.print(maxCurrent);
+            Serial.print(EOL);
+            printErrorStr();
         } else if (strcmp(command, setPulseDurationCommand.c_str()) == 0){
             // set the pulse duration
             setPulseDuration = atol(value);
@@ -192,6 +204,11 @@ void parser(char str[]){
             Serial.print(setCurrent);
             Serial.print(EOL);
             printErrorStr();
+        } else if (strcmp(str, getMaxCurrentCommand.c_str()) == 0){
+            // get the max current
+            Serial.print(setCurrent);
+            Serial.print(EOL);
+            printErrorStr();
         } else if (strcmp(str, getPulseDurationCommand.c_str()) == 0){
             // get the pulse duration
             Serial.print(setPulseDuration);
@@ -219,6 +236,8 @@ void parser(char str[]){
     // print all the new values
     Serial.print("Current: ");
     Serial.println(setCurrent);
+    Serial.print("Max current: ");
+    Serial.println(maxCurrent);
     Serial.print("Pulse duration: ");
     print_big_int(setPulseDuration);
     Serial.println();
@@ -233,7 +252,19 @@ void parser(char str[]){
 
 }
 
-void set_values(){}
+void set_values(){
+    // every time this function is run, the states are pushed to the IO, such as DAC voltages, pulses and so on.
+
+    // if analog mode is on and output is enabled set the DAC voltage
+    if (outputEnabled){
+        if(analogMode){
+            // TODO DAC output range is actually no rail to rail so we'll need some circuit to deal with that
+            
+        }else{
+            // Not implemented
+        }
+    }
+}
 
 void loop() {
     read_host_data(hostBuffer, sizeof(hostBuffer));
