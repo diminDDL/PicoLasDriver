@@ -258,15 +258,9 @@
                 "platform":"Arduino DUE",
                 "output_enable":{
                     "command":"enab",
-                    "parameter":"",
+                    "parameter":"boolean",
                     "answer":"",
                     "description":"Activates the output"
-                },
-                "output_disable":{
-                    "command":"disa",
-                    "parameter":"",
-                    "answer":"",
-                    "description":"Deactivates the output"
                 },
                 "set_pulse_duration":{
                     "command":"spdu",
@@ -300,27 +294,15 @@
                 },
                 "lock_all":{
                     "command":"lock",
-                    "parameter":"",
+                    "parameter":"boolean",
                     "answer":"",
                     "description":"Locks all settings"
                 },
-                "unlock_all":{
-                    "command":"unlo",
-                    "parameter":"",
-                    "answer":"",
-                    "description":"Unlocks all settings"
-                },
                 "set_analog_mode":{
                     "command":"anmo",
-                    "parameter":"",
+                    "parameter":"boolean",
                     "answer":"",
                     "description":"Sets the analog mode"
-                },
-                "set_digital_mode":{
-                    "command":"dimo",
-                    "parameter":"",
-                    "answer":"",
-                    "description":"Sets the digital mode"
                 },
                 "get_mode":{
                     "command":"gmod",
@@ -380,15 +362,9 @@
                 "platform":"Arduino DUE",
                 "output_enable":{
                     "command":"enab",
-                    "parameter":"",
+                    "parameter":"boolean",
                     "answer":"",
                     "description":"Activates the output"
-                },
-                "output_disable":{
-                    "command":"disa",
-                    "parameter":"",
-                    "answer":"",
-                    "description":"Deactivates the output"
                 },
                 "set_pulse_duration":{
                     "command":"spdu",
@@ -422,27 +398,15 @@
                 },
                 "lock_all":{
                     "command":"lock",
-                    "parameter":"",
+                    "parameter":"boolean",
                     "answer":"",
                     "description":"Locks all settings"
                 },
-                "unlock_all":{
-                    "command":"unlo",
-                    "parameter":"",
-                    "answer":"",
-                    "description":"Unlocks all settings"
-                },
                 "set_analog_mode":{
                     "command":"anmo",
-                    "parameter":"",
+                    "parameter":"boolean",
                     "answer":"",
                     "description":"Sets the analog mode"
-                },
-                "set_digital_mode":{
-                    "command":"dimo",
-                    "parameter":"",
-                    "answer":"",
-                    "description":"Sets the digital mode"
                 },
                 "get_mode":{
                     "command":"gmod",

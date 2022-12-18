@@ -29,7 +29,6 @@ bool lockState = false;                                 // lock state of the dri
 const String lockCommand = "lock";                      // string representation of the lock command
 bool analogMode = false;                                // analog mode flag
 const String setAnalogModeCommand = "anmo";             // string representation of the analog mode command
-const String getAnalogModeCommand = "gamo";             // string representation of the analog mode command
 const String getModeCommand = "gmod";                   // string representation of the get mode command
 // data structure: 
 // get commands: <command>\n
@@ -154,20 +153,24 @@ void parser(char str[]){
             Serial.print(EOL);
             printErrorStr();
         } else if (strcmp(command, enableOutputCommand.c_str()) == 0){
-            // enable the output, 1 = enable, 0 = disable if the string is invalid it will still return 0 this disabling the output if the host sends an invalid values
+            // enable the output, 1 = enable, 0 = disable if the string is invalid it will still return 0 thus disabling the output if the host sends an invalid values
             if (atoi(value) == 1){
                 outputEnabled = true;
-            } else if (atoi(value) == 0){           // TODO compare this and the thing below
+            } else if (atoi(value) == 0){
+                outputEnabled = false;
+            } else {
                 outputEnabled = false;
             }
             Serial.print(outputEnabled, DEC);
             Serial.print(EOL);
             printErrorStr();
         } else if (strcmp(command, lockCommand.c_str()) == 0){
-            // lock the driver
-            if (strcmp(value, "1") == 0){
+            // lock the driver, 1 = lock, 0 = unlock if the string is invalid it will still return 0 thus disabling the output if the host sends an invalid values
+            if (atoi(value) == 1){
                 lockState = true;
-            } else if (strcmp(value, "0") == 0){
+            } else if (atoi(value) == 0){
+                lockState = false;
+            } else {
                 lockState = false;
             }
             Serial.print(lockState, DEC);
@@ -175,9 +178,11 @@ void parser(char str[]){
             printErrorStr();
         } else if (strcmp(command, setAnalogModeCommand.c_str()) == 0){
             // set the driver to analog mode
-            if (strcmp(value, "1") == 0){
+            if (atoi(value) == 1){
                 analogMode = true;
-            } else if (strcmp(value, "0") == 0){
+            } else if (atoi(value) == 0){
+                analogMode = false;
+            } else {
                 analogMode = false;
             }
             Serial.print(analogMode, DEC);
