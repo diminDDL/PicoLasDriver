@@ -1,12 +1,19 @@
 #include <Arduino.h>
 
+// use another board and PWM dac
+
 // configuration variables
 // set serial port to 115200 baud, data 8 bits, even parity, 1 stop bit
 #define SERIAL_BAUD_RATE 115200
 #define SERIAL_MODE SERIAL_8E1
 #define FORWARD_PORT Serial1    // when in digital mode all the communication will be forwarded to this port
 #define EOL "\r\n"              // end of line characters
-# define DAC_PIN DAC0           // DAC pin
+#define DAC_PIN 9           // PWM DAC pin
+#define DAC_FREQ 10000        // PWM DAC frequency
+#define INTERRUPT_PIN 2       // interrupt pin for the trigger
+#define ESTOP_PIN 3           // emergency stop pin
+bool estop = false;         // emergency stop flag
+// if estop is true the driver will stop sending pulses to the laser
 
 // variables that need to be remembered between power cycles
 uint64_t globalPulseCount = 0;                          // counts the total number of pulses sent do the driver
@@ -48,11 +55,17 @@ char errorStr[] = "00";
 unsigned long serialTimeout = 0;
 bool newData = false;
 
+void stop(){
+
+}
+
 void setup() {
     Serial.begin(SERIAL_BAUD_RATE, SERIAL_MODE);
     FORWARD_PORT.begin(SERIAL_BAUD_RATE, SERIAL_MODE);  
     pinMode(DAC_PIN, OUTPUT);
     analogWriteResolution(12);
+    // set up interrupt to handle the e-stop
+
 }
 
 void printErrorStr(){
@@ -257,17 +270,27 @@ void parser(char str[]){
 
 }
 
+void setAnalogVoltage(float voltage){
+    // TODO
+    // add calibration constants here
+    //
+    // depending on the platform this will be run on in the end this will need to be implemented
+    // RP2040 with arduino-pico is the current idea
+    // this: https://github.com/earlephilhower/arduino-pico/blob/5dee051a7a754ff2966733bff3c6312b194f6a6f/cores/rp2040/wiring_analog.cpp#L82-L95
+}
+
 void set_values(){
     // every time this function is run, the states are pushed to the IO, such as DAC voltages, pulses and so on.
 
     // if analog mode is on and output is enabled set the DAC voltage
     if (outputEnabled){
         if(analogMode){
-            // TODO DAC output range is actually no rail to rail so we'll need some circuit to deal with that
-            
+            setAnalogVoltage(setCurrent);
         }else{
             // Not implemented
         }
+        // attach the interrupt pin
+
     }
 }
 
@@ -279,4 +302,13 @@ void loop() {
         parser(hostBuffer);
     }
     delay(100);
+    if(!estop){
+        set_values();
+    }else{
+        // TODO
+        // set the DAC to 0V
+        // set outputEnabled to false
+        // detach the interrupt pin
+        // set error flag
+    }
 }
