@@ -1,4 +1,6 @@
 #include <Arduino.h>
+#include "pwm_lib.h"
+#include "tc_lib.h"
 
 // use another board and PWM dac
 
