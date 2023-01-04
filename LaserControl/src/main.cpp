@@ -2,19 +2,20 @@
 #include "pwm_lib.h"
 #include "tc_lib.h"
 
-// use another board and PWM dac
+// use another board and MCP4922
 
 // configuration variables
 // set serial port to 115200 baud, data 8 bits, even parity, 1 stop bit
+#define K_CAL 1
+#define B_CAL 0
+// used in the y = kx + b equation to calibrate the zero current and the correct slope
 #define SERIAL_BAUD_RATE 115200
 #define SERIAL_MODE SERIAL_8E1
 #define FORWARD_PORT Serial1    // when in digital mode all the communication will be forwarded to this port
 #define EOL "\r\n"              // end of line characters
-#define DAC_PIN 9           // PWM DAC pin
-#define DAC_FREQ 10000        // PWM DAC frequency
-#define INTERRUPT_PIN 2       // interrupt pin for the trigger
-#define ESTOP_PIN 3           // emergency stop pin
-bool estop = false;         // emergency stop flag
+#define INTERRUPT_PIN 2         // interrupt pin for the trigger
+#define ESTOP_PIN 3             // emergency stop pin, active low
+
 // if estop is true the driver will stop sending pulses to the laser
 
 // variables that need to be remembered between power cycles
@@ -53,6 +54,8 @@ char driverBuffer[32];
 bool error1 = false;        // Not implemented (should be used to read error states of the driver)
 bool error2 = false;
 char errorStr[] = "00";
+bool estop = false;             // emergency stop flag
+bool valuesChanged = false;     // flag to indicate if the values have changed
 
 unsigned long serialTimeout = 0;
 bool newData = false;
@@ -64,13 +67,16 @@ void stop(){
 void setup() {
     Serial.begin(SERIAL_BAUD_RATE, SERIAL_MODE);
     FORWARD_PORT.begin(SERIAL_BAUD_RATE, SERIAL_MODE);  
-    pinMode(DAC_PIN, OUTPUT);
     analogWriteResolution(12);
+    pinMode(13, OUTPUT);
+    pinMode(ESTOP_PIN, INPUT_PULLUP);   // TODO attach interrupt to this pin
     // set up interrupt to handle the e-stop
 
 }
 
-void printErrorStr(){
+void printErrorStr(bool commandType = false){
+    // commandType = true - set command
+    // commandType = false - get command
     // set the error string
     if (error1){
         errorStr[0] = '1';
@@ -85,6 +91,9 @@ void printErrorStr(){
     // print the error string
     Serial.print(errorStr);
     Serial.print(EOL);
+    if (commandType){
+        valuesChanged = true;
+    }
 }
 
 void print_big_int(uint64_t value)
@@ -146,27 +155,31 @@ void parser(char str[]){
         if (strcmp(command, setCurrentCommand.c_str()) == 0){
             // set the current
             setCurrent = atof(value);
+            if (setCurrent > maxCurrent){
+                setCurrent = maxCurrent;
+            }
             Serial.print(setCurrent);
             Serial.print(EOL);
-            printErrorStr();
+            // since printErrorStr is called every time we update the values it updates the values changed flag as well
+            printErrorStr(true);
         } else if (strcmp(command, setMaxCurrentCommand.c_str()) == 0){
             // set the max current
             maxCurrent = atof(value);
             Serial.print(maxCurrent);
             Serial.print(EOL);
-            printErrorStr();
+            printErrorStr(true);
         } else if (strcmp(command, setPulseDurationCommand.c_str()) == 0){
             // set the pulse duration
             setPulseDuration = atol(value);
             Serial.print(setPulseDuration);
             Serial.print(EOL);
-            printErrorStr();
+            printErrorStr(true);
         } else if (strcmp(command, setPulseFrequencyCommand.c_str()) == 0){
             // set the pulse frequency
             setPulseFrequency = atol(value);
             Serial.print(setPulseFrequency);
             Serial.print(EOL);
-            printErrorStr();
+            printErrorStr(true);
         } else if (strcmp(command, enableOutputCommand.c_str()) == 0){
             // enable the output, 1 = enable, 0 = disable if the string is invalid it will still return 0 thus disabling the output if the host sends an invalid values
             if (atoi(value) == 1){
@@ -178,7 +191,7 @@ void parser(char str[]){
             }
             Serial.print(outputEnabled, DEC);
             Serial.print(EOL);
-            printErrorStr();
+            printErrorStr(true);
         } else if (strcmp(command, lockCommand.c_str()) == 0){
             // lock the driver, 1 = lock, 0 = unlock if the string is invalid it will still return 0 thus disabling the output if the host sends an invalid values
             if (atoi(value) == 1){
@@ -190,7 +203,7 @@ void parser(char str[]){
             }
             Serial.print(lockState, DEC);
             Serial.print(EOL);
-            printErrorStr();
+            printErrorStr(true);
         } else if (strcmp(command, setAnalogModeCommand.c_str()) == 0){
             // set the driver to analog mode
             if (atoi(value) == 1){
@@ -202,7 +215,7 @@ void parser(char str[]){
             }
             Serial.print(analogMode, DEC);
             Serial.print(EOL);
-            printErrorStr();
+            printErrorStr(true);
         } else {
             // unknown command
             Serial.print("UC");
@@ -269,25 +282,29 @@ void parser(char str[]){
     Serial.println(lockState);
     Serial.print("Analog mode: ");
     Serial.println(analogMode);
+    Serial.print("Changed: ");
+    Serial.println(valuesChanged);
+    
 
 }
 
-void setAnalogVoltage(float voltage){
-    // TODO
-    // add calibration constants here
-    //
-    // depending on the platform this will be run on in the end this will need to be implemented
-    // RP2040 with arduino-pico is the current idea
-    // this: https://github.com/earlephilhower/arduino-pico/blob/5dee051a7a754ff2966733bff3c6312b194f6a6f/cores/rp2040/wiring_analog.cpp#L82-L95
+void setAnalogCurrentSetpoint(float current){
+    // We are using a MCP4922
+
+    Serial.print("Setting analog current");
+
 }
 
 void set_values(){
     // every time this function is run, the states are pushed to the IO, such as DAC voltages, pulses and so on.
-
+    Serial.println("Setting values");
     // if analog mode is on and output is enabled set the DAC voltage
     if (outputEnabled){
+        Serial.println("Output enabled");
         if(analogMode){
-            setAnalogVoltage(setCurrent);
+            Serial.println("Analog mode");
+            // set DAC voltage
+            setAnalogCurrentSetpoint(setCurrent);
         }else{
             // Not implemented
         }
@@ -305,7 +322,10 @@ void loop() {
     }
     delay(100);
     if(!estop){
-        set_values();
+        if(valuesChanged){
+            set_values();
+            valuesChanged = false;
+        }
     }else{
         // TODO
         // set the DAC to 0V
@@ -314,3 +334,17 @@ void loop() {
         // set error flag
     }
 }
+
+
+// BOM:
+// MCP4821
+// 100nF capacitor
+// 10uF capacitor
+// 1k resistor
+// 3.3k resistor
+// 2.54mm headers
+// 2.54mm raspberry pi header
+// screw terminals
+// BNC?
+// MOLEX connectors (for photodiode)
+// TODO parts for photodiode
