@@ -11,10 +11,12 @@
 // used in the y = kx + b equation to calibrate the zero current and the correct slope
 #define SERIAL_BAUD_RATE 115200
 #define SERIAL_MODE SERIAL_8E1
-#define FORWARD_PORT Serial1    // when in digital mode all the communication will be forwarded to this port
-#define EOL "\r\n"              // end of line characters
-#define INTERRUPT_PIN 2         // interrupt pin for the trigger
-#define ESTOP_PIN 3             // emergency stop pin, active low
+#define FORWARD_PORT Serial1                // when in digital mode all the communication will be forwarded to this port
+#define EOL "\r\n"                          // end of line characters
+#define INTERRUPT_PIN 2                     // interrupt pin for the trigger
+#define ESTOP_PIN 3                         // emergency stop pin, active low
+#define EN_PIN 4                            // enable pin, active high
+#define PULSE_PIN pwm<pwm_pin::PWML6_PC23>  // pin used to generate the pulses
 
 // if estop is true the driver will stop sending pulses to the laser
 
