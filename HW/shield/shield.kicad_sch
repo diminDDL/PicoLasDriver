@@ -1302,6 +1302,10 @@
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 61e95f83-cf09-497f-ae84-5337083279a5)
   )
+  (text "E stop needs\nto be latching" (at 80.01 126.365 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid 6778ba2a-a44b-40f7-a837-a229830bbcd8)
+  )
   (text "E-STOP - active low\nshort GND and signal\nto trigger E-STOP."
     (at 57.15 138.43 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
