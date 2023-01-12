@@ -1,0 +1,23 @@
+Circuit: * Z:\home\dmytro\Documents\projects\PicoLasDriver\HW\simulation\level_shift.asc
+
+Limiting rise time of source v1 to 0.0001
+Limiting fall time of source v1 to 0.0001
+.OP point found by inspection.
+
+Date: Thu Jan 12 09:46:40 2023
+Total elapsed time: 1.678 seconds.
+
+tnom = 27
+temp = 27
+method = modified trap
+totiter = 497742
+traniter = 497742
+tranpoints = 138987
+accept = 103056
+rejected = 35931
+matrix size = 12
+fillins = 0
+solver = Normal
+Matrix Compiler1: 508 bytes object code size  2.3/2.5/[2.3]
+Matrix Compiler2: 946 bytes object code size  2.1/2.3/[2.1]
+

@@ -1,0 +1,3 @@
+(sym_lib_table
+  (lib (name "OPA320AIDBVR")(type "KiCad")(uri "${KIPRJMOD}/lib/OPA320AIDBVR/OPA320AIDBVR.kicad_sym")(options "")(descr ""))
+)
