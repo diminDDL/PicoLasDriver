@@ -1658,7 +1658,6 @@
 
   (no_connect (at 99.695 20.32) (uuid 1f20960e-d7b7-4d95-8158-777ab440fa21))
   (no_connect (at 44.45 132.08) (uuid 5b324f82-2d61-486d-b182-2410f9a5074c))
-  (no_connect (at 57.15 132.08) (uuid 83799985-a8c7-4fb3-8809-5f7c8a86de48))
 
   (wire (pts (xy 51.435 167.005) (xy 65.405 167.005))
     (stroke (width 0) (type default) (color 0 0 0 0))
@@ -3262,6 +3261,22 @@
     (pin "8" (uuid 520f1992-3fb4-4904-bbab-5ae20e74746d))
   )
 
+  (symbol (lib_id "power:+5V") (at 64.77 132.08 0) (unit 1)
+    (in_bom yes) (on_board yes)
+    (uuid 4498f9de-1b76-432d-bf96-a7a8be0bccdd)
+    (property "Reference" "#PWR?" (id 0) (at 64.77 135.89 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Value" "+5V" (id 1) (at 64.77 128.27 0))
+    (property "Footprint" "" (id 2) (at 64.77 132.08 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Datasheet" "" (id 3) (at 64.77 132.08 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (pin "1" (uuid 0e3336de-9174-451b-8110-ee0a8244e446))
+  )
+
   (symbol (lib_id "power:GND") (at 29.845 74.93 0) (unit 1)
     (in_bom yes) (on_board yes) (fields_autoplaced)
     (uuid 460fdbc3-5a62-4e7e-a3a7-923a5b1975d6)
@@ -4115,6 +4130,25 @@
     (pin "2" (uuid f484e435-430b-43fc-9cd5-2a4849dd5e5f))
   )
 
+  (symbol (lib_id "Device:R") (at 60.96 132.08 270) (unit 1)
+    (in_bom yes) (on_board yes)
+    (uuid b3abeee2-cb51-4396-a413-9eb16f44d456)
+    (property "Reference" "R?" (id 0) (at 59.055 127.635 90)
+      (effects (font (size 1.27 1.27)) (justify left))
+    )
+    (property "Value" "N.P." (id 1) (at 59.055 129.54 90)
+      (effects (font (size 1.27 1.27)) (justify left))
+    )
+    (property "Footprint" "" (id 2) (at 60.96 130.302 90)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Datasheet" "~" (id 3) (at 60.96 132.08 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (pin "1" (uuid 11cf1007-3e9b-41ef-afb9-56f765e00ca6))
+    (pin "2" (uuid acbe9fe9-5b32-446d-84ae-438833d3ad53))
+  )
+
   (symbol (lib_id "power:+3V3") (at 45.72 39.37 0) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid b6864b51-eda6-4e79-9bc7-d92940ff7acd)
@@ -4696,6 +4730,9 @@
     (path "/3c123281-afa2-42d5-9170-faedd1f671fc"
       (reference "#PWR?") (unit 1) (value "GND") (footprint "")
     )
+    (path "/4498f9de-1b76-432d-bf96-a7a8be0bccdd"
+      (reference "#PWR?") (unit 1) (value "+5V") (footprint "")
+    )
     (path "/460fdbc3-5a62-4e7e-a3a7-923a5b1975d6"
       (reference "#PWR?") (unit 1) (value "GND") (footprint "")
     )
@@ -4947,6 +4984,9 @@
     )
     (path "/b2a33ebe-bb03-4eaa-98dd-383d72335874"
       (reference "R?") (unit 1) (value "10k") (footprint "")
+    )
+    (path "/b3abeee2-cb51-4396-a413-9eb16f44d456"
+      (reference "R?") (unit 1) (value "N.P.") (footprint "")
     )
     (path "/c029db6a-259d-4adf-a8bd-35c698951b05"
       (reference "R?") (unit 1) (value "1k") (footprint "")
