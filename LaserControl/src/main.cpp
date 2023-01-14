@@ -2,6 +2,8 @@
 #include "pwm_lib.h"
 #include "tc_lib.h"
 
+using namespace arduino_due::pwm_lib;
+
 // use another board and MCP4922
 
 // configuration variables
@@ -17,6 +19,7 @@
 #define ESTOP_PIN 3                         // emergency stop pin, active low
 #define EN_PIN 4                            // enable pin, active high
 #define PULSE_PIN pwm<pwm_pin::PWML6_PC23>  // pin used to generate the pulses
+PULSE_PIN pulsePin;                         // pulse pin object
 
 // if estop is true the driver will stop sending pulses to the laser
 
@@ -62,8 +65,35 @@ bool valuesChanged = false;     // flag to indicate if the values have changed
 unsigned long serialTimeout = 0;
 bool newData = false;
 
-void stop(){
 
+void stop(){
+}
+
+void trg(){
+    // if trigger is HIGH and output is enabled we start PWM
+    if (digitalRead(INTERRUPT_PIN) == HIGH && outputEnabled){
+        // calculate period in microseconds
+        uint32_t period = 1000000 / setPulseFrequency;
+        // check if pulse duration is less than period
+        if (setPulseDuration < period){
+            // stop the old PWM
+            pulsePin.stop();
+            // start the PWM
+            // our numbers are in 1e-6, but the library uses 1e-8
+            pulsePin.start(period*100, setPulseDuration*100);
+            // set the LED on
+            digitalWrite(13, HIGH);
+        }
+    } else {
+        // stop the PWM
+        ///PULSE_PIN.stop();
+        // set the LED off
+        digitalWrite(13, LOW);
+    }
+}
+
+void pulse(){
+    globalPulseCount++;
 }
 
 void setup() {
@@ -74,6 +104,10 @@ void setup() {
     pinMode(ESTOP_PIN, INPUT_PULLUP);   // TODO attach interrupt to this pin
     // set up interrupt to handle the e-stop
 
+    pinMode(INTERRUPT_PIN, INPUT);
+    attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), trg, RISING);
+    pinMode(6, INPUT_PULLUP);
+    attachInterrupt(digitalPinToInterrupt(6), pulse, RISING);
 }
 
 void printErrorStr(bool commandType = false){
@@ -334,6 +368,11 @@ void loop() {
         // set outputEnabled to false
         // detach the interrupt pin
         // set error flag
+    }
+    if (outputEnabled){
+        Serial.print("Pulse counter: ");
+        print_big_int(globalPulseCount);
+        Serial.println();
     }
 }
 
