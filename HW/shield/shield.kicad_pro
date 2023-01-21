@@ -45,7 +45,7 @@
         "silk_text_upright": false,
         "zones": {
           "45_degree_only": false,
-          "min_clearance": 0.254
+          "min_clearance": 0.03
         }
       },
       "diff_pair_dimensions": [
@@ -55,7 +55,15 @@
           "width": 0.0
         }
       ],
-      "drc_exclusions": [],
+      "drc_exclusions": [
+        "courtyards_overlap|134739999|110239001|63146189-c2b7-4b04-bf73-91e94ebd76cd|c6baf986-b9b6-4cf5-9dc2-0b49615b1a34",
+        "silk_over_copper|114962857|89253190|3746a4fd-0c03-45da-a5bc-5258844ede94|93275323-b6a2-417f-90ed-299a00dca867",
+        "silk_over_copper|118610142|89606380|891647e2-4ad6-483e-b361-a8220ce90fbe|36f57719-e8eb-4b91-aa2b-cb4f0a56610b",
+        "silk_over_copper|122855038|89696923|21d73648-7531-4613-9804-d8858562c564|6aa1b003-a999-4d93-8e1f-3ca4258cd380",
+        "silk_over_copper|122864619|79589380|b79b1d25-c68b-42f0-9d4b-53c7377b192d|89db57d9-9198-41dc-8795-1d38ecf67595",
+        "silk_over_copper|126280000|112482380|538c5f19-eaf1-42bc-8e18-143dfe669d83|17b3f7a6-f1e3-4fc7-b7b8-d2776493887d",
+        "silk_over_copper|126280000|113101428|8533c4ca-8947-4845-8361-d81cf5466bc6|17b3f7a6-f1e3-4fc7-b7b8-d2776493887d"
+      ],
       "meta": {
         "version": 2
       },
@@ -86,7 +94,7 @@
         "pth_inside_courtyard": "ignore",
         "shorting_items": "error",
         "silk_over_copper": "warning",
-        "silk_overlap": "warning",
+        "silk_overlap": "ignore",
         "skew_out_of_range": "error",
         "through_hole_pad_without_hole": "error",
         "too_many_vias": "error",
@@ -147,9 +155,7 @@
     "equivalence_files": []
   },
   "erc": {
-    "erc_exclusions": [
-      "power_pin_not_driven|1555750|736600|c81a3496-fcb5-4c69-9f41-c3a127fd493c|00000000-0000-0000-0000-000000000000"
-    ],
+    "erc_exclusions": [],
     "meta": {
       "version": 0
     },
