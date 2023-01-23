@@ -1,122 +1,128 @@
-"Source:","/home/dmytro/Documents/projects/PicoLasDriver/HW/shield/shield.kicad_sch"
-"Date:","Wed 18 Jan 2023 10:19:12 PM CET"
-"Tool:","Eeschema 6.0.8-f2edbf62ab~116~ubuntu20.04.1"
-"Generator:","/usr/share/kicad/plugins/bom_csv_grouped_by_value.py"
-"Component Count:","78"
-
-"Individual Components:"
-
-"Item","Qty","Reference(s)","Value","LibPart","Footprint","Datasheet"
-"","","A1","Arduino_UNO_R3","MCU_Module:Arduino_UNO_R3","Module:Arduino_UNO_R3","https://www.arduino.cc/en/Main/arduinoBoardUno"
-"","","C1","1000u","Device:C_Polarized","Capacitor_SMD:CP_Elec_10x10","~"
-"","","C2","10u","Device:C","Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder","~"
-"","","C3","10u","Device:C","Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder","~"
-"","","C4","100n","Device:C","Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder","~"
-"","","C5","10u","Device:C","Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder","~"
-"","","C6","100n","Device:C","Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder","~"
-"","","C7","100n","Device:C","Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder","~"
-"","","C8","10u","Device:C","Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder","~"
-"","","C9","10p","Device:C","Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder","~"
-"","","C10","100n","Device:C","Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder","~"
-"","","D1","1N4148","Device:D","Diode_SMD:D_SOD-123","~"
-"","","D2","1N4148","Device:D","Diode_SMD:D_SOD-123","~"
-"","","D3","1N4148","Device:D","Diode_SMD:D_SOD-123","~"
-"","","D4","OUT_EN","Device:LED","LED_SMD:LED_0805_2012Metric_Pad1.15x1.40mm_HandSolder","~"
-"","","D5","ERR","Device:LED","LED_SMD:LED_0805_2012Metric_Pad1.15x1.40mm_HandSolder","~"
-"","","D6","TRGR'D","Device:LED","LED_SMD:LED_0805_2012Metric_Pad1.15x1.40mm_HandSolder","~"
-"","","D7","LED","Device:LED","LED_SMD:LED_0805_2012Metric_Pad1.15x1.40mm_HandSolder","~"
-"","","D8","SFH 213","Device:D_Photo","LED_THT:LED_D5.0mm_IRGrey","~"
-"","","H1","MountingHole","Mechanical:MountingHole","MountingHole:MountingHole_3.2mm_M3","~"
-"","","H2","MountingHole","Mechanical:MountingHole","MountingHole:MountingHole_3.2mm_M3","~"
-"","","J1","TRG","Connector:Conn_Coaxial","Connector_Coaxial:SMA_Amphenol_901-144_Vertical"," ~"
-"","","J2","E-STOP","Connector_Generic:Conn_01x03","TerminalBlock:TerminalBlock_Altech_AK300-3_P5.00mm","~"
-"","","J3","UART","Connector_Generic:Conn_01x03","Connector_PinSocket_2.54mm:PinSocket_1x03_P2.54mm_Vertical","~"
-"","","J4","IO","Connector:Screw_Terminal_01x06","TerminalBlock_Altech:Altech_AK300_1x06_P5.00mm_45-Degree","~"
-"","","J5","LDP-C BOB","Connector_Generic:Conn_02x05_Odd_Even","Connector_PinHeader_2.54mm:PinHeader_2x05_P2.54mm_Vertical","~"
-"","","J6","VIN","Connector:Screw_Terminal_01x02","TerminalBlock:TerminalBlock_Altech_AK300-2_P5.00mm","~"
-"","","J7","BREAK","Connector_Generic:Conn_02x03_Odd_Even","Connector_PinSocket_2.54mm:PinSocket_2x03_P2.54mm_Vertical","~"
-"","","JP1","HW E-STOP","Jumper:Jumper_3_Bridged12","Jumper:SolderJumper-3_P1.3mm_Bridged12_RoundedPad1.0x1.5mm_NumberLabels","~"
-"","","JP2","INTR","Jumper:SolderJumper_2_Bridged","Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm","~"
-"","","Q1","BSS138","Transistor_FET:BSS138","Package_TO_SOT_SMD:SOT-23","https://www.onsemi.com/pub/Collateral/BSS138-D.PDF"
-"","","Q2","BSS138","Transistor_FET:BSS138","Package_TO_SOT_SMD:SOT-23","https://www.onsemi.com/pub/Collateral/BSS138-D.PDF"
-"","","Q3","BSS138","Transistor_FET:BSS138","Package_TO_SOT_SMD:SOT-23","https://www.onsemi.com/pub/Collateral/BSS138-D.PDF"
-"","","Q4","BSS138","Transistor_FET:BSS138","Package_TO_SOT_SMD:SOT-23","https://www.onsemi.com/pub/Collateral/BSS138-D.PDF"
-"","","Q5","BSS138","Transistor_FET:BSS138","Package_TO_SOT_SMD:SOT-23","https://www.onsemi.com/pub/Collateral/BSS138-D.PDF"
-"","","Q6","BSS138","Transistor_FET:BSS138","Package_TO_SOT_SMD:SOT-23","https://www.onsemi.com/pub/Collateral/BSS138-D.PDF"
-"","","R1","10k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R2","50","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R3","1k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R4","1k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R5","10k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R6","N.P.","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R7","10k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R8","10k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R9","10k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R10","10k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R11","10k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R12","1k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R13","1k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R14","1k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R15","1k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R16","1k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R17","1k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R18","10k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R19","10k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R20","N.P.","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R21","10k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R22","10k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R23","N.P.","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R24","10k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R25","10k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R26","N.P.","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R27","10k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R28","10k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R29","N.P.","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R30","10k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R31","10k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R32","N.P.","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R33","N.P.","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R34","10k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R35","100","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R36","100","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R37","50","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R38","10k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R39","10k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","R40","10k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"","","U1","MCP4725xxx-xCH","Analog_DAC:MCP4725xxx-xCH","Package_TO_SOT_SMD:SOT-23-6","http://ww1.microchip.com/downloads/en/DeviceDoc/22039d.pdf"
-"","","U2","OPA2727","Amplifier_Operational:MCP6L02x-xMS","Package_SO:SO-8_3.9x4.9mm_P1.27mm","http://ww1.microchip.com/downloads/en/devicedoc/22140b.pdf"
-
-
-
-"Collated Components:"
-
-"Item","Qty","Reference(s)","Value","LibPart","Footprint","Datasheet"
-"1","1","A1","Arduino_UNO_R3","MCU_Module:Arduino_UNO_R3","Module:Arduino_UNO_R3","https://www.arduino.cc/en/Main/arduinoBoardUno"
-"2","1","C1","1000u","Device:C_Polarized","Capacitor_SMD:CP_Elec_10x10","~"
-"3","4","C2, C3, C5, C8","10u","Device:C","Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder","~"
-"4","4","C4, C6, C7, C10","100n","Device:C","Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder","~"
-"5","1","C9","10p","Device:C","Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder","~"
-"6","3","D1, D2, D3","1N4148","Device:D","Diode_SMD:D_SOD-123","~"
-"7","1","D4","OUT_EN","Device:LED","LED_SMD:LED_0805_2012Metric_Pad1.15x1.40mm_HandSolder","~"
-"8","1","D5","ERR","Device:LED","LED_SMD:LED_0805_2012Metric_Pad1.15x1.40mm_HandSolder","~"
-"9","1","D6","TRGR'D","Device:LED","LED_SMD:LED_0805_2012Metric_Pad1.15x1.40mm_HandSolder","~"
-"10","1","D7","LED","Device:LED","LED_SMD:LED_0805_2012Metric_Pad1.15x1.40mm_HandSolder","~"
-"11","1","D8","SFH 213","Device:D_Photo","LED_THT:LED_D5.0mm_IRGrey","~"
-"12","2","H1, H2","MountingHole","Mechanical:MountingHole","MountingHole:MountingHole_3.2mm_M3","~"
-"13","1","J1","TRG","Connector:Conn_Coaxial","Connector_Coaxial:SMA_Amphenol_901-144_Vertical"," ~"
-"14","1","J2","E-STOP","Connector_Generic:Conn_01x03","TerminalBlock:TerminalBlock_Altech_AK300-3_P5.00mm","~"
-"15","1","J3","UART","Connector_Generic:Conn_01x03","Connector_PinSocket_2.54mm:PinSocket_1x03_P2.54mm_Vertical","~"
-"16","1","J4","IO","Connector:Screw_Terminal_01x06","TerminalBlock_Altech:Altech_AK300_1x06_P5.00mm_45-Degree","~"
-"17","1","J5","LDP-C BOB","Connector_Generic:Conn_02x05_Odd_Even","Connector_PinHeader_2.54mm:PinHeader_2x05_P2.54mm_Vertical","~"
-"18","1","J6","VIN","Connector:Screw_Terminal_01x02","TerminalBlock:TerminalBlock_Altech_AK300-2_P5.00mm","~"
-"19","1","J7","BREAK","Connector_Generic:Conn_02x03_Odd_Even","Connector_PinSocket_2.54mm:PinSocket_2x03_P2.54mm_Vertical","~"
-"20","1","JP1","HW E-STOP","Jumper:Jumper_3_Bridged12","Jumper:SolderJumper-3_P1.3mm_Bridged12_RoundedPad1.0x1.5mm_NumberLabels","~"
-"21","1","JP2","INTR","Jumper:SolderJumper_2_Bridged","Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm","~"
-"22","6","Q1, Q2, Q3, Q4, Q5, Q6","BSS138","Transistor_FET:BSS138","Package_TO_SOT_SMD:SOT-23","https://www.onsemi.com/pub/Collateral/BSS138-D.PDF"
-"23","21","R1, R5, R7, R8, R9, R10, R11, R18, R19, R21, R22, R24, R25, R27, R28, R30, R31, R34, R38, R39, R40","10k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"24","2","R2, R37","50","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"25","8","R3, R4, R12, R13, R14, R15, R16, R17","1k","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"26","7","R6, R20, R23, R26, R29, R32, R33","N.P.","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"27","2","R35, R36","100","Device:R","Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder","~"
-"28","1","U1","MCP4725xxx-xCH","Analog_DAC:MCP4725xxx-xCH","Package_TO_SOT_SMD:SOT-23-6","http://ww1.microchip.com/downloads/en/DeviceDoc/22039d.pdf"
-"29","1","U2","OPA2727","Amplifier_Operational:MCP6L02x-xMS","Package_SO:SO-8_3.9x4.9mm_P1.27mm","http://ww1.microchip.com/downloads/en/devicedoc/22140b.pdf"
+Source:,/home/dmytro/Documents/projects/PicoLasDriver/HW/shield/shield.kicad_sch,,,,,,
+Date:,Mon 23 Jan 2023 01:09:47 PM CET,,,,,,
+Tool:,Eeschema 6.0.10-86aedd382b~118~ubuntu22.04.1,,,,,,
+Generator:,/usr/share/kicad/plugins/bom_csv_grouped_by_value.py,,,,,,
+Component Count:,82,,,,,,
+,,,,,,,
+Individual Components:,,,,,,,
+,,,,,,,
+Item,Qty,Reference(s),Value,LibPart,Footprint,Datasheet,
+,,A1,Arduino_UNO_R3,MCU_Module:Arduino_UNO_R3,Module:Arduino_UNO_R3,https://www.arduino.cc/en/Main/arduinoBoardUno,
+,,C1,1000u,Device:C_Polarized,Capacitor_SMD:CP_Elec_10x10,~,
+,,C2,10u,Device:C,Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder,~,
+,,C3,10u,Device:C,Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder,~,
+,,C4,100n,Device:C,Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder,~,
+,,C5,10u,Device:C,Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder,~,
+,,C6,100n,Device:C,Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder,~,
+,,C7,100n,Device:C,Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder,~,
+,,C8,10u,Device:C,Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder,~,
+,,C9,10p,Device:C,Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder,~,
+,,C10,100n,Device:C,Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder,~,
+,,C11,470p,Device:C,Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder,~,
+,,C12,10u,Device:C,Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder,~,
+,,D1,1N4148,Device:D,Diode_SMD:D_SOD-123,~,
+,,D2,1N4148,Device:D,Diode_SMD:D_SOD-123,~,
+,,D3,1N4148,Device:D,Diode_SMD:D_SOD-123,~,
+,,D4,OUT_EN,Device:LED,LED_SMD:LED_0805_2012Metric_Pad1.15x1.40mm_HandSolder,~,
+,,D5,ERR,Device:LED,LED_SMD:LED_0805_2012Metric_Pad1.15x1.40mm_HandSolder,~,
+,,D6,TRGR'D,Device:LED,LED_SMD:LED_0805_2012Metric_Pad1.15x1.40mm_HandSolder,~,
+,,D7,LED,Device:LED,LED_SMD:LED_0805_2012Metric_Pad1.15x1.40mm_HandSolder,~,
+,,D8,SFH 213,Device:D_Photo,LED_THT:LED_D5.0mm_IRGrey,~,
+,,H1,MountingHole,Mechanical:MountingHole,MountingHole:MountingHole_3.2mm_M3,~,
+,,H2,MountingHole,Mechanical:MountingHole,MountingHole:MountingHole_3.2mm_M3,~,
+,,J1,TRG,Connector:Conn_Coaxial,Connector_Coaxial:SMA_Amphenol_901-144_Vertical, ~,
+,,J2,E-STOP,Connector_Generic:Conn_01x03,TerminalBlock:TerminalBlock_Altech_AK300-3_P5.00mm,~,
+,,J3,UART,Connector_Generic:Conn_01x03,Connector_PinSocket_2.54mm:PinSocket_1x03_P2.54mm_Vertical,~,
+,,J4,IO,Connector:Screw_Terminal_01x06,TerminalBlock_Altech:Altech_AK300_1x06_P5.00mm_45-Degree,~,
+,,J5,LDP-C BOB,Connector_Generic:Conn_02x05_Odd_Even,Connector_PinHeader_2.54mm:PinHeader_2x05_P2.54mm_Vertical,~,
+,,J6,VIN,Connector:Screw_Terminal_01x02,TerminalBlock:TerminalBlock_Altech_AK300-2_P5.00mm,~,
+,,J7,BREAK,Connector_Generic:Conn_02x03_Odd_Even,Connector_PinSocket_2.54mm:PinSocket_2x03_P2.54mm_Vertical,~,
+,,JP1,HW E-STOP,Jumper:Jumper_3_Bridged12,Jumper:SolderJumper-3_P1.3mm_Bridged12_RoundedPad1.0x1.5mm_NumberLabels,~,
+,,JP2,INTR,Jumper:SolderJumper_2_Bridged,Jumper:SolderJumper-2_P1.3mm_Bridged2Bar_RoundedPad1.0x1.5mm,~,
+,,JP3,INTR,Jumper:SolderJumper_2_Bridged,Jumper:SolderJumper-2_P1.3mm_Bridged2Bar_RoundedPad1.0x1.5mm,~,
+,,Q1,BSS138,Transistor_FET:BSS138,Package_TO_SOT_SMD:SOT-23,https://www.onsemi.com/pub/Collateral/BSS138-D.PDF,
+,,Q2,BSS138,Transistor_FET:BSS138,Package_TO_SOT_SMD:SOT-23,https://www.onsemi.com/pub/Collateral/BSS138-D.PDF,
+,,Q3,BSS138,Transistor_FET:BSS138,Package_TO_SOT_SMD:SOT-23,https://www.onsemi.com/pub/Collateral/BSS138-D.PDF,
+,,Q4,BSS138,Transistor_FET:BSS138,Package_TO_SOT_SMD:SOT-23,https://www.onsemi.com/pub/Collateral/BSS138-D.PDF,
+,,Q5,BSS138,Transistor_FET:BSS138,Package_TO_SOT_SMD:SOT-23,https://www.onsemi.com/pub/Collateral/BSS138-D.PDF,
+,,Q6,BSS138,Transistor_FET:BSS138,Package_TO_SOT_SMD:SOT-23,https://www.onsemi.com/pub/Collateral/BSS138-D.PDF,
+,,R1,10k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R2,50,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R3,1k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R4,1k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R5,10k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R6,N.P.,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R7,10k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R8,10k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R9,10k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R10,10k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R11,10k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R12,1k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R13,1k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R14,1k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R15,1k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R16,1k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R17,1k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R18,10k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R19,10k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R20,N.P.,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R21,10k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R22,10k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R23,N.P.,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R24,10k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R25,10k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R26,N.P.,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R27,10k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R28,10k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R29,N.P.,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R30,10k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R31,10k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R32,N.P.,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R33,N.P.,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R34,10k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R35,100,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R36,100,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R37,50,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R38,10k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R39,10k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,R40,10k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+,,U1,MCP4725xxx-xCH,Analog_DAC:MCP4725xxx-xCH,Package_TO_SOT_SMD:SOT-23-6,http://ww1.microchip.com/downloads/en/DeviceDoc/22039d.pdf,
+,,U2,OPA2727,Amplifier_Operational:MCP6L02x-xMS,Package_SO:SO-8_3.9x4.9mm_P1.27mm,http://ww1.microchip.com/downloads/en/devicedoc/22140b.pdf,
+,,U3,MIC5205-3.3YM5,Regulator_Linear:MIC5205-3.3YM5,Package_TO_SOT_SMD:SOT-23-5,http://ww1.microchip.com/downloads/en/DeviceDoc/20005785A.pdf,
+,,,,,,,
+,,,,,,,
+,,,,,,,
+Collated Components:,,,,,,,
+,,,,,,,
+Item,Qty,Reference(s),Value,LibPart,Footprint,Datasheet,Purchase link:
+1,1,A1,Arduino_UNO_R3,MCU_Module:Arduino_UNO_R3,Module:Arduino_UNO_R3,https://www.arduino.cc/en/Main/arduinoBoardUno,-
+2,1,C1,1000u,Device:C_Polarized,Capacitor_SMD:CP_Elec_10x10,~,https://eu.mouser.com/ProductDetail/Panasonic/EEE-0JA102P?qs=ANJC8C65Mw6KDNffTW8%2Fyw%3D%3D
+3,5,"C2, C3, C5, C8, C12",10u,Device:C,Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder,~,https://eu.mouser.com/ProductDetail/Samsung-Electro-Mechanics/CL21A106KOQNNNG?qs=sGAEpiMZZMvsSlwiRhF8qiamir66WTSkBRoD9MoKPnM%3D
+4,4,"C4, C6, C7, C10",100n,Device:C,Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder,~,https://eu.mouser.com/ProductDetail/KYOCERA-AVX/08055C104KAT2A?qs=sGAEpiMZZMvsSlwiRhF8qsUJX4ZZq7O1fj1ZNAE%252BSKM%3D
+5,1,C9,3p,Device:C,Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder,~,https://eu.mouser.com/ProductDetail/YAGEO/CC0805CRNPO9BN3R0?qs=sGAEpiMZZMvsSlwiRhF8qtfYLhfk%2FiLlA0d%2F5YnG1CM%3D
+6,1,C11,470p,Device:C,Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder,~,https://eu.mouser.com/ProductDetail/YAGEO/CC0805KRX7R9BB471?qs=sGAEpiMZZMvsSlwiRhF8qj9NgEuXmwzvXx46t%2FNza8g%3D
+7,3,"D1, D2, D3",1N4148,Device:D,Diode_SMD:D_SOD-123,~,https://eu.mouser.com/ProductDetail/Micro-Commercial-Components-MCC/1N4148W-TP?qs=KFo7JewZbUH7wCMabJ4EeQ%3D%3D
+8,1,D4,OUT_EN,Device:LED,LED_SMD:LED_0805_2012Metric_Pad1.15x1.40mm_HandSolder,~,-
+9,1,D5,ERR,Device:LED,LED_SMD:LED_0805_2012Metric_Pad1.15x1.40mm_HandSolder,~,-
+10,1,D6,TRGR'D,Device:LED,LED_SMD:LED_0805_2012Metric_Pad1.15x1.40mm_HandSolder,~,-
+11,1,D7,LED,Device:LED,LED_SMD:LED_0805_2012Metric_Pad1.15x1.40mm_HandSolder,~,-
+12,1,D8,SFH 213,Device:D_Photo,LED_THT:LED_D5.0mm_IRGrey,~,https://eu.mouser.com/ProductDetail/ams-OSRAM/SFH-213?qs=K5ta8V%252BWhtZez2QtPyLV%2FA%3D%3D
+13,2,"H1, H2",MountingHole,Mechanical:MountingHole,MountingHole:MountingHole_3.2mm_M3,~,-
+14,1,J1,TRG,Connector:Conn_Coaxial,Connector_Coaxial:SMA_Amphenol_901-144_Vertical, ~,https://eu.mouser.com/ProductDetail/Amphenol-RF/901-144-8RFX?qs=jpOL8GWAqat%252BbPjbt8toTg%3D%3D
+15,1,J2,E-STOP,Connector_Generic:Conn_01x03,TerminalBlock:TerminalBlock_Altech_AK300-3_P5.00mm,~,https://eu.mouser.com/ProductDetail/Altech/30.603?qs=kBsVI6mO3rDBA7xaDoNxhw%3D%3D
+16,1,J3,UART,Connector_Generic:Conn_01x03,Connector_PinSocket_2.54mm:PinSocket_1x03_P2.54mm_Vertical,~,-
+17,1,J4,IO,Connector:Screw_Terminal_01x06,TerminalBlock_Altech:Altech_AK300_1x06_P5.00mm_45-Degree,~,https://eu.mouser.com/ProductDetail/Altech/30.606?qs=e14k54Pd2N13eutguFJAZg%3D%3D
+18,1,J5,LDP-C BOB,Connector_Generic:Conn_02x05_Odd_Even,Connector_PinHeader_2.54mm:PinHeader_2x05_P2.54mm_Vertical,~,-
+19,1,J6,VIN,Connector:Screw_Terminal_01x02,TerminalBlock:TerminalBlock_Altech_AK300-2_P5.00mm,~,https://eu.mouser.com/ProductDetail/Altech/30.602?qs=6YwAVAdATLxlHE0VSugUBQ%3D%3D
+20,1,J7,BREAK,Connector_Generic:Conn_02x03_Odd_Even,Connector_PinSocket_2.54mm:PinSocket_2x03_P2.54mm_Vertical,~,-
+21,1,JP1,HW E-STOP,Jumper:Jumper_3_Bridged12,Jumper:SolderJumper-3_P1.3mm_Bridged12_RoundedPad1.0x1.5mm_NumberLabels,~,-
+22,2,"JP2, JP3",INTR,Jumper:SolderJumper_2_Bridged,Jumper:SolderJumper-2_P1.3mm_Bridged2Bar_RoundedPad1.0x1.5mm,~,-
+23,6,"Q1, Q2, Q3, Q4, Q5, Q6",BSS138,Transistor_FET:BSS138,Package_TO_SOT_SMD:SOT-23,https://www.onsemi.com/pub/Collateral/BSS138-D.PDF,https://eu.mouser.com/ProductDetail/Taiwan-Semiconductor/BSS138-RFG?qs=CiayqK2gdcIdWgbW3EO6bQ%3D%3D
+24,21,"R1, R5, R7, R8, R9, R10, R11, R18, R19, R21, R22, R24, R25, R27, R28, R30, R31, R34, R38, R39, R40",10k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+25,2,"R2, R37",50,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+26,8,"R3, R4, R12, R13, R14, R15, R16, R17",1k,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,TODO
+27,7,"R6, R20, R23, R26, R29, R32, R33",N.P.,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+28,2,"R35, R36",100,Device:R,Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder,~,
+29,1,U1,MCP4725xxx-xCH,Analog_DAC:MCP4725xxx-xCH,Package_TO_SOT_SMD:SOT-23-6,http://ww1.microchip.com/downloads/en/DeviceDoc/22039d.pdf,https://eu.mouser.com/ProductDetail/SparkFun/BOB-12918?qs=WyAARYrbSnZElsWSnCaKMQ%3D%3D
+30,1,U2,OPA2727,Amplifier_Operational:MCP6L02x-xMS,Package_SO:SO-8_3.9x4.9mm_P1.27mm,http://ww1.microchip.com/downloads/en/devicedoc/22140b.pdf,-
+31,1,U3,MIC5205-3.3YM5,Regulator_Linear:MIC5205-3.3YM5,Package_TO_SOT_SMD:SOT-23-5,http://ww1.microchip.com/downloads/en/DeviceDoc/20005785A.pdf,https://eu.mouser.com/ProductDetail/Microchip-Technology-Atmel/MIC5205-3.3YM5-TR?qs=U6T8BxXiZAUfeWKvTx3acw%3D%3D
