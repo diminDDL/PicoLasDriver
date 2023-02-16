@@ -1,16 +1,13 @@
 #include <Arduino.h>
 #include "pwm_lib.h"
 #include "tc_lib.h"
+#include "Wire.h"
 
 using namespace arduino_due::pwm_lib;
-
-// use another board and MCP4922
+// create a wire object
 
 // configuration variables
 // set serial port to 115200 baud, data 8 bits, even parity, 1 stop bit
-#define K_CAL 1
-#define B_CAL 0
-// used in the y = kx + b equation to calibrate the zero current and the correct slope
 #define SERIAL_BAUD_RATE 115200
 #define SERIAL_MODE SERIAL_8E1
 #define FORWARD_PORT Serial1                // when in digital mode all the communication will be forwarded to this port
@@ -19,6 +16,12 @@ using namespace arduino_due::pwm_lib;
 #define ESTOP_PIN 3                         // emergency stop pin, active low
 #define EN_PIN 4                            // enable pin, active high
 #define PULSE_PIN pwm<pwm_pin::PWML6_PC23>  // pin used to generate the pulses
+#define GPIO_BASE_PIN 8                     // base pin for the GPIO outputs
+#define GPIO_NUM 4                          // number of GPIO pins
+#define OE_LED 13                           // LED indicating wether the output is enabled
+#define TRIG_LED 12                         // LED indicating Internal/external triggering
+#define E_STOP_LED A3                       // LED indicating that the e-stop is halting the operation of the board
+#define FAULT_LED A2                        // LED indicating an internal fault
 PULSE_PIN pulsePin;                         // pulse pin object
 
 // if estop is true the driver will stop sending pulses to the laser
@@ -45,6 +48,9 @@ const String lockCommand = "lock";                      // string representation
 bool analogMode = false;                                // analog mode flag
 const String setAnalogModeCommand = "anmo";             // string representation of the analog mode command
 const String getModeCommand = "gmod";                   // string representation of the get mode command
+byte gpioState = 0;                                     // state of the GPIO pins
+const String setGpioStateCommand = "stio";              // string representation of the set GPIO state command
+
 // data structure: 
 // get commands: <command>\n
 // return values: <value>\r\n<00>\r\n
@@ -101,13 +107,24 @@ void setup() {
     FORWARD_PORT.begin(SERIAL_BAUD_RATE, SERIAL_MODE);  
     analogWriteResolution(12);
     pinMode(13, OUTPUT);
+    for(uint8_t i = 0; i < GPIO_NUM; i++){
+        pinMode(GPIO_BASE_PIN + i, OUTPUT);
+        digitalWrite(GPIO_BASE_PIN + i, LOW);
+    }
     pinMode(ESTOP_PIN, INPUT_PULLUP);   // TODO attach interrupt to this pin
+    pinMode(OE_LED, OUTPUT);
+    pinMode(TRIG_LED, OUTPUT);
+    pinMode(E_STOP_LED, OUTPUT);
+    pinMode(FAULT_LED, OUTPUT);
+
     // set up interrupt to handle the e-stop
 
     pinMode(INTERRUPT_PIN, INPUT);
     attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), trg, RISING);
     pinMode(6, INPUT_PULLUP);
     attachInterrupt(digitalPinToInterrupt(6), pulse, RISING);
+    Wire1.begin();
+    Wire1.setClock(400000);
 }
 
 void printErrorStr(bool commandType = false){
@@ -252,7 +269,15 @@ void parser(char str[]){
             Serial.print(analogMode, DEC);
             Serial.print(EOL);
             printErrorStr(true);
-        } else {
+        } else if(strcmp(command, setGpioStateCommand.c_str()) == 0){ 
+            // set the GPIO state 
+            gpioState = (atoi(value) > 0) && (atoi(value) < 256) ? atoi(value) : 0;
+            Serial.print(gpioState);
+            Serial.print(EOL);
+            printErrorStr(true);
+
+            Serial.println(gpioState, BIN);
+        }else {
             // unknown command
             Serial.print("UC");
             Serial.print(EOL);
@@ -300,6 +325,7 @@ void parser(char str[]){
             printErrorStr();
         }
     }
+    ///// remove later
     // TODO test cahnges
     Serial.println();
     // print all the new values
@@ -318,17 +344,19 @@ void parser(char str[]){
     Serial.println(lockState);
     Serial.print("Analog mode: ");
     Serial.println(analogMode);
+    Serial.print("GPIO state: ");
+    Serial.println(gpioState);
     Serial.print("Changed: ");
     Serial.println(valuesChanged);
-    
-
+    /////
 }
 
 void setAnalogCurrentSetpoint(float current){
-    // We are using a MCP4922
-
-    Serial.print("Setting analog current");
-
+    // We are using a MCP4725
+    Serial.println("Setting analog current");
+    // TODO calculate the voltage
+    //uint16_t voltage = 0b0000111111111111;
+    uint16_t voltage = 0;
 }
 
 void set_values(){
@@ -344,15 +372,23 @@ void set_values(){
         }else{
             // Not implemented
         }
+
         // attach the interrupt pin
 
+    }
+    Serial.println("Setting GPIO");
+    // GPIOs stay on regardless of OE, only turned off by E-STOP
+    for(uint8_t i = 0; i < GPIO_NUM; i++){
+        digitalWrite(GPIO_BASE_PIN + i, ((gpioState >> i) & 1));
     }
 }
 
 void loop() {
     read_host_data(hostBuffer, sizeof(hostBuffer));
     if(newData){
+        // Remove later
         Serial.print(hostBuffer);
+        //
         newData = false;
         parser(hostBuffer);
     }
@@ -368,17 +404,65 @@ void loop() {
         // set outputEnabled to false
         // detach the interrupt pin
         // set error flag
+        // turn off GPIO
     }
-    if (outputEnabled){
-        Serial.print("Pulse counter: ");
-        print_big_int(globalPulseCount);
-        Serial.println();
+    // if (outputEnabled){
+    //     Serial.print("Pulse counter: ");
+    //     print_big_int(globalPulseCount);
+    //     Serial.println();
+    // }
+    digitalWrite(OE_LED, outputEnabled);
+
+
+    // Wire1.beginTransmission(0x60);
+    // Wire1.write(0x40);
+    // Wire1.write(0x55);
+    // Wire1.write(0x00);
+    // Wire1.endTransmission(true);
+
+      byte error, address;
+  int nDevices;
+ 
+  Serial.println("Scanning...");
+ 
+  nDevices = 0;
+  for(address = 1; address < 127; address++ )
+  {
+    // The i2c_scanner uses the return value of
+    // the Write.endTransmisstion to see if
+    // a device did acknowledge to the address.
+    Wire1.beginTransmission(address);
+    error = Wire1.endTransmission();
+ 
+    if (error == 0)
+    {
+      Serial.print("I2C device found at address 0x");
+      if (address<16)
+        Serial.print("0");
+      Serial.print(address,HEX);
+      Serial.println("  !");
+ 
+      nDevices++;
     }
+    else if (error==4)
+    {
+      Serial.print("Unknown error at address 0x");
+      if (address<16)
+        Serial.print("0");
+      Serial.println(address,HEX);
+    }    
+  }
+  if (nDevices == 0)
+    Serial.println("No I2C devices found\n");
+  else
+    Serial.println("done\n");
+ 
+  delay(100);           // wait 5 seconds for next scan
 }
 
 
 // BOM:
-// MCP4821
+// MCP4725
 // 100nF capacitor
 // 10uF capacitor
 // 1k resistor
