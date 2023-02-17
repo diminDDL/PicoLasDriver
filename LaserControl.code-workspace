@@ -11,7 +11,8 @@
 		"files.associations": {
 			"*.m": "matlab",
 			"bitset": "cpp",
-			"set": "cpp"
+			"set": "cpp",
+			"*.tcc": "cpp"
 		}
 	}
 }

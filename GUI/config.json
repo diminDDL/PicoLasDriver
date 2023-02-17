@@ -292,6 +292,12 @@
                     "answer":"64bit",
                     "description":"Returns the number of total pulses ever generated"
                 },
+                "get_current_pulse_count":{
+                    "command":"gcpc",
+                    "parameter":"",
+                    "answer":"64bit",
+                    "description":"Returns the number of pulses generated since the device was turned on"
+                },
                 "lock_all":{
                     "command":"lock",
                     "parameter":"boolean",
@@ -401,6 +407,12 @@
                     "parameter":"",
                     "answer":"64bit",
                     "description":"Returns the number of total pulses ever generated"
+                },
+                "get_current_pulse_count":{
+                    "command":"gcpc",
+                    "parameter":"",
+                    "answer":"64bit",
+                    "description":"Returns the number of pulses generated since the device was turned on"
                 },
                 "lock_all":{
                     "command":"lock",
