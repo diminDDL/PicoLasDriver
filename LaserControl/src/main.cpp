@@ -2,6 +2,7 @@
 #include "pwm_lib.h"
 #include "tc_lib.h"
 #include <DueFlashStorage.h>
+#include <comms.h>
 
 using namespace arduino_due::pwm_lib;
 // create a wire object
@@ -322,6 +323,9 @@ void parser(char str[]){
         } else if (strcmp(command, setMaxCurrentCommand.c_str()) == 0){
             // set the max current
             maxCurrent = atof(value);
+            if(maxCurrent < setCurrent){
+                setCurrent = maxCurrent;
+            }
             Serial.print(maxCurrent);
             Serial.print(EOL);
             printErrorStr(true);
@@ -435,29 +439,29 @@ void parser(char str[]){
         }
     }
     ///// remove later
-    // TODO test cahnges
-    Serial.println();
-    // print all the new values
-    Serial.print("Current: ");
-    Serial.println(setCurrent);
-    Serial.print("Max current: ");
-    Serial.println(maxCurrent);
-    Serial.print("Pulse duration: ");
-    print_big_int(setPulseDuration);
-    Serial.println();
-    Serial.print("Pulse frequency: ");
-    Serial.println(setPulseFrequency);
-    Serial.print("Output enabled: ");
-    Serial.println(outputEnabled);
-    Serial.print("Lock state: ");
-    Serial.println(lockState);
-    Serial.print("Analog mode: ");
-    Serial.println(analogMode);
-    Serial.print("GPIO state: ");
-    Serial.println(gpioState);
-    Serial.print("Changed: ");
-    Serial.println(valuesChanged);
-    /////
+    // // TODO test cahnges
+    // Serial.println();
+    // // print all the new values
+    // Serial.print("Current: ");
+    // Serial.println(setCurrent);
+    // Serial.print("Max current: ");
+    // Serial.println(maxCurrent);
+    // Serial.print("Pulse duration: ");
+    // print_big_int(setPulseDuration);
+    // Serial.println();
+    // Serial.print("Pulse frequency: ");
+    // Serial.println(setPulseFrequency);
+    // Serial.print("Output enabled: ");
+    // Serial.println(outputEnabled);
+    // Serial.print("Lock state: ");
+    // Serial.println(lockState);
+    // Serial.print("Analog mode: ");
+    // Serial.println(analogMode);
+    // Serial.print("GPIO state: ");
+    // Serial.println(gpioState);
+    // Serial.print("Changed: ");
+    // Serial.println(valuesChanged);
+    // /////
 }
 
 void setAnalogCurrentSetpoint(float current){
@@ -499,12 +503,8 @@ void EEPROM_service(){
     // if 
     if (millis() - lastTime > 1000 || valuesChanged){
         lastTime = millis();
-        Serial.println("Checking if needs to be saved to EEPROM");
-
         // read CRC from EEPROM
-        Serial.print("CRC EEPROM: ");
         uint16_t crcRead = (EEPROM.read(1) << 8) | EEPROM.read(0);
-        Serial.println(crcRead, HEX);
         // set the values to the struct
         conf.globalpulse = globalPulseCount;
         conf.current = setCurrent;
@@ -517,9 +517,6 @@ void EEPROM_service(){
         memcpy(b2, &conf, sizeof(Configuration)); // copy the struct to the byte array
         // calculate the crc
         crc = gen_crc16(b2, sizeof(Configuration)); 
-        // print the crc
-        Serial.print("CRC: ");
-        Serial.println(crc, HEX);
         if(crcRead != crc){
             // print the values
             Serial.print("globalpulse: ");
