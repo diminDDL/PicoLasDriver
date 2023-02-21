@@ -12,7 +12,8 @@
 			"*.m": "matlab",
 			"bitset": "cpp",
 			"set": "cpp",
-			"*.tcc": "cpp"
+			"*.tcc": "cpp",
+			"sstream": "cpp"
 		}
 	}
 }
