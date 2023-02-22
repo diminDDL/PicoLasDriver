@@ -1,7 +1,13 @@
 #include <comms.h>
 #include <Arduino.h>
 
-// constructor
+/*
+* Constructor
+* @param serial pointer to the serial port object
+* @param forwardPort pointer to the port where the data will be forwarded
+* @param baudRate baud rate of the serial port
+* @param config configuration of the serial port, see UARTClass::UARTModes
+*/
 Communications::Communications(UARTClass *serial, UARTClass *forwardPort, const uint32_t baudRate, const UARTClass::UARTModes config){
     this->serial = serial;
     this->fwdPort = forwardPort;
@@ -9,6 +15,9 @@ Communications::Communications(UARTClass *serial, UARTClass *forwardPort, const 
     mdReg = config;
 }
 
+/*
+* Initialize the serial ports
+*/
 void Communications::init(void){
     // initialize the serial port
     serial->begin(bdRate, mdReg);
@@ -16,6 +25,9 @@ void Communications::init(void){
     fwdPort->begin(bdRate, mdReg);
 }
 
+/*
+* Read the serial port into the buffer
+*/
 void Communications::readSerial(void){
     // read the data from serial port and store it in the dest array
     uint8_t i = 0;
@@ -34,6 +46,10 @@ void Communications::readSerial(void){
     }
 }
 
+/*
+* Print the error string, and update the valuesChanged flag if it is a set command
+* @param commandType true if it is a set command, false if it is a get command
+*/
 void Communications::printErrorStr(bool commandType = false){
     // commandType = true - set command
     // commandType = false - get command
@@ -56,6 +72,10 @@ void Communications::printErrorStr(bool commandType = false){
     }
 }
 
+/*
+* Used to print a uint64_t value
+* @param value the value to be printed
+*/
 void Communications::print_big_int(uint64_t value){
     if ( value >= 10 ){
         print_big_int(value / 10);
@@ -63,6 +83,9 @@ void Communications::print_big_int(uint64_t value){
     serial->print((uint32_t)(value % 10));
 }
 
+/*
+* Parse the buffer and update the data struct
+*/
 void Communications::parseBuffer(void){
     if(!newData){
         return;

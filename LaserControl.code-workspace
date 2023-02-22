@@ -13,7 +13,8 @@
 			"bitset": "cpp",
 			"set": "cpp",
 			"*.tcc": "cpp",
-			"sstream": "cpp"
+			"sstream": "cpp",
+			"chrono": "cpp"
 		}
 	}
 }

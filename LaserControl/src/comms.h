@@ -10,6 +10,14 @@ It does everything from parsing the data to maintaining the heartbeat.
 All of the variables that we send back and forth are stored here.
 These variables are public so that the user can access them.
 */
+
+/*
+* Constructor
+* @param serial - pointer to the serial port object
+* @param forwardPort - pointer to the port where the data will be forwarded
+* @param baudRate - baud rate of the serial port
+* @param config - configuration of the serial port, see UARTClass::UARTModes
+*/
 class Communications{
     private:
         // command list
