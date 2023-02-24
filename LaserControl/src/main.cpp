@@ -135,8 +135,59 @@ void setup() {
         comms.data.analogMode = memory.config.analog;
     }else{
         // write empty config
-        memory.writePage(0);
+        //memory.writePage(0);
     }
+    // dump the entire memory
+    Serial.println("MEMORY DUMP");
+    delay(5000);
+    Serial.println("=====================");
+    for (uint8_t i = 0; i < 8; i++){
+        Serial.print("Page ");
+        Serial.print(i);
+        Serial.print(": ");
+        Serial.println(memory.readPage(i));
+    }
+    Serial.println("Dump complete");
+    Serial.println("=====================");
+    Serial.println("Reading PAGES 1");
+    memory.writeLeveled();
+    Serial.println("Reading PAGES 2");
+    memory.writeLeveled();
+    Serial.println("Reading PAGES 3");
+    memory.writeLeveled();
+    Serial.println("Reading PAGES 4");
+    memory.writeLeveled();
+    Serial.println("Reading PAGES 5");
+    memory.writeLeveled();
+    Serial.println("Reading PAGES 6");
+    memory.writeLeveled();
+    Serial.println("Reading PAGES 7");
+    memory.writeLeveled();
+    Serial.println("Reading PAGES 8");
+    memory.writeLeveled();
+    Serial.println("Reading PAGES 9");
+    memory.writeLeveled();
+    Serial.println("Reading PAGES 10");
+    memory.writeLeveled();
+    Serial.println("Reading PAGES 11");
+    memory.writeLeveled();
+    Serial.println("Reading PAGES 12");
+    memory.writeLeveled();
+    Serial.println("Reading PAGES 13");
+    memory.writeLeveled();
+    Serial.println("Reading PAGES 14");
+    memory.writeLeveled();
+    Serial.println("Reading PAGES 15");
+    memory.writeLeveled();
+    Serial.println("Reading PAGES 16");
+    memory.writeLeveled();
+    Serial.println("Reading PAGES 17");
+    memory.writeLeveled();
+    Serial.println("Reading PAGES 18");
+    memory.writeLeveled();
+    Serial.println("Reading PAGES 19");
+    memory.writeLeveled();
+    Serial.println("Reading PAGES 20");
 }
 
 void setAnalogCurrentSetpoint(float current){
@@ -190,11 +241,11 @@ void loop() {
     comms.readSerial();
     comms.parseBuffer();
     delay(100);
-    EEPROM_service();
+    //EEPROM_service();
     if(!estop){
         if(comms.valuesChanged){
             set_values();
-            EEPROM_service();
+            //EEPROM_service();
             comms.valuesChanged = false;
         }
     }else{
