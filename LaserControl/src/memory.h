@@ -12,7 +12,7 @@ class Memory{
         static const uint8_t number_of_pages = 8;           // number of pages to use for the EEPROM wear leveling
         bool bad_pages[number_of_pages] = {0};              // array to store the bad pages
         uint8_t current_page = 0;                           // the current page we are writing to
-        uint32_t current_index = 0;                         // the current index we are writing to
+        uint32_t current_index = 0;                         // the current index (ID of the blocks we are writing)
         const uint32_t page_size = IFLASH0_PAGE_SIZE;       // size of a page in the EEPROM
         const uint16_t CRC16 = 0x8005;                      // CRC16 polynomial
         // the settings we want to store in the EEPROM:

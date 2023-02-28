@@ -149,45 +149,123 @@ void setup() {
     }
     Serial.println("Dump complete");
     Serial.println("=====================");
+
+    Serial.println("Writing PAGES 1");
+    memory.config.current = 1.0;
+    memory.writeLeveled();
     Serial.println("Reading PAGES 1");
+    memory.loadCurrent();
+
+    Serial.println("Writing PAGES 2");
+    memory.config.current = 2.0;
     memory.writeLeveled();
     Serial.println("Reading PAGES 2");
+    memory.loadCurrent();
+
+    Serial.println("Writing PAGES 3");
+    memory.config.current = 3.0;
     memory.writeLeveled();
     Serial.println("Reading PAGES 3");
+    memory.loadCurrent();
+
+    Serial.println("Writing PAGES 4");
+    memory.config.current = 4.0;
     memory.writeLeveled();
     Serial.println("Reading PAGES 4");
+    memory.loadCurrent();
+
+    Serial.println("Writing PAGES 5");
+    memory.config.current = 5.0;
     memory.writeLeveled();
     Serial.println("Reading PAGES 5");
+    memory.loadCurrent();
+
+    Serial.println("Writing PAGES 6");
+    memory.config.current = 6.0;
     memory.writeLeveled();
     Serial.println("Reading PAGES 6");
+    memory.loadCurrent();
+
+    Serial.println("Writing PAGES 7");
+    memory.config.current = 7.0;
     memory.writeLeveled();
     Serial.println("Reading PAGES 7");
+    memory.loadCurrent();
+
+    Serial.println("Writing PAGES 8");
+    memory.config.current = 8.0;
     memory.writeLeveled();
     Serial.println("Reading PAGES 8");
+    memory.loadCurrent();
+
+    Serial.println("Writing PAGES 9");
+    memory.config.current = 9.0;
     memory.writeLeveled();
     Serial.println("Reading PAGES 9");
+    memory.loadCurrent();
+
+    Serial.println("Writing PAGES 10");
+    memory.config.current = 10.0;
     memory.writeLeveled();
     Serial.println("Reading PAGES 10");
+    memory.loadCurrent();
+    
+
+    Serial.println("Writing PAGES 11");
+    memory.config.current = 11.0;
     memory.writeLeveled();
     Serial.println("Reading PAGES 11");
+    memory.loadCurrent();
+
+    Serial.println("Writing PAGES 12");
+    memory.config.current = 12.0;
     memory.writeLeveled();
     Serial.println("Reading PAGES 12");
+    memory.loadCurrent();
+
+    Serial.println("Writing PAGES 13");
+    memory.config.current = 13.0;
     memory.writeLeveled();
     Serial.println("Reading PAGES 13");
+    memory.loadCurrent();
+
+    Serial.println("Writing PAGES 14");
+    memory.config.current = 14.0;
     memory.writeLeveled();
     Serial.println("Reading PAGES 14");
+    memory.loadCurrent();
+
+    Serial.println("Writing PAGES 15");
+    memory.config.current = 15.0;
     memory.writeLeveled();
     Serial.println("Reading PAGES 15");
+    memory.loadCurrent();
+
+    Serial.println("Writing PAGES 16");
+    memory.config.current = 16.0;
     memory.writeLeveled();
     Serial.println("Reading PAGES 16");
+    memory.loadCurrent();
+
+    Serial.println("Writing PAGES 17");
+    memory.config.current = 17.0;
     memory.writeLeveled();
     Serial.println("Reading PAGES 17");
+    memory.loadCurrent();
+
+    Serial.println("Writing PAGES 18");
+    memory.config.current = 18.0;
     memory.writeLeveled();
     Serial.println("Reading PAGES 18");
+    memory.loadCurrent();
+
+    Serial.println("Writing PAGES 19");
+    memory.config.current = 19.0;
     memory.writeLeveled();
     Serial.println("Reading PAGES 19");
-    memory.writeLeveled();
-    Serial.println("Reading PAGES 20");
+    memory.loadCurrent();
+
+    Serial.println("Done");
 }
 
 void setAnalogCurrentSetpoint(float current){
