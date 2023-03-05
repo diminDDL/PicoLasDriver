@@ -202,6 +202,8 @@ bool Memory::readLeveled(bool storeStruct){
     bool correct[number_of_pages];
     uint32_t index[number_of_pages];
     bool broke = false;
+    bool overflow = false;
+    bool edge = false;
     static bool last_mode = false;
     for (int i = 0; i < number_of_pages; ++i){
         //Serial.print("--- Reading page ");
@@ -214,17 +216,6 @@ bool Memory::readLeveled(bool storeStruct){
             if(correct[i]){
                 // when we read a page with a correct CRC we check if we have overflowed and should start writing from the start again
                 Serial.println("Found a page with a correct CRC");
-                // uint32_t index_buff = index[i]+1;
-                // if (index_buff > current_index){
-                //     if(index_buff >= number_of_pages && current_index < number_of_pages*2){
-                //         current_index = index_buff - number_of_pages;
-                //     }else{
-                //         current_index = index_buff;
-                //     }
-                // }
-                // if(current_index >= number_of_pages*2){
-                //     current_index = 0;              // we reset the index
-                // }
             }else{
                 Serial.println("Found a page with an incorrect CRC, writing here");
                 // if we found a page with an incorrect CRC, we can just write here,
@@ -270,9 +261,11 @@ bool Memory::readLeveled(bool storeStruct){
         // normal mode - 0 < current_index < number_of_pages
         // to find if we are in overflow mode we check if the last page has a lower index than the first page
         // if it does, we are in overflow mode
-        bool overflow = index[number_of_pages-1] < index[0];
+        overflow = index[number_of_pages-1] < index[0];
         Serial.print("Overflow: ");
         Serial.println(overflow);
+        Serial.print("Last mode: ");
+        Serial.println(last_mode);
         
         for (int i = 0; i < number_of_pages; ++i){
             if((overflow && index[i] > max_index) || (!overflow && index[i] > max_index && index[i] < number_of_pages)){
@@ -289,6 +282,7 @@ bool Memory::readLeveled(bool storeStruct){
         if(last_mode && !overflow){
             max_index_write = 0;
             max_index_page_write = 0;
+            edge = true;
         }
         last_mode = overflow;
         
@@ -299,36 +293,41 @@ bool Memory::readLeveled(bool storeStruct){
     }
     
     if(storeStruct){
-    // TODO store the struct
-    // why?
-    //         ---------
-    // Struct Reading addr: 1540
-    // reading CRC addr: 1536
-    // CRC read: 6531
-    // CRC calc: 6531
-    // --- Page 6 index: 14 correct: 1
-    // current: 15.00
-    // ---------
-    // Struct Reading addr: 1796
-    // reading CRC addr: 1792
-    // CRC read: 21C1
-    // CRC calc: 21C1
-    // --- Page 7 index: 15 correct: 1
-    // current: 16.00
-    // ---------
-    // Overflow: 0
-    // Max index page: 0
-    // =====================================================
-    // Config values:
-    // Current: 9.00
-    // Max current: 0.00
-    // Pulse duration: 0
-    // Pulse frequency: 0
-    // Analog: 0
-    // Current page: 7
-    // Current index: 15
-    // =====================================================
-    // Writing PAGES 17
+        // TODO store the struct
+        // why?
+        //         ---------
+        // Struct Reading addr: 1540
+        // reading CRC addr: 1536
+        // CRC read: 6531
+        // CRC calc: 6531
+        // --- Page 6 index: 14 correct: 1
+        // current: 15.00
+        // ---------
+        // Struct Reading addr: 1796
+        // reading CRC addr: 1792
+        // CRC read: 21C1
+        // CRC calc: 21C1
+        // --- Page 7 index: 15 correct: 1
+        // current: 16.00
+        // ---------
+        // Overflow: 0
+        // Max index page: 0
+        // =====================================================
+        // Config values:
+        // Current: 9.00
+        // Max current: 0.00
+        // Pulse duration: 0
+        // Pulse frequency: 0
+        // Analog: 0
+        // Current page: 7
+        // Current index: 15
+        // =====================================================
+        // Writing PAGES 17
+
+        if(edge){
+            max_index_page = number_of_pages-1;
+        }
+
         Serial.print("Max index page: ");
         Serial.println(max_index_page);
         config.globalpulse = c[max_index_page].globalpulse;
@@ -350,9 +349,8 @@ bool Memory::readLeveled(bool storeStruct){
         Serial.println(config.pulsefreq);
         Serial.print("Analog: ");
         Serial.println(config.analog);
-
-
     }
+
     Serial.print("Current page: ");
     Serial.println(current_page);
     Serial.print("Current index: ");
