@@ -133,6 +133,7 @@ bool Memory::readPage(uint32_t page, Configuration &c){
     // Serial.println(c.pulsefreq);
     // Serial.print("analog: ");
     // Serial.println(c.analog);
+
     if (crcRead == crcCalc){
         return true;
     } else {
@@ -146,6 +147,14 @@ bool Memory::writePage(uint32_t page, Configuration &c){
     bool writeConf = EEPROM.write(base_data_addr + page * page_size, b, sizeof(Configuration));
     // calculate the CRC
     uint16_t crc = gen_crc16(b, sizeof(Configuration));
+
+
+    // FOR TESTING REMOVE LATER
+    // TODO REMOVE
+    // if(page == 5 || page == 7)
+    //     crc = 0x1234;
+
+
     // write the CRC
     bool writeCRC1 = EEPROM.write(base_crc_addr + page * page_size, crc & 0xFF);
     bool writeCRC2 = EEPROM.write((base_crc_addr + 1) + page * page_size, (crc >> 8) & 0xFF);
