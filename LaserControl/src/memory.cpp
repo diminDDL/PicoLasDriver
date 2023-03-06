@@ -293,36 +293,6 @@ bool Memory::readLeveled(bool storeStruct){
     }
     
     if(storeStruct){
-        // TODO store the struct
-        // why?
-        //         ---------
-        // Struct Reading addr: 1540
-        // reading CRC addr: 1536
-        // CRC read: 6531
-        // CRC calc: 6531
-        // --- Page 6 index: 14 correct: 1
-        // current: 15.00
-        // ---------
-        // Struct Reading addr: 1796
-        // reading CRC addr: 1792
-        // CRC read: 21C1
-        // CRC calc: 21C1
-        // --- Page 7 index: 15 correct: 1
-        // current: 16.00
-        // ---------
-        // Overflow: 0
-        // Max index page: 0
-        // =====================================================
-        // Config values:
-        // Current: 9.00
-        // Max current: 0.00
-        // Pulse duration: 0
-        // Pulse frequency: 0
-        // Analog: 0
-        // Current page: 7
-        // Current index: 15
-        // =====================================================
-        // Writing PAGES 17
 
         if(edge){
             max_index_page = number_of_pages-1;
@@ -341,14 +311,6 @@ bool Memory::readLeveled(bool storeStruct){
         Serial.println("Config values:");
         Serial.print("Current: ");
         Serial.println(config.current);
-        Serial.print("Max current: ");
-        Serial.println(config.maxcurr);
-        Serial.print("Pulse duration: ");
-        Serial.println(config.pulsedur);
-        Serial.print("Pulse frequency: ");
-        Serial.println(config.pulsefreq);
-        Serial.print("Analog: ");
-        Serial.println(config.analog);
     }
 
     Serial.print("Current page: ");

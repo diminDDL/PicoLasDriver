@@ -155,6 +155,10 @@ void setup() {
     memory.writeLeveled();
     Serial.println("Reading PAGES 1");
     memory.loadCurrent();
+    Serial.println("Reading PAGES 1 (again)");
+    memory.loadCurrent();
+    Serial.println("Reading PAGES 1 (again)");
+    memory.loadCurrent();
 
     Serial.println("Writing PAGES 2");
     memory.config.current = 2.0;
@@ -244,7 +248,17 @@ void setup() {
     Serial.println("Writing PAGES 16");
     memory.config.current = 16.0;
     memory.writeLeveled();
+    Serial.println("Writing PAGES 16 (again)");
+    memory.writeLeveled();
+    Serial.println("Writing PAGES 16 (again)");
+    memory.writeLeveled();
     Serial.println("Reading PAGES 16");
+    memory.loadCurrent();
+    Serial.println("Reading PAGES 16 (again)");
+    memory.loadCurrent();
+    Serial.println("Writing PAGES 16 (again)");
+    memory.writeLeveled();
+    Serial.println("Reading PAGES 16 (again)");
     memory.loadCurrent();
 
     Serial.println("Writing PAGES 17");
