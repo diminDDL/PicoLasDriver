@@ -144,21 +144,23 @@ bool Memory::readPage(uint32_t page, Configuration &c){
 bool Memory::writePage(uint32_t page, Configuration &c){
     // write the config
     byte* b = (byte*) &c;
-    bool writeConf = EEPROM.write(base_data_addr + page * page_size, b, sizeof(Configuration));
+    EEPROM.write(base_data_addr + page * page_size, b, sizeof(Configuration));
     // calculate the CRC
     uint16_t crc = gen_crc16(b, sizeof(Configuration));
 
 
     // FOR TESTING REMOVE LATER
     // TODO REMOVE
-    // if(page == 5 || page == 7)
-    //     crc = 0x1234;
+    if(page == 5 || page == 7)
+        crc = 0x1234;
 
 
     // write the CRC
-    bool writeCRC1 = EEPROM.write(base_crc_addr + page * page_size, crc & 0xFF);
-    bool writeCRC2 = EEPROM.write((base_crc_addr + 1) + page * page_size, (crc >> 8) & 0xFF);
-    return writeConf && writeCRC1 && writeCRC2;
+    EEPROM.write(base_crc_addr + page * page_size, crc & 0xFF);
+    EEPROM.write((base_crc_addr + 1) + page * page_size, (crc >> 8) & 0xFF);
+    // now we try reading the page and check the CRC
+    bool read = readPage(page, c);
+    return read;
 }
 
 /*
@@ -306,7 +308,23 @@ bool Memory::readLeveled(bool storeStruct){
         if(edge){
             max_index_page = number_of_pages-1;
         }
-
+        // if the last page is incorrect, we need to find the last correct page
+        int16_t count = number_of_pages;
+        while(!correct[max_index_page] && count > 0){
+            Serial.print("Incorrect page: ");
+            Serial.println(max_index_page);
+            if(max_index_page == 0){
+                max_index_page = number_of_pages;
+            }
+            max_index_page--;
+            Serial.print("Trying: ");
+            Serial.println(max_index_page);
+            count--;
+        }
+        if(count == 0){
+            Serial.println("No correct pages found");
+            return false;
+        }
         Serial.print("Max index page: ");
         Serial.println(max_index_page);
         config.globalpulse = c[max_index_page].globalpulse;
@@ -327,6 +345,7 @@ bool Memory::readLeveled(bool storeStruct){
     Serial.print("Current index: ");
     Serial.println(current_index);
     Serial.println("=====================================================");
+    return correct[max_index_page];
 }
 
 /*
