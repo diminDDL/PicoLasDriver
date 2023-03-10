@@ -14,7 +14,9 @@
 			"set": "cpp",
 			"*.tcc": "cpp",
 			"sstream": "cpp",
-			"chrono": "cpp"
+			"chrono": "cpp",
+			"variant": "cpp",
+			"streambuf": "cpp"
 		}
 	}
 }

@@ -9,7 +9,7 @@ class Memory{
         const uint8_t base_data_addr = 4;                   // address of the data in the EEPROM
         const uint8_t base_crc_addr = 0;                    // address of the crc in the EEPROM (2 bytes)
         const uint8_t base_page_header = 2;                 // address of the page header in the EEPROM
-        static const uint8_t number_of_pages = 8;           // number of pages to use for the EEPROM wear leveling
+        static const uint8_t number_of_pages = 10;           // number of pages to use for the EEPROM wear leveling
         bool bad_pages[number_of_pages] = {0};              // array to store the bad pages
         uint8_t current_page = 0;                           // the current page we are writing to
         uint32_t current_index = 0;                         // the current index (ID of the blocks we are writing)
