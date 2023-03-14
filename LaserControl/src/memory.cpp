@@ -59,21 +59,33 @@ uint16_t Memory::gen_crc16(const uint8_t *data, uint16_t size)
 * @param page the page to read
 * @return true if the page was read successfully
 */
-bool Memory::readPage(uint32_t page){
+bool Memory::readPage(uint32_t page, bool dbg){
     byte* b = EEPROM.readAddress(base_data_addr + page * page_size);
     Configuration c;
     memcpy(&c, b, sizeof(Configuration));
     // read the CRC
-    //Serial.print("CRC: ");
+    if(dbg)
+        Serial.print("CRC: ");
     uint16_t crcRead = (EEPROM.read((base_crc_addr + 1) + page * page_size) << 8) | EEPROM.read(base_crc_addr + page * page_size);
-    //Serial.println(crcRead, HEX);
+    if(dbg)
+        Serial.println(crcRead, HEX);
     // calculate the CRC
     uint16_t crcCalc = gen_crc16(b, sizeof(Configuration));
-    //Serial.print("CRC calc: ");
-    //Serial.println(crcCalc, HEX);
+    if(dbg)
+        Serial.print("CRC calc: ");
+    if(dbg)
+        Serial.println(crcCalc, HEX);
+    if(dbg){
+        Serial.print("current: ");
+        Serial.println(c.current);
+        Serial.print("index: ");
+        uint8_t idx = EEPROM.read((base_page_header) + page * page_size);
+        Serial.println(idx);
+    }
     // check if the CRC is correct
     if (crcRead == crcCalc){
-        //Serial.println("CRC correct");
+        if(dbg)
+            Serial.println("CRC correct");
         // set the values
         config.globalpulse = c.globalpulse;
         config.current = c.current;
@@ -83,7 +95,8 @@ bool Memory::readPage(uint32_t page){
         config.analog = c.analog;
         return true;
     } else {
-        //Serial.println("CRC incorrect");
+        if(dbg)
+            Serial.println("CRC incorrect");
         return false;
     }
 }
@@ -127,7 +140,7 @@ bool Memory::writePage(uint32_t page, Configuration &c){
 
     // FOR TESTING REMOVE LATER
     // TODO REMOVE
-    if(page == 5 || page == 7)
+    if(page == 5 || page == 6 || page == 7)
         crc = 0x1234;
 
 
@@ -184,7 +197,7 @@ bool Memory::readLeveled(bool storeStruct){
     // we also have a CRC for each page
     // when we read a page, we check the CRC
     // so in this function we want to just get the latest page with the valid CRC
-    Serial.println("===================Reading leveled===================");
+    // Serial.println("===================Reading leveled===================");
     Configuration c[number_of_pages] = {0};   
     bool correct[number_of_pages] = {0};
     uint32_t index[number_of_pages] = {0};
@@ -194,19 +207,19 @@ bool Memory::readLeveled(bool storeStruct){
     bool overflow_reader = false;
     static bool last_mode_reader = false;
     for (int i = 0; i < number_of_pages; ++i){
-        Serial.print("--- Reading page ");
-        Serial.println(i);
+        // Serial.print("--- Reading page ");
+        // Serial.println(i);
         correct[i] = readPage(i, c[i]);
         index[i] = EEPROM.read((base_page_header) + i * page_size);
-        Serial.print("Index: ");
-        Serial.println(index[i]);
+        // Serial.print("Index: ");
+        // Serial.println(index[i]);
         if(!storeStruct){
             if(correct[i]){
                 // when we read a page with a correct CRC we check if we have overflowed and should start writing from the start again
-                Serial.println("Found a page with a correct CRC");
+                // Serial.println("Found a page with a correct CRC");
             }else{
-                Serial.print("Found a page with an incorrect CRC, page: ");
-                Serial.println(i);
+                // Serial.print("Found a page with an incorrect CRC, page: ");
+                // Serial.println(i);
                 // if we found a page with an incorrect CRC, we can just write here,
                 // if we already tried to write here (current_page = i) we shouldn't write again
                 // this indicates a problem with the EEPROM on this page and after a failure we should continue regularly
@@ -222,24 +235,24 @@ bool Memory::readLeveled(bool storeStruct){
                         current_index = 0;
                     }
                     broke = true;
-                    Serial.println("This page is not bad, writing");
+                    // Serial.println("This page is not bad, writing");
                     break;
                     // TODO, bruh we need to maintain a list of bad pages
                 }else{
-                    Serial.println("This page is bad, skipping");
+                    // Serial.println("This page is bad, skipping");
                 }
             }
         }
 
-        Serial.print("--- Page ");
-        Serial.print(i);
-        Serial.print(" index: ");
-        Serial.print(index[i]);
-        Serial.print(" correct: ");
-        Serial.println(correct[i]);
-        Serial.print("current: ");
-        Serial.println(c[i].current);
-        Serial.println("---------");
+        // Serial.print("--- Page ");
+        // Serial.print(i);
+        // Serial.print(" index: ");
+        // Serial.print(index[i]);
+        // Serial.print(" correct: ");
+        // Serial.println(correct[i]);
+        // Serial.print("current: ");
+        // Serial.println(c[i].current);
+        // Serial.println("---------");
     }
 
     uint32_t max_index = 0;
@@ -251,27 +264,28 @@ bool Memory::readLeveled(bool storeStruct){
         // normal mode - 0 < current_index < number_of_pages
         // to find if we are in overflow mode we check if the last page has a lower index than the first page
         // if it does, we are in overflow mode
+        // TODO, this is not reliable if one of these becomes bad
         overflow_writer = index[number_of_pages-1] < index[0];
-        Serial.print("Overflow: ");
-        Serial.println(overflow_writer);
-        Serial.print("Last mode: ");
-        Serial.println(last_mode_writer);
-        Serial.println("///////////// finding index and page stuff here /////////////");
+        // Serial.print("Overflow: ");
+        // Serial.println(overflow_writer);
+        // Serial.print("Last mode: ");
+        // Serial.println(last_mode_writer);
+        // Serial.println("///////////// finding index and page stuff here /////////////");
         for (int i = 0; i < number_of_pages; ++i){
             if(((overflow_writer && index[i] > max_index) || (!overflow_writer && index[i] > max_index && index[i] < number_of_pages)) && !bad_pages[i]){
                 max_index = index[i];
-                Serial.print("Setting max_index to: ");
-                Serial.println(max_index);
+                // Serial.print("Setting max_index to: ");
+                // Serial.println(max_index);
                 max_index_page = i;
-                Serial.print("Setting max_index_page to: ");
-                Serial.println(max_index_page);
+                // Serial.print("Setting max_index_page to: ");
+                // Serial.println(max_index_page);
             }
         }
 
-        uint32_t max_index_write = max_index+1;
+        uint32_t max_index_write = 0;
         uint32_t max_index_page_write = max_index_page+1;
         uint8_t count = number_of_pages;
-        Serial.println("Checking for bad pages");
+        // Serial.println("Checking for bad pages");
         while(bad_pages[max_index_page_write] && count > 0){
             max_index_page_write++;
             // roll over
@@ -280,14 +294,22 @@ bool Memory::readLeveled(bool storeStruct){
             }
             count--;
         }
-        Serial.print("1. max_index_page_write: ");
-        Serial.println(max_index_page_write);
+        // Serial.print("1. max_index_page_write: ");
+        // Serial.println(max_index_page_write);
 
         if(max_index_page_write >= number_of_pages){
             max_index_page_write = max_index_page_write - number_of_pages;
         }
-        Serial.print("2. max_index_page_write: ");
-        Serial.println(max_index_page_write);
+        // Serial.print("2. max_index_page_write: ");
+        // Serial.println(max_index_page_write);
+
+        if(overflow_writer){
+            max_index_write = max_index_page + number_of_pages;
+        }else{
+            max_index_write = max_index_page;
+        }
+
+        max_index_write = max_index_write+1;
 
         if(last_mode_writer && !overflow_writer){
             max_index_write = 0;
@@ -295,32 +317,40 @@ bool Memory::readLeveled(bool storeStruct){
         }
         last_mode_writer = overflow_writer;
 
-        Serial.print("3. max_index_page_write: ");
-        Serial.println(max_index_page_write);
+        // Serial.print("3. max_index_page_write: ");
+        // Serial.println(max_index_page_write);
         
         
-        Serial.print("Setting global");
-        Serial.print(" current_index: ");
-        Serial.print(max_index_write);
-        Serial.print("; current_page: ");
-        Serial.println(max_index_page_write);
+        // Serial.print("Setting global");
+        // Serial.print(" current_index: ");
+        // Serial.print(max_index_write);
+        // Serial.print("; current_page: ");
+        // Serial.println(max_index_page_write);
         current_index = max_index_write;
         current_page = max_index_page_write;
         
-        Serial.println("///////////////////////////////////////");
+        //Serial.println("///////////////////////////////////////");
     }
     
     if(storeStruct){
+         // TODO, this is not reliable if one of these becomes bad
         overflow_reader = index[number_of_pages-1] < index[0];
-        Serial.println("\\\\\\\\\\\\\\ finding index and page stuff here \\\\\\\\\\\\\\");
+
+        // Serial.print("Overflow: ");
+        // Serial.println(overflow_writer);
+        // Serial.print("Last mode: ");
+        // Serial.println(last_mode_writer);
+
+        // Serial.println("\\\\\\\\\\\\\\ finding index and page stuff here \\\\\\\\\\\\\\");
+
         for (int i = 0; i < number_of_pages; ++i){
-            if(((overflow_reader && index[i] > max_index) || (!overflow_reader && index[i] > max_index && index[i] < number_of_pages)) && !bad_pages[i]){
+            if(((overflow_reader && (index[i] > max_index)) || (!overflow_reader && (index[i] > max_index) && (index[i] < number_of_pages))) && !bad_pages[i]){
                 max_index = index[i];
-                Serial.print("Setting max_index to: ");
-                Serial.println(max_index);
+                // Serial.print("Setting max_index to: ");
+                // Serial.println(max_index);
                 max_index_page = i;
-                Serial.print("Setting max_index_page to: ");
-                Serial.println(max_index_page);
+                // Serial.print("Setting max_index_page to: ");
+                // Serial.println(max_index_page);
             }
         }
 
@@ -333,22 +363,22 @@ bool Memory::readLeveled(bool storeStruct){
         int16_t count = number_of_pages;
         // this makes no sense wtf
         while(!correct[max_index_page] && count > 0){
-            Serial.print("Incorrect page: ");
-            Serial.println(max_index_page);
+            // Serial.print("Incorrect page: ");
+            // Serial.println(max_index_page);
             if(max_index_page == 0){
                 max_index_page = number_of_pages;
             }
             max_index_page--;
-            Serial.print("Trying: ");
-            Serial.println(max_index_page);
+            // Serial.print("Trying: ");
+            // Serial.println(max_index_page);
             count--;
         }
         if(count == 0){
-            Serial.println("No correct pages found");
+            // Serial.println("No correct pages found");
             return false;
         }
-        Serial.print("Max index page: ");
-        Serial.println(max_index_page);
+        // Serial.print("Max index page: ");
+        // Serial.println(max_index_page);
         config.globalpulse = c[max_index_page].globalpulse;
         config.current = c[max_index_page].current;
         config.maxcurr = c[max_index_page].maxcurr;
@@ -356,19 +386,19 @@ bool Memory::readLeveled(bool storeStruct){
         config.pulsefreq = c[max_index_page].pulsefreq;
         config.analog = c[max_index_page].analog;
         // print the values
-        Serial.println("=====================================================");
-        Serial.println("Config values:");
-        Serial.print("Current: ");
-        Serial.println(config.current);
-        Serial.println("\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\");
+        // Serial.println("=====================================================");
+        // Serial.println("Config values:");
+        // Serial.print("Current: ");
+        // Serial.println(config.current);
+        // Serial.println("\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\");
     }
 
-    Serial.println();
-    Serial.print("Current page: ");
-    Serial.println(current_page);
-    Serial.print("Current index: ");
-    Serial.println(current_index);
-    Serial.println("=====================================================");
+    // Serial.println();
+    // Serial.print("Current page: ");
+    // Serial.println(current_page);
+    // Serial.print("Current index: ");
+    // Serial.println(current_index);
+    // Serial.println("=====================================================");
     return correct[max_index_page];
 }
 
@@ -407,6 +437,3 @@ bool Memory::writeLeveled(){
 bool Memory::loadCurrent(){
     return readLeveled(true);
 }
-
-
-//TODO current problem is - recovery of overflow not working correctly, continuing from index from a page marked as bad

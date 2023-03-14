@@ -137,20 +137,11 @@ void setup() {
         // write empty config
         //memory.writePage(0);
     }
-    // dump the entire memory
-    Serial.println("MEMORY DUMP");
+    Serial.println("Starting");
     delay(5000);
-    Serial.println("=====================");
-    for (uint8_t i = 0; i < 8; i++){
-        Serial.print("Page ");
-        Serial.print(i);
-        Serial.print(": ");
-        Serial.println(memory.readPage(i));
-    }
-    Serial.println("Dump complete");
-    Serial.println("=====================");
+    Serial.println("Complete");
 
-    for(uint8_t i = 0; i < 32; i++){
+    for(uint8_t i = 0; i < 50; i++){
         Serial.print("Writing PAGES ");
         Serial.println(i);
         memory.config.current = i;
@@ -160,6 +151,19 @@ void setup() {
         Serial.println(i);
         Serial.print("Current: ");
         Serial.println(memory.config.current);
+        // if(i == 32){
+        //     Serial.println("=====================");
+        //     Serial.println("MEMORY DUMP");
+        //     for (uint8_t i = 0; i < 10; i++){
+        //         Serial.print("Page ");
+        //         Serial.print(i);
+        //         Serial.print(": ");
+        //         Serial.println(memory.readPage(i, true));
+        //     }
+        //     Serial.println("Dump complete");
+        //     Serial.println("=====================");
+        // }
+        Serial.println("--------------------");
     }
 }
 
