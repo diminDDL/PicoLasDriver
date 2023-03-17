@@ -122,9 +122,8 @@ bool Memory::writePage(uint32_t page, Configuration &c){
 
     // FOR TESTING REMOVE LATER
     // TODO REMOVE
-    // when page 0 corrupt it broke!!!
-    if(page == 0 || page == 5 || page == 6 || page == 7 || page == 9)
-        crc = 0x1234;
+    // if(page == 0 || page == 5 || page == 6 || page == 7 || page == 9)
+    //     crc = 0x1234;
 
 
     // write the CRC
@@ -263,6 +262,10 @@ bool Memory::readLeveled(bool storeStruct){
         // to find if we are in overflow mode we check if the last page has a lower index than the first page
         // if it does, we are in overflow mode
         // TODO, this is not reliable if one of these becomes bad
+        // Serial.print("Index at max valid page: ");
+        // Serial.println(index[max_valid_page]);
+        // Serial.print("Index at min valid page: ");
+        // Serial.println(index[min_valid_page]);
         overflow_writer = index[max_valid_page] < index[min_valid_page];
         // Serial.print("Overflow: ");
         // Serial.println(overflow_writer);
@@ -310,8 +313,8 @@ bool Memory::readLeveled(bool storeStruct){
         max_index_write = max_index_write+1;
 
         if(last_mode_writer && !overflow_writer){
-            max_index_write = 0;
-            max_index_page_write = 0;
+            max_index_write = min_valid_page;
+            max_index_page_write = min_valid_page;
         }
         last_mode_writer = overflow_writer;
 

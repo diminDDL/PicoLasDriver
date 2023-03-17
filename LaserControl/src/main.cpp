@@ -148,8 +148,8 @@ void setup() {
         memory.writeLeveled();
         memory.loadCurrent();
         Serial.print("Reading PAGES ");
-        Serial.println(i);
-        Serial.print("Current: ");
+        Serial.print(i);
+        Serial.print("; read: ");
         Serial.println(memory.config.current);
         // if(i == 32){
         //     Serial.println("=====================");
