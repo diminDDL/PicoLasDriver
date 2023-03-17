@@ -141,16 +141,28 @@ void setup() {
     delay(5000);
     Serial.println("Complete");
 
-    for(uint8_t i = 0; i < 50; i++){
-        Serial.print("Writing PAGES ");
+    for(uint8_t i = 0; i < 135; i++){
+        Serial.print("Writing PAGES 3x: ");
         Serial.println(i);
         memory.config.current = i;
         memory.writeLeveled();
+        memory.config.current = i * 10;
+        memory.writeLeveled();
+        memory.config.current = i * 100;
+        memory.writeLeveled();
         memory.loadCurrent();
-        Serial.print("Reading PAGES ");
+        memory.loadCurrent();
+        memory.loadCurrent();
+        memory.loadCurrent();
+        Serial.print("Reading PAGES 4x: ");
         Serial.print(i);
         Serial.print("; read: ");
         Serial.println(memory.config.current);
+        // compare if the values are the same
+        if (memory.config.current != i && memory.config.current != i * 10 && memory.config.current != i * 100){
+            Serial.println("ERROR");
+            while(1);
+        }
         // if(i == 32){
         //     Serial.println("=====================");
         //     Serial.println("MEMORY DUMP");
