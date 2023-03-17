@@ -64,28 +64,12 @@ bool Memory::readPage(uint32_t page, bool dbg){
     Configuration c;
     memcpy(&c, b, sizeof(Configuration));
     // read the CRC
-    if(dbg)
-        Serial.print("CRC: ");
     uint16_t crcRead = (EEPROM.read((base_crc_addr + 1) + page * page_size) << 8) | EEPROM.read(base_crc_addr + page * page_size);
-    if(dbg)
-        Serial.println(crcRead, HEX);
     // calculate the CRC
     uint16_t crcCalc = gen_crc16(b, sizeof(Configuration));
-    if(dbg)
-        Serial.print("CRC calc: ");
-    if(dbg)
-        Serial.println(crcCalc, HEX);
-    if(dbg){
-        Serial.print("current: ");
-        Serial.println(c.current);
-        Serial.print("index: ");
-        uint8_t idx = EEPROM.read((base_page_header) + page * page_size);
-        Serial.println(idx);
-    }
+    uint8_t idx = EEPROM.read((base_page_header) + page * page_size);
     // check if the CRC is correct
     if (crcRead == crcCalc){
-        if(dbg)
-            Serial.println("CRC correct");
         // set the values
         config.globalpulse = c.globalpulse;
         config.current = c.current;
@@ -95,8 +79,6 @@ bool Memory::readPage(uint32_t page, bool dbg){
         config.analog = c.analog;
         return true;
     } else {
-        if(dbg)
-            Serial.println("CRC incorrect");
         return false;
     }
 }
@@ -140,7 +122,8 @@ bool Memory::writePage(uint32_t page, Configuration &c){
 
     // FOR TESTING REMOVE LATER
     // TODO REMOVE
-    if(page == 5 || page == 6 || page == 7)
+    // when page 0 corrupt it broke!!!
+    if(page == 0 || page == 5 || page == 6 || page == 7 || page == 9)
         crc = 0x1234;
 
 
@@ -206,10 +189,20 @@ bool Memory::readLeveled(bool storeStruct){
     static bool last_mode_writer = false;
     bool overflow_reader = false;
     static bool last_mode_reader = false;
+    uint32_t max_valid_page = 0; // a valid page with the highest index
+    uint32_t min_valid_page = 99999; // a valid page with the lowest index
     for (int i = 0; i < number_of_pages; ++i){
         // Serial.print("--- Reading page ");
         // Serial.println(i);
         correct[i] = readPage(i, c[i]);
+        if(correct[i]){
+            if(i > max_valid_page){
+                max_valid_page = i;
+            }
+            if(i < min_valid_page){
+                min_valid_page = i;
+            }
+        }
         index[i] = EEPROM.read((base_page_header) + i * page_size);
         // Serial.print("Index: ");
         // Serial.println(index[i]);
@@ -258,6 +251,11 @@ bool Memory::readLeveled(bool storeStruct){
     uint32_t max_index = 0;
     uint32_t max_index_page = 0;
 
+    // Serial.print("Max Valid Page: ");
+    // Serial.println(max_valid_page);
+    // Serial.print("Min Valid Page: ");
+    // Serial.println(min_valid_page);
+
     if(!broke && !storeStruct){
         // to figure out the index we need to find if we are in overflow mode
         // overflow mode - number_of_pages < current_index < number_of_pages*2
@@ -265,7 +263,7 @@ bool Memory::readLeveled(bool storeStruct){
         // to find if we are in overflow mode we check if the last page has a lower index than the first page
         // if it does, we are in overflow mode
         // TODO, this is not reliable if one of these becomes bad
-        overflow_writer = index[number_of_pages-1] < index[0];
+        overflow_writer = index[max_valid_page] < index[min_valid_page];
         // Serial.print("Overflow: ");
         // Serial.println(overflow_writer);
         // Serial.print("Last mode: ");
@@ -334,7 +332,7 @@ bool Memory::readLeveled(bool storeStruct){
     
     if(storeStruct){
          // TODO, this is not reliable if one of these becomes bad
-        overflow_reader = index[number_of_pages-1] < index[0];
+        overflow_reader = index[max_valid_page] < index[min_valid_page];
 
         // Serial.print("Overflow: ");
         // Serial.println(overflow_writer);
