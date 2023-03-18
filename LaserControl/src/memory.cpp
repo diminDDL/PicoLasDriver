@@ -113,25 +113,6 @@ bool Memory::writePage(uint32_t page, Configuration &c){
     byte* b = (byte*) &c;
     EEPROM.write(base_data_addr + page * page_size, b, sizeof(Configuration));
     uint16_t crc = gen_crc16(b, sizeof(Configuration));
-
-    // FOR TESTING REMOVE LATER
-    // TODO REMOVE
-    // bad pages:
-    // 0,
-    // 1,
-    // 2,
-    // 10,
-    // 20,
-    // 21,
-    // 22,
-    // 23,
-    // 29,
-    // 30,
-    // 31
-
-    // if(page == 0 || page == 1 || page == 2 || page == 10 || page == 20 || page == 21 || page == 22 || page == 23 || page == 29 || page == 30 || page == 31)
-    //     crc = 0x1234;
-
     // write the CRC
     EEPROM.write(base_crc_addr + page * page_size, crc & 0xFF);
     EEPROM.write((base_crc_addr + 1) + page * page_size, (crc >> 8) & 0xFF);
@@ -188,9 +169,7 @@ bool Memory::readLeveled(bool storeStruct){
     uint32_t index[number_of_pages] = {0};      // a list of the indexes of the configurations
     bool broke = false;                         // a flag to that indicates if we broke out of the reading loop
     bool overflow_writer = false;               
-    static bool last_mode_writer = false;
     bool overflow_reader = false;
-    static bool last_mode_reader = false;
     uint32_t max_valid_page = 0;                // a valid page with the highest index
     uint32_t min_valid_page = 99999;            // a valid page with the lowest index
     for (uint8_t i = 0; i < number_of_pages; ++i){
@@ -243,14 +222,19 @@ bool Memory::readLeveled(bool storeStruct){
             }
         }
 
-        uint32_t max_index_write = 0;
         uint32_t max_index_page_write = max_index_page+1;
         uint8_t count = number_of_pages;
+        
         while(bad_pages[max_index_page_write] && count > 0){
             max_index_page_write++;
             // roll over
             if(max_index_page_write >= number_of_pages){
                 max_index_page_write = 0;
+                // if we weren't in overflow mode and had to roll over, we are now in overflow mode
+                if(!overflow_writer)
+                    overflow_writer = true;
+                else
+                    overflow_writer = false;
             }
             count--;
         }
@@ -259,19 +243,16 @@ bool Memory::readLeveled(bool storeStruct){
             max_index_page_write = max_index_page_write - number_of_pages;
         }
 
-        if(overflow_writer){
-            max_index_write = max_index_page + number_of_pages;
-        }else{
-            max_index_write = max_index_page;
-        }
-
-        max_index_write = max_index_write+1;
-
-        if(last_mode_writer && !overflow_writer){
-            max_index_write = min_valid_page;
+        if(index[min_valid_page] == number_of_pages && index[max_valid_page] == number_of_pages*2-1){
             max_index_page_write = min_valid_page;
         }
-        last_mode_writer = overflow_writer;
+
+        uint32_t max_index_write = 0;
+        if(overflow_writer){
+            max_index_write = max_index_page_write + number_of_pages;
+        }else{
+            max_index_write = max_index_page_write;
+        }
 
         current_index = max_index_write;
         current_page = max_index_page_write;
@@ -280,19 +261,15 @@ bool Memory::readLeveled(bool storeStruct){
     
     if(storeStruct){
         overflow_reader = index[max_valid_page] < index[min_valid_page];
-
+        if((index[min_valid_page] == min_valid_page + number_of_pages) && (index[max_valid_page] == (number_of_pages*2)-(number_of_pages-max_valid_page))){
+            overflow_reader = true;
+        }
         for (int i = 0; i < number_of_pages; ++i){
             if(((overflow_reader && index[i] > max_index) || (!overflow_reader && index[i] > max_index && index[i] < number_of_pages)) && !bad_pages[i]){
                 max_index = index[i];
                 max_index_page = i;
             }
         }
-
-        if(last_mode_reader && !overflow_reader){
-            max_index_page = number_of_pages-1;
-        }
-        last_mode_reader = overflow_reader;
-
         // if the last page is incorrect, we need to find the last correct page
         int16_t count = number_of_pages;
         while(!correct[max_index_page] && count > 0){
@@ -305,8 +282,6 @@ bool Memory::readLeveled(bool storeStruct){
         if(count == 0){
             return false;
         }
-        Serial.print("Reading config from page: ");
-        Serial.println(max_index_page);
         config.globalpulse = c[max_index_page].globalpulse;
         config.current = c[max_index_page].current;
         config.maxcurr = c[max_index_page].maxcurr;
@@ -327,6 +302,16 @@ bool Memory::writeLeveled(){
     // try to write, if we can't read back the crc we add it to the list of bad pages and try the next page
     int16_t count = number_of_pages;
     bool correct = false;
+
+    Configuration c;
+    correct = readPage(current_page, c);
+    if(correct){
+        if (config.globalpulse == c.globalpulse && config.current == c.current && config.maxcurr == c.maxcurr && config.pulsedur == c.pulsedur && config.pulsefreq == c.pulsefreq && config.analog == c.analog){
+            Serial.println("Config is the same, not writing");
+            return true;
+        }
+    }
+
     do{
         // first we read the page but don't override the config struct
         readLeveled(false);

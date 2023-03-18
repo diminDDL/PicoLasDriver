@@ -142,24 +142,25 @@ void setup() {
     Serial.println("Complete");
 
     for(uint8_t i = 0; i < 135; i++){
-        Serial.print("Writing PAGES 3x: ");
+        Serial.print("Writing PAGES: ");
         Serial.println(i);
-        memory.config.current = i;
+        memory.config.current = i * 100;
         memory.writeLeveled();
         memory.config.current = i * 10;
         memory.writeLeveled();
-        memory.config.current = i * 100;
+        memory.config.current = i;
+        memory.writeLeveled();
         memory.writeLeveled();
         memory.loadCurrent();
         memory.loadCurrent();
         memory.loadCurrent();
         memory.loadCurrent();
-        Serial.print("Reading PAGES 4x: ");
+        Serial.print("Reading PAGES: ");
         Serial.print(i);
         Serial.print("; read: ");
         Serial.println(memory.config.current);
         // compare if the values are the same
-        if (memory.config.current != i && memory.config.current != i * 10 && memory.config.current != i * 100){
+        if (memory.config.current != i){
             Serial.println("ERROR");
             while(1);
         }
