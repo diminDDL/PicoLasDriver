@@ -56,10 +56,20 @@ namespace arduino_due
        pwm& operator=(const pwm& the_pwm) = delete;
        pwm& operator=(pwm&& the_pwm) = delete;
 
+       bool start(){
+          if(_started_) return false;
+          PWMC_EnableChannel(
+	         PWM_INTERFACE,
+	         pin_info::channel
+	       ); 
+         _started_ = true;
+          return true;
+       }
+
        bool start(
         uint32_t period, // hundredths of usecs (1e-8 secs)
         uint32_t duty, // // hundredths of usecs (1e-8 secs)
-        bool inverted = false
+        bool inverted = false // inverted output
        )
        {
          uint32_t clock;
@@ -70,7 +80,7 @@ namespace arduino_due
 	       ) return false;
 
          _inverted_=inverted;
-
+         
 	       _start_(period,duty,clock,_inverted_);
 
 	       return true;

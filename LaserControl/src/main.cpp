@@ -13,6 +13,8 @@ using namespace arduino_due::pwm_lib;
 // local pulse count
 // reading ADC
 // estop
+// add R32 short
+// external/no trigger
 
 // configuration variables
 // set serial port to 115200 baud, data 8 bits, even parity, 1 stop bit
@@ -23,6 +25,8 @@ using namespace arduino_due::pwm_lib;
 #define ESTOP_PIN 3                         // emergency stop pin, active low
 #define EN_PIN 4                            // enable pin, active high
 #define PULSE_PIN pwm<pwm_pin::PWML6_PC23>  // pin used to generate the pulses
+#define PULSE_PIN_STD 7                     // pin used to generate the pulses in standard notation
+#define PULSE_COUNT_PIN 6                   // pin used to count the pulses
 #define GPIO_BASE_PIN 8                     // base pin for the GPIO outputs
 #define GPIO_NUM 4                          // number of GPIO pins
 #define OE_LED 13                           // LED indicating wether the output is enabled
@@ -47,11 +51,12 @@ uint32_t pwm_period;
 void trg(){
     // if trigger is HIGH and output is enabled we start PWM
     if (digitalRead(INTERRUPT_PIN) == HIGH){
-        // our numbers are in 1e-6, but the library uses 1e-8
-        pulsePin.start(pwm_period*100, comms.data.setPulseDuration*100);
+        pulsePin.start();
+        digitalWrite(TRIG_LED, HIGH);
     } else {
         // stop the PWM
         pulsePin.stop();
+        digitalWrite(TRIG_LED, LOW);
     }
 }
 
@@ -75,13 +80,16 @@ void setup() {
     pinMode(TRIG_LED, OUTPUT);
     pinMode(E_STOP_LED, OUTPUT);
     pinMode(FAULT_LED, OUTPUT);
+    pinMode(PULSE_PIN_STD, OUTPUT);
+    digitalWrite(PULSE_PIN_STD, LOW);
 
     // set up interrupt to handle the e-stop
 
     // set up the PWM
     pinMode(INTERRUPT_PIN, INPUT);
-    pinMode(6, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(6), pulse, RISING);
+
+    pinMode(PULSE_COUNT_PIN, INPUT);
+    attachInterrupt(digitalPinToInterrupt(PULSE_COUNT_PIN), pulse, RISING);
 
     if(memory.loadCurrent() == true){
         // read values from memory
@@ -123,19 +131,21 @@ void set_values(){
         }
 
         // calculate period in microseconds
-        pwm_period = 1000000 / comms.data.setPulseFrequency;
+        pwm_period = 1000000 / (comms.data.setPulseFrequency);
         // attach the interrupt pin
         // check if pulse duration is less than period
         if (comms.data.setPulseDuration < pwm_period){
+            // our numbers are in 1e-6, but the library uses 1e-8
+            pulsePin.stop();
+            pulsePin.start(pwm_period*100, (comms.data.setPulseDuration)*100, false);
+            pulsePin.stop();
             attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), trg, CHANGE);
-            digitalWrite(TRIG_LED, HIGH);
         }
     }else{
-        // detach the interrupt pin
+        pulsePin.stop();
+        digitalWrite(PULSE_PIN_STD, LOW);
         detachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN));
-        digitalWrite(TRIG_LED, LOW);
-        // run the trg function, if output is diabled it will handle it
-        trg();
+        
     }
     Serial.println("Setting GPIO");
     // GPIOs stay on regardless of OE, only turned off by E-STOP
@@ -173,10 +183,10 @@ void loop() {
         // turn off GPIO
         // send error message
     }
-    if (comms.data.outputEnabled){
-        Serial.print("Pulse counter: ");
-        comms.print_big_int(comms.data.globalPulseCount);
-        Serial.println();
-    }
+    // if (comms.data.outputEnabled){
+    //     Serial.print("Pulse counter: ");
+    //     comms.print_big_int(comms.data.globalPulseCount);
+    //     Serial.println();
+    // }
     digitalWrite(OE_LED, comms.data.outputEnabled);
 }
