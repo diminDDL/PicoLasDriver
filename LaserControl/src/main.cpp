@@ -44,6 +44,8 @@ MCP4725 MCP(0x60, &Wire1);                  // init DAC
 // if estop is true the driver will stop sending pulses to the laser
 
 bool estop = false;             // emergency stop flag
+bool eeprom_fault = false;      // eeprom fault flag
+
 
 void stop(){
 }
@@ -101,6 +103,7 @@ void setup() {
         comms.data.analogMode = memory.config.analog;
     }else{
         Serial.println("Could not load memory");
+        eeprom_fault = true;
     }
 
     if (MCP.begin() == false)
@@ -134,12 +137,17 @@ void set_values(){
         pwm_period = 1000000 / (comms.data.setPulseFrequency);
         // attach the interrupt pin
         // check if pulse duration is less than period
-        if (comms.data.setPulseDuration < pwm_period){
+        if (comms.data.setPulseDuration <= pwm_period){
             // our numbers are in 1e-6, but the library uses 1e-8
+            Serial.println("Starting PWM");
             pulsePin.stop();
             pulsePin.start(pwm_period*100, (comms.data.setPulseDuration)*100, false);
             pulsePin.stop();
             attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), trg, CHANGE);
+            // edge case, if the trigger is already high we need to start the PWM
+            if(digitalRead(INTERRUPT_PIN) == HIGH){
+                trg();
+            }
         }
     }else{
         pulsePin.stop();
@@ -156,10 +164,18 @@ void set_values(){
 
 void EEPROM_service(){
     static uint32_t lastTime = 0;
-    if (millis() - lastTime > 1000 || comms.valuesChanged){
+    if (millis() - lastTime > 10000 || comms.valuesChanged){
         lastTime = millis();
         // set the values
-        // TODO rewrite this to use the memory object
+        memory.config.globalpulse = comms.data.globalPulseCount;
+        memory.config.current = comms.data.setCurrent;
+        memory.config.maxcurr = comms.data.maxCurrent;
+        memory.config.pulsedur = comms.data.setPulseDuration;
+        memory.config.pulsefreq = comms.data.setPulseFrequency;
+        memory.config.analog = comms.data.analogMode;
+
+        // write to memory
+        eeprom_fault = !memory.writeLeveled();
     }
 }
 
@@ -167,9 +183,10 @@ void loop() {
     comms.readSerial();
     comms.parseBuffer();
     delay(100);
-    //EEPROM_service();
+    EEPROM_service();
     if(!estop){
         if(comms.valuesChanged){
+            Serial.println("Values changed");
             set_values();
             //EEPROM_service();
             comms.valuesChanged = false;
@@ -189,4 +206,9 @@ void loop() {
     //     Serial.println();
     // }
     digitalWrite(OE_LED, comms.data.outputEnabled);
+    if(eeprom_fault){
+        digitalWrite(FAULT_LED, HIGH);
+    }else{
+        digitalWrite(FAULT_LED, LOW);
+    }
 }

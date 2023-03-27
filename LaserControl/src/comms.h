@@ -41,8 +41,8 @@ class Communications{
         UARTClass *fwdPort;         // pointer to the serial port to forward data to
         uint32_t bdRate;            // baud rate of the serial port
         UARTClass::UARTModes mdReg; // mode register of the serial port
-        char readBuff[64];          // array for the serial data
-        char drivBuff[64];          // array for the serial data
+        char readBuff[128];          // array for the serial data
+        char drivBuff[128];          // array for the serial data
         bool newData = false;       // flag to indicate that new data has been received
         char errorStr[3] = "00";    // string to hold the error code
     public:

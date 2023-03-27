@@ -30,8 +30,8 @@ void Communications::init(void){
 */
 void Communications::readSerial(void){
     // read the data from serial port and store it in the dest array
-    uint8_t i = 0;
-    uint8_t size = sizeof(readBuff);
+    uint32_t i = 0;
+    uint32_t size = sizeof(readBuff);
     if (serial->available() >0){
         // clear the buffer
         memset(readBuff, 0, size);
@@ -87,6 +87,9 @@ void Communications::print_big_int(uint64_t value){
 * Parse the buffer and update the data struct
 */
 void Communications::parseBuffer(void){
+    // TODO remove this
+    serial->print(readBuff);
+
     if(!newData){
         return;
     }
@@ -245,6 +248,10 @@ void Communications::parseBuffer(void){
             printErrorStr();
         }
     }
+
+    // clear the buffer
+    memset(readBuff, 0, sizeof(readBuff));
+
     ///// remove later
     // TODO test cahnges
     serial->println();
