@@ -10,7 +10,6 @@ using namespace arduino_due::pwm_lib;
 // create a wire object
 
 // TODO
-// local pulse count
 // reading ADC
 // estop
 // add R32 short
@@ -46,7 +45,6 @@ MCP4725 MCP(0x60, &Wire1);                  // init DAC
 bool estop = false;             // emergency stop flag
 bool eeprom_fault = false;      // eeprom fault flag
 
-
 void stop(){
 }
 uint32_t pwm_period;
@@ -64,6 +62,11 @@ void trg(){
 
 void pulse(){
     comms.data.globalPulseCount++;
+}
+
+void dummy_pulse(){
+    // we do nothing here
+    __asm__ __volatile__ ("nop");
 }
 
 void setup() {
@@ -91,11 +94,13 @@ void setup() {
     pinMode(INTERRUPT_PIN, INPUT);
 
     pinMode(PULSE_COUNT_PIN, INPUT);
-    attachInterrupt(digitalPinToInterrupt(PULSE_COUNT_PIN), pulse, RISING);
+    attachInterrupt(digitalPinToInterrupt(PULSE_COUNT_PIN), dummy_pulse, RISING);
+    detachInterrupt(digitalPinToInterrupt(PULSE_COUNT_PIN));
 
     if(memory.loadCurrent() == true){
         // read values from memory
         comms.data.globalPulseCount = memory.config.globalpulse;
+        comms.data.initPulseCount = memory.config.globalpulse;
         comms.data.setCurrent = memory.config.current;
         comms.data.maxCurrent = memory.config.maxcurr;
         comms.data.setPulseDuration = memory.config.pulsedur;
@@ -122,6 +127,7 @@ void setAnalogCurrentSetpoint(float current){
 }
 
 void set_values(){
+    static bool enabled = false;
     // every time this function is run, the states are pushed to the IO, such as DAC voltages, pulses and so on.
     // if analog mode is on and output is enabled set the DAC voltage
     if (comms.data.outputEnabled){
@@ -143,7 +149,16 @@ void set_values(){
             pulsePin.stop();
             pulsePin.start(pwm_period*100, (comms.data.setPulseDuration)*100, false);
             pulsePin.stop();
-            attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), trg, CHANGE);
+            if(!enabled){
+                // this cursed code is to prevent the interrupt from firing when we attach it
+                attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), trg, CHANGE);
+                delay(1);
+                attachInterrupt(digitalPinToInterrupt(PULSE_COUNT_PIN), dummy_pulse, RISING);
+                detachInterrupt(digitalPinToInterrupt(PULSE_COUNT_PIN));
+                delay(1);
+                attachInterrupt(digitalPinToInterrupt(PULSE_COUNT_PIN), pulse, RISING);
+                enabled = true;
+            }
             // edge case, if the trigger is already high we need to start the PWM
             if(digitalRead(INTERRUPT_PIN) == HIGH){
                 trg();
@@ -152,8 +167,10 @@ void set_values(){
     }else{
         pulsePin.stop();
         digitalWrite(PULSE_PIN_STD, LOW);
+        digitalWrite(TRIG_LED, LOW);
         detachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN));
-        
+        detachInterrupt(digitalPinToInterrupt(PULSE_COUNT_PIN));
+        enabled = false;
     }
     Serial.println("Setting GPIO");
     // GPIOs stay on regardless of OE, only turned off by E-STOP
@@ -200,11 +217,13 @@ void loop() {
         // turn off GPIO
         // send error message
     }
-    // if (comms.data.outputEnabled){
-    //     Serial.print("Pulse counter: ");
-    //     comms.print_big_int(comms.data.globalPulseCount);
-    //     Serial.println();
-    // }
+    if (comms.data.outputEnabled){
+        Serial.print("Global Pulse counter: ");
+        comms.print_big_int(comms.data.globalPulseCount);
+        Serial.print("; Local: ");
+        comms.print_big_int(comms.data.localPulseCount);
+        Serial.println();
+    }
     digitalWrite(OE_LED, comms.data.outputEnabled);
     if(eeprom_fault){
         digitalWrite(FAULT_LED, HIGH);

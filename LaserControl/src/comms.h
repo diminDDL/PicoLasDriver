@@ -59,11 +59,13 @@ class Communications{
         void sendHeartbeat(void);
         void printErrorStr(bool commandType);
         void print_big_int(uint64_t value);
+        void updateValues(void);
 
         bool valuesChanged = false;     // flag to indicate if the values have changed
         // struct with the data
         struct Data{
             uint64_t globalPulseCount = 0;                          // counts the total number of pulses sent do the driver
+            uint64_t initPulseCount = 0;                            // initial pulse count
             uint64_t localPulseCount = 0;                           // counts the number of pulses sent to the driver since it was turned on
             float setCurrent = 0.0;                                 // current set by the user in Amperes
             float maxCurrent = 0.0;                                 // max current set by the user in Amperes

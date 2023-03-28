@@ -44,6 +44,8 @@ void Communications::readSerial(void){
             break;
         }
     }
+    // update internal variables
+    updateValues();
 }
 
 /*
@@ -81,6 +83,14 @@ void Communications::print_big_int(uint64_t value){
         print_big_int(value / 10);
     }
     serial->print((uint32_t)(value % 10));
+}
+
+/*
+* Update the values in the data struct
+*/
+
+void Communications::updateValues(void){
+    data.localPulseCount = data.globalPulseCount - data.initPulseCount;
 }
 
 /*
@@ -212,6 +222,7 @@ void Communications::parseBuffer(void){
             serial->print(EOL);
             printErrorStr();
         } else if (strcmp(readBuff, getLocalPulseCountCommand.c_str()) == 0){
+            updateValues();
             // get the local pulse count
             print_big_int(data.localPulseCount);
             serial->print(EOL);
