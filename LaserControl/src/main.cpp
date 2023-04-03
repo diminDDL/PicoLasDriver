@@ -10,10 +10,9 @@ using namespace arduino_due::pwm_lib;
 // create a wire object
 
 // TODO
-// reading ADC
-// estop
-// add R32 short
 // external/no trigger
+// lock state?
+// test it
 
 // configuration variables
 // set serial port to 115200 baud, data 8 bits, even parity, 1 stop bit
@@ -35,6 +34,7 @@ using namespace arduino_due::pwm_lib;
 #define MAX_DAC_VOLTAGE 1.5                 // maximum voltage of the DAC
 #define DAC_VREF 3.3                        // DAC reference voltage
 #define DAC_VDIV 2                          // DAC voltage divider ratio 2 means we are using a 1:2 divider aka the output is half the input
+#define ADC_PIN A0                          // pin used to read the photodiode
 PULSE_PIN pulsePin;                         // pulse pin object
 Communications comms(&Serial, &FORWARD_PORT, SERIAL_BAUD_RATE, SERIAL_MODE); // communications object
 Memory memory;                              // memory object
@@ -45,8 +45,8 @@ MCP4725 MCP(0x60, &Wire1);                  // init DAC
 bool estop = false;             // emergency stop flag
 bool eeprom_fault = false;      // eeprom fault flag
 
-void stop(){
-}
+void stop();
+
 uint32_t pwm_period;
 void trg(){
     // if trigger is HIGH and output is enabled we start PWM
@@ -75,12 +75,18 @@ void setup() {
     comms.init();
     Serial.println("Starting");
     analogWriteResolution(12);
-    pinMode(13, OUTPUT);
+    analogReadResolution(12);
     for(uint8_t i = 0; i < GPIO_NUM; i++){
         pinMode(GPIO_BASE_PIN + i, OUTPUT);
         digitalWrite(GPIO_BASE_PIN + i, LOW);
     }
-    pinMode(ESTOP_PIN, INPUT_PULLUP);   // TODO attach interrupt to this pin
+    pinMode(EN_PIN, OUTPUT);
+    digitalWrite(EN_PIN, HIGH);
+    pinMode(ESTOP_PIN, INPUT);   // TODO attach interrupt to this pin
+    attachInterrupt(digitalPinToInterrupt(ESTOP_PIN), dummy_pulse, RISING);
+    detachInterrupt(digitalPinToInterrupt(ESTOP_PIN));
+    delay(1);
+    attachInterrupt(digitalPinToInterrupt(ESTOP_PIN), stop, FALLING);
     pinMode(OE_LED, OUTPUT);
     pinMode(TRIG_LED, OUTPUT);
     pinMode(E_STOP_LED, OUTPUT);
@@ -196,7 +202,45 @@ void EEPROM_service(){
     }
 }
 
+void pollADC(){
+    comms.data.adcValue = analogRead(ADC_PIN);
+}
+
+void stop(){
+    // turn off the output
+    digitalWrite(EN_PIN, LOW);
+    // set the DAC to 0V
+    MCP.setValue(0);
+    // set outputEnabled to false
+    comms.data.outputEnabled = false;
+    // detach the interrupt pin
+    detachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN));
+    detachInterrupt(digitalPinToInterrupt(PULSE_COUNT_PIN));
+    // stop the PWM
+    pulsePin.stop();
+    // set error flag
+    comms.error2 = true;
+    // turn off GPIO
+    for(uint8_t i = 0; i < GPIO_NUM; i++){
+        digitalWrite(GPIO_BASE_PIN + i, LOW);
+    }
+    // send error message
+    // TODO implement error message
+    // comms.sendError();
+    // turn on LED
+    digitalWrite(FAULT_LED, HIGH);
+    // force store memory
+    if(!estop){
+        comms.valuesChanged = true;
+        EEPROM_service();
+        comms.valuesChanged = false;
+        Serial.println("Stopping");
+    }
+    estop = true;
+}
+
 void loop() {
+    pollADC();
     comms.readSerial();
     comms.parseBuffer();
     delay(100);
@@ -205,17 +249,10 @@ void loop() {
         if(comms.valuesChanged){
             Serial.println("Values changed");
             set_values();
-            //EEPROM_service();
             comms.valuesChanged = false;
         }
     }else{
-        // TODO
-        // set the DAC to 0V
-        // set outputEnabled to false
-        // detach the interrupt pin
-        // set error flag
-        // turn off GPIO
-        // send error message
+        stop();
     }
     if (comms.data.outputEnabled){
         Serial.print("Global Pulse counter: ");
@@ -225,7 +262,8 @@ void loop() {
         Serial.println();
     }
     digitalWrite(OE_LED, comms.data.outputEnabled);
-    if(eeprom_fault){
+    digitalWrite(E_STOP_LED, estop);
+    if(eeprom_fault || comms.error2){
         digitalWrite(FAULT_LED, HIGH);
     }else{
         digitalWrite(FAULT_LED, LOW);

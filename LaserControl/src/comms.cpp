@@ -252,6 +252,11 @@ void Communications::parseBuffer(void){
             serial->print(data.analogMode, DEC);
             serial->print(EOL);
             printErrorStr();
+        } else if (strcmp(readBuff, getAdcCommand.c_str()) == 0){
+            // get the adc value
+            serial->print(data.adcValue);
+            serial->print(EOL);
+            printErrorStr();
         } else {
             // unknown command
             serial->print("UC");

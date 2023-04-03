@@ -20,6 +20,7 @@ These variables are public so that the user can access them.
 */
 class Communications{
     private:
+        // TODO double check the command list in the json
         // command list
         const String getGlobalPulseCountCommand = "gpsc";       // string representation of the pulse count command
         const String getLocalPulseCountCommand = "gcpc";        // string representation of the local pulse count command
@@ -36,6 +37,7 @@ class Communications{
         const String setAnalogModeCommand = "anmo";             // string representation of the analog mode command
         const String getModeCommand = "gmod";                   // string representation of the get mode command
         const String setGpioStateCommand = "stio";              // string representation of the set GPIO state command
+        const String getAdcCommand = "gadc";                    // string representation of the get ADC command
         // internal variables
         UARTClass *serial;          // pointer to the serial port
         UARTClass *fwdPort;         // pointer to the serial port to forward data to
@@ -74,10 +76,11 @@ class Communications{
             bool outputEnabled = false;                             // output enabled flag
             bool lockState = false;                                 // lock state of the driver and UI (locked = true, unlocked = false)
             bool analogMode = false;                                // analog mode flag
+            uint16_t adcValue = 0;                                  // has the latest ADC value
             byte gpioState = 0;                                     // state of the GPIO pins
         } data;
         bool error1 = false;        // Not implemented (should be used to read error states of the driver)
-        bool error2 = false;
+        bool error2 = false;        // Used to indicate critical errors (driver halted, etc.)
         
 };
 

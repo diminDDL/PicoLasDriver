@@ -17,6 +17,15 @@
 			"chrono": "cpp",
 			"variant": "cpp",
 			"streambuf": "cpp"
-		}
+		},
+		"cSpell.words": [
+			"comms",
+			"globalpulse",
+			"maxcurr",
+			"pulsedur",
+			"pulsefreq",
+			"PWML",
+			"VDIV"
+		]
 	}
 }
