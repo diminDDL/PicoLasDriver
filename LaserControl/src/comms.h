@@ -38,6 +38,8 @@ class Communications{
         const String getModeCommand = "gmod";                   // string representation of the get mode command
         const String setGpioStateCommand = "stio";              // string representation of the set GPIO state command
         const String getAdcCommand = "gadc";                    // string representation of the get ADC command
+        const String setPulseMode = "spmo";                     // string representation of the set pulse mode command
+        const String getPulseMode = "gpmo";                     // string representation of the get pulse mode command
         // internal variables
         UARTClass *serial;          // pointer to the serial port
         UARTClass *fwdPort;         // pointer to the serial port to forward data to
@@ -78,6 +80,7 @@ class Communications{
             bool analogMode = false;                                // analog mode flag
             uint16_t adcValue = 0;                                  // has the latest ADC value
             byte gpioState = 0;                                     // state of the GPIO pins
+            byte pulseMode = 0;                                     // pulse mode, 0 - continuous, 1 - single pulse
         } data;
         bool error1 = false;        // Not implemented (should be used to read error states of the driver)
         bool error2 = false;        // Used to indicate critical errors (driver halted, etc.)

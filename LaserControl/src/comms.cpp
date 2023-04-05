@@ -174,12 +174,10 @@ void Communications::parseBuffer(void){
             serial->print(EOL);
             printErrorStr(true);
         } else if (strcmp(command, lockCommand.c_str()) == 0){
-            // lock the driver, 1 = lock, 0 = unlock if the string is invalid it will still return 0 thus disabling the output if the host sends an invalid values
+            // lock the driver, 1 = lock, 0 = unlock if the string is invalid it will not change the lock state
             if (atoi(value) == 1){
                 data.lockState = true;
             } else if (atoi(value) == 0){
-                data.lockState = false;
-            } else {
                 data.lockState = false;
             }
             serial->print(data.lockState, DEC);
@@ -200,12 +198,21 @@ void Communications::parseBuffer(void){
         } else if(strcmp(command, setGpioStateCommand.c_str()) == 0){ 
             // set the GPIO state 
             data.gpioState = (atoi(value) > 0) && (atoi(value) < 256) ? atoi(value) : 0;
-            serial->print(data.gpioState);
+            serial->print(data.gpioState, DEC);
             serial->print(EOL);
             printErrorStr(true);
 
             serial->println(data.gpioState, BIN);
-        }else {
+        } else if(strcmp(command, setPulseMode.c_str()) == 0){
+            if (atoi(value) == 1){
+                data.pulseMode = 1;
+            } else if (atoi(value) == 0){
+                data.pulseMode = 0;
+            }
+            serial->print(data.pulseMode, DEC);
+            serial->print(EOL);
+            printErrorStr(true);
+        } else {
             // unknown command
             serial->print("UC");
             serial->print(EOL);
@@ -257,6 +264,10 @@ void Communications::parseBuffer(void){
             serial->print(data.adcValue);
             serial->print(EOL);
             printErrorStr();
+        } else if (strcmp(readBuff, getPulseMode.c_str()) == 0){
+            // print the pulse mode
+            serial->print(data.pulseMode);
+            serial->print(EOL); 
         } else {
             // unknown command
             serial->print("UC");
@@ -289,6 +300,8 @@ void Communications::parseBuffer(void){
     serial->println(data.analogMode);
     serial->print("GPIO state: ");
     serial->println(data.gpioState);
+    serial->print("Pulse mode: ");
+    serial->println(data.pulseMode);
     serial->print("Changed: ");
     serial->println(valuesChanged);
     /////

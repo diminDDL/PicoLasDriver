@@ -10,9 +10,9 @@ using namespace arduino_due::pwm_lib;
 // create a wire object
 
 // TODO
-// external/no trigger
 // lock state?
 // test it
+// fix bug where frequency < trigger freq causes the driver to lag and behave weirdly
 
 // configuration variables
 // set serial port to 115200 baud, data 8 bits, even parity, 1 stop bit
@@ -48,7 +48,19 @@ bool eeprom_fault = false;      // eeprom fault flag
 void stop();
 
 uint32_t pwm_period;
+// why is this firing very often on low frequencies
 void trg(){
+    static uint32_t interruptsInX = 0;
+    interruptsInX++;
+    static uint32_t last_interrupt_time = 0;
+    if(millis() - last_interrupt_time > 300){
+        Serial.print("Trigger delta: ");
+        Serial.println(millis() - last_interrupt_time);
+        Serial.print("Interrupts in X: ");
+        Serial.println(interruptsInX);
+        interruptsInX = 0;
+        last_interrupt_time = millis();
+    }
     // if trigger is HIGH and output is enabled we start PWM
     if (digitalRead(INTERRUPT_PIN) == HIGH){
         pulsePin.start();
@@ -61,7 +73,23 @@ void trg(){
 }
 
 void pulse(){
-    comms.data.globalPulseCount++;
+    switch(comms.data.pulseMode){
+        case 0:
+            // we are in standard (continuous) mode
+            break;
+        case 1:
+            // we are in PWM mode
+            if(digitalRead(PULSE_COUNT_PIN) == LOW){
+                pulsePin.stop();
+            }
+            break;
+        default:
+            // we are in unknown mode
+            break;
+    }
+    if(digitalRead(PULSE_COUNT_PIN) == HIGH){
+        comms.data.globalPulseCount++;
+    }
 }
 
 void dummy_pulse(){
@@ -159,10 +187,10 @@ void set_values(){
                 // this cursed code is to prevent the interrupt from firing when we attach it
                 attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), trg, CHANGE);
                 delay(1);
-                attachInterrupt(digitalPinToInterrupt(PULSE_COUNT_PIN), dummy_pulse, RISING);
+                attachInterrupt(digitalPinToInterrupt(PULSE_COUNT_PIN), dummy_pulse, CHANGE);
                 detachInterrupt(digitalPinToInterrupt(PULSE_COUNT_PIN));
                 delay(1);
-                attachInterrupt(digitalPinToInterrupt(PULSE_COUNT_PIN), pulse, RISING);
+                attachInterrupt(digitalPinToInterrupt(PULSE_COUNT_PIN), pulse, CHANGE);
                 enabled = true;
             }
             // edge case, if the trigger is already high we need to start the PWM
@@ -254,13 +282,13 @@ void loop() {
     }else{
         stop();
     }
-    if (comms.data.outputEnabled){
-        Serial.print("Global Pulse counter: ");
-        comms.print_big_int(comms.data.globalPulseCount);
-        Serial.print("; Local: ");
-        comms.print_big_int(comms.data.localPulseCount);
-        Serial.println();
-    }
+    // if (comms.data.outputEnabled){
+    //     Serial.print("Global Pulse counter: ");
+    //     comms.print_big_int(comms.data.globalPulseCount);
+    //     Serial.print("; Local: ");
+    //     comms.print_big_int(comms.data.localPulseCount);
+    //     Serial.println();
+    // }
     digitalWrite(OE_LED, comms.data.outputEnabled);
     digitalWrite(E_STOP_LED, estop);
     if(eeprom_fault || comms.error2){
