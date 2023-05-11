@@ -1,8 +1,6 @@
 #include <Arduino.h>
 #include <SPI.h>
 
-#define BUFFER_SIZE 512                 // we want to be able to store this much of the FRAM in order to provide bulk read functionality
-
 class FRAM{
     private:
         uint8_t WREN  = 0b00000110;     // Set write enable latch
@@ -19,7 +17,6 @@ class FRAM{
         bool _FRAM_WEL = false;
         bool _FRAM_BP0 = false;
         bool _FRAM_BP1 = false;
-        uint8_t _FRAM_buffer[BUFFER_SIZE];
         
         void readStatus(){
             digitalWrite(this->_FRAM_CS, LOW);

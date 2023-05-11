@@ -1,10 +1,11 @@
 #include <Arduino.h>
 #include "Wire.h"
 #include <comms.h>
-#include <fram.h>
-//TODO figure out EEPROM
-// #include <memory.h>
-// create a wire object
+#include <memory.h>
+#include <mcp.h>
+#include <mbed.h>
+
+
 
 // TODO
 // lock state?
@@ -16,32 +17,39 @@
 #define SERIAL_BAUD_RATE 115200
 #define SERIAL_MODE SERIAL_8E1
 #define FORWARD_PORT Serial1                // when in digital mode all the communication will be forwarded to this port
-#define INTERRUPT_PIN 2                     // interrupt pin for the trigger
-#define ESTOP_PIN 3                         // emergency stop pin, active low
-#define EN_PIN 4                            // enable pin, active high
-#define PULSE_PIN 5  // pin used to generate the pulses
-#define PULSE_PIN_STD 7                     // pin used to generate the pulses in standard notation
-#define PULSE_COUNT_PIN 6                   // pin used to count the pulses
-#define GPIO_BASE_PIN 8                     // base pin for the GPIO outputs
+#define INTERRUPT_PIN 18                     // interrupt pin for the trigger
+#define ESTOP_PIN 19                         // emergency stop pin, active low
+#define EN_PIN 20                            // enable pin, active high
+#define PULSE_PIN 14                        // pin used to generate the pulses
+#define PULSE_COUNT_PIN 15                   // pin used to count the pulses
+#define GPIO_BASE_PIN 10                     // base pin for the GPIO outputs
 #define GPIO_NUM 4                          // number of GPIO pins
-#define OE_LED 13                           // LED indicating wether the output is enabled
-#define TRIG_LED 12                         // LED indicating Internal/external triggering
-#define E_STOP_LED A3                       // LED indicating that the e-stop is halting the operation of the board
-#define FAULT_LED A2                        // LED indicating an internal fault
+#define OE_LED 8                           // LED indicating wether the output is enabled
+#define TRIG_LED 9                         // LED indicating Internal/external triggering
+#define E_STOP_LED 21                       // LED indicating that the e-stop is halting the operation of the board
+#define FAULT_LED 22                        // LED indicating an internal fault
 #define MAX_DAC_VOLTAGE 1.5                 // maximum voltage of the DAC
 #define DAC_VREF 3.3                        // DAC reference voltage
 #define DAC_VDIV 2                          // DAC voltage divider ratio 2 means we are using a 1:2 divider aka the output is half the input
-#define ADC_PIN A0                          // pin used to read the photodiode
+#define ADC_PIN A1                          // pin used to read the photodiode
 
 
-#define FRAM_SPI_SCLK 2 // Bl
-#define FRAM_SPI_MOSI 3 // G
-#define FRAM_SPI_MISO 4 // P
-#define FRAM_SPI_CS 5   // Br 
-Communications comms = Communications();
+#define FRAM_SPI_SCLK 2 
+#define FRAM_SPI_MOSI 3 
+#define FRAM_SPI_MISO 4 
+#define FRAM_SPI_CS 5
+
 arduino::MbedSPI FRAM_SPI(FRAM_SPI_MISO, FRAM_SPI_MOSI, FRAM_SPI_SCLK);
-FRAM fram = FRAM(&FRAM_SPI, FRAM_SPI_CS);
-// Memory memory = Memory();
+Memory memory = Memory(&FRAM_SPI, FRAM_SPI_CS);
+
+#define DAC_I2C_SDA 0
+#define DAC_I2C_SCL 1
+arduino::MbedI2C DAC_I2C(I2C_SDA, I2C_SCL);
+MCP mcp = MCP(&DAC_I2C);
+
+mbed::PwmOut PWM(digitalPinToPinName(PULSE_PIN));
+
+Communications comms = Communications();
 
 // if estop is true the driver will stop sending pulses to the laser
 
@@ -59,14 +67,14 @@ void trg(){
 
     // if trigger is HIGH and output is enabled we start PWM
     if (digitalRead(INTERRUPT_PIN) == HIGH && running == false){
-        // TODO pulsePin.start();
+        PWM.resume();
         running = true;
-        //digitalWrite(TRIG_LED, HIGH);
+        digitalWrite(TRIG_LED, HIGH);
     } else {
         // stop the PWM
-        // TODO pulsePin.stop();
+        PWM.suspend();
         running = false;
-        //digitalWrite(TRIG_LED, LOW);
+        digitalWrite(TRIG_LED, LOW);
     }
     digitalWrite(57, running);
     digitalWrite(TRIG_LED, LOW);
@@ -88,54 +96,53 @@ void setup() {
     Serial.begin(SERIAL_BAUD_RATE, SERIAL_MODE);
     //FORWARD_PORT.begin(SERIAL_BAUD_RATE, SERIAL_MODE);  
     comms.init();
-    fram.init();
+    memory.init();
     Serial.println("Starting");
 
-    // analogWriteResolution(12);
-    // analogReadResolution(12);
-    // for(uint8_t i = 0; i < GPIO_NUM; i++){
-    //     pinMode(GPIO_BASE_PIN + i, OUTPUT);
-    //     digitalWrite(GPIO_BASE_PIN + i, LOW);
-    // }
-    // pinMode(EN_PIN, OUTPUT);
-    // digitalWrite(EN_PIN, HIGH);
-    // pinMode(ESTOP_PIN, INPUT);   // TODO attach interrupt to this pin
+    analogReadResolution(12);
+    for(uint8_t i = 0; i < GPIO_NUM; i++){
+        pinMode(GPIO_BASE_PIN + i, OUTPUT);
+        digitalWrite(GPIO_BASE_PIN + i, LOW);
+    }
+    pinMode(EN_PIN, OUTPUT);
+    digitalWrite(EN_PIN, HIGH);
+    pinMode(ESTOP_PIN, INPUT);   // TODO attach interrupt to this pin
     // attachInterrupt(digitalPinToInterrupt(ESTOP_PIN), dummy_pulse, RISING);
     // detachInterrupt(digitalPinToInterrupt(ESTOP_PIN));
-    // delay(1);
-    // attachInterrupt(digitalPinToInterrupt(ESTOP_PIN), stop, FALLING);
-    // pinMode(OE_LED, OUTPUT);
-    // pinMode(TRIG_LED, OUTPUT);
-    // pinMode(E_STOP_LED, OUTPUT);
-    // pinMode(FAULT_LED, OUTPUT);
-    // pinMode(PULSE_PIN_STD, OUTPUT);
-    // pinMode(57, OUTPUT);
-    // digitalWrite(PULSE_PIN_STD, LOW);
+    delay(1);
+    attachInterrupt(digitalPinToInterrupt(ESTOP_PIN), stop, FALLING);
+    pinMode(OE_LED, OUTPUT);
+    pinMode(TRIG_LED, OUTPUT);
+    pinMode(E_STOP_LED, OUTPUT);
+    pinMode(FAULT_LED, OUTPUT);
+    pinMode(PULSE_PIN, OUTPUT);
+    digitalWrite(PULSE_PIN, LOW);
 
-    // // set up interrupt to handle the e-stop
+    // set up interrupt to handle the e-stop
 
-    // // set up the PWM
-    // pinMode(INTERRUPT_PIN, INPUT);
+    // set up the PWM
+    pinMode(INTERRUPT_PIN, INPUT);
 
-    // pinMode(PULSE_COUNT_PIN, INPUT);
+    pinMode(PULSE_COUNT_PIN, INPUT);
     // attachInterrupt(digitalPinToInterrupt(PULSE_COUNT_PIN), dummy_pulse, RISING);
     // detachInterrupt(digitalPinToInterrupt(PULSE_COUNT_PIN));
-    // // TODO 
-    // if(memory.loadCurrent() == true){
-    //     // read values from memory
-    //     comms.data.globalPulseCount = memory.config.globalpulse;
-    //     comms.data.initPulseCount = memory.config.globalpulse;
-    //     comms.data.setCurrent = memory.config.current;
-    //     comms.data.maxCurrent = memory.config.maxcurr;
-    //     comms.data.setPulseDuration = memory.config.pulsedur;
-    //     comms.data.setPulseFrequency = memory.config.pulsefreq;
-    //     comms.data.analogMode = memory.config.analog;
-    // }else{
-    //     Serial.println("Could not load memory");
-    //     eeprom_fault = true;
-    // }
+    // TODO 
+    if(memory.loadCurrent() == true){
+        // read values from memory
+        comms.data.globalPulseCount = memory.config.globalpulse;
+        comms.data.initPulseCount = memory.config.globalpulse;
+        comms.data.setCurrent = memory.config.current;
+        comms.data.maxCurrent = memory.config.maxcurr;
+        comms.data.setPulseDuration = memory.config.pulsedur;
+        comms.data.setPulseFrequency = memory.config.pulsefreq;
+        comms.data.analogMode = memory.config.analog;
+    }else{
+        Serial.println("Could not load memory");
+        eeprom_fault = true;
+    }
 
-    // TODO if (MCP.begin() == false)
+    // TODO
+    // if (MCP.begin() == false)
     // {
     //   Serial.println("Could not attach to DAC");
     // }
@@ -170,9 +177,9 @@ void set_values(){
         if (comms.data.setPulseDuration <= pwm_period){
             // our numbers are in 1e-6, but the library uses 1e-8
             Serial.println("Starting PWM");
-            // TODO pulsePin.stop();
-            // pulsePin.start(pwm_period*100, (comms.data.setPulseDuration)*100, false);
-            // pulsePin.stop();
+            PWM.period_us(pwm_period);
+            PWM.pulsewidth_us(comms.data.setPulseDuration);
+            PWM.suspend();
             if(!enabled){
                 // this cursed code is to prevent the interrupt from firing when we attach it
                 attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), trg, CHANGE);
@@ -186,8 +193,8 @@ void set_values(){
             }
         }
     }else{
-        // TODO pulsePin.stop();
-        digitalWrite(PULSE_PIN_STD, LOW);
+        PWM.suspend();
+        digitalWrite(PULSE_PIN, LOW);
         digitalWrite(TRIG_LED, LOW);
         detachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN));
         detachInterrupt(digitalPinToInterrupt(PULSE_COUNT_PIN));
@@ -205,15 +212,17 @@ void EEPROM_service(){
     if (millis() - lastTime > 10000 || comms.valuesChanged){
         lastTime = millis();
         // set the values
-        // TODO memory.config.globalpulse = comms.data.globalPulseCount;
-        // memory.config.current = comms.data.setCurrent;
-        // memory.config.maxcurr = comms.data.maxCurrent;
-        // memory.config.pulsedur = comms.data.setPulseDuration;
-        // memory.config.pulsefreq = comms.data.setPulseFrequency;
-        // memory.config.analog = comms.data.analogMode;
+        // TODO
+        memory.config.globalpulse = comms.data.globalPulseCount;
+        memory.config.current = comms.data.setCurrent;
+        memory.config.maxcurr = comms.data.maxCurrent;
+        memory.config.pulsedur = comms.data.setPulseDuration;
+        memory.config.pulsefreq = comms.data.setPulseFrequency;
+        memory.config.analog = comms.data.analogMode;
 
         // write to memory
-        // TODO eeprom_fault = !memory.writeLeveled();
+        // TODO 
+        eeprom_fault = !memory.writeLeveled();
     }
 }
 
@@ -225,14 +234,15 @@ void stop(){
     // turn off the output
     digitalWrite(EN_PIN, LOW);
     // set the DAC to 0V
-    // TODO MCP.setValue(0);
+    // TODO
+    // MCP.setValue(0);
     // set outputEnabled to false
     comms.data.outputEnabled = false;
     // detach the interrupt pin
     detachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN));
     detachInterrupt(digitalPinToInterrupt(PULSE_COUNT_PIN));
     // stop the PWM
-    // TODO pulsePin.stop();
+    PWM.suspend();
     // set error flag
     comms.error2 = true;
     // turn off GPIO
@@ -255,55 +265,33 @@ void stop(){
 }
 
 void loop() {
-    // pollADC();
-    // comms.readSerial();
-    // comms.parseBuffer();
-    delay(1000);
-    // EEPROM_service();
-    // if(!estop){
-    //     if(comms.valuesChanged){
-    //         Serial.println("Values changed");
-    //         set_values();
-    //         comms.valuesChanged = false;
-    //     }
-    // }else{
-    //     stop();
-    // }
-    // // if (comms.data.outputEnabled){
-    // //     Serial.print("Global Pulse counter: ");
-    // //     comms.print_big_int(comms.data.globalPulseCount);
-    // //     Serial.print("; Local: ");
-    // //     comms.print_big_int(comms.data.localPulseCount);
-    // //     Serial.println();
-    // // }
-    // digitalWrite(OE_LED, comms.data.outputEnabled);
-    // digitalWrite(E_STOP_LED, estop);
-    // if(eeprom_fault || comms.error2){
-    //     digitalWrite(FAULT_LED, HIGH);
-    // }else{
-    //     digitalWrite(FAULT_LED, LOW);
-    // }
-
-    fram.setBP(true, true);
-    fram.setWEL(true);
-    Serial.println(fram.getStatus(), BIN);
-    fram.setWEL(false);
-    fram.setBP(false, true);
-    Serial.println(fram.getStatus(), BIN);
-    fram.setWEL(false);
-    fram.setBP(false, false);
-    Serial.println(fram.getStatus(), BIN);
-    //fram.write(0x155, 0x69);
-    Serial.println(fram.read(0x155), HEX);
-    //fram.write(0x166, 0x96);
-    Serial.println(fram.read(0x166), HEX);
-
-    const char data[] = "Hello World!";
-    char data2[13];
-
-    fram.write((uint16_t)0x0, (uint8_t *)data, (uint16_t)sizeof(data));
-    fram.read((uint16_t)0x0, (uint8_t *)data2, (uint16_t)sizeof(data2));
-
-    Serial.println(data2);
+    pollADC();
+    comms.readSerial();
+    comms.parseBuffer();
+    delay(100);
+    EEPROM_service();
+    if(!estop){
+        if(comms.valuesChanged){
+            Serial.println("Values changed");
+            set_values();
+            comms.valuesChanged = false;
+        }
+    }else{
+        stop();
+    }
+    if (comms.data.outputEnabled){
+        Serial.print("Global Pulse counter: ");
+        comms.print_big_int(comms.data.globalPulseCount);
+        Serial.print("; Local: ");
+        comms.print_big_int(comms.data.localPulseCount);
+        Serial.println();
+    }
+    digitalWrite(OE_LED, comms.data.outputEnabled);
+    digitalWrite(E_STOP_LED, estop);
+    if(eeprom_fault || comms.error2){
+        digitalWrite(FAULT_LED, HIGH);
+    }else{
+        digitalWrite(FAULT_LED, LOW);
+    }
 
 }

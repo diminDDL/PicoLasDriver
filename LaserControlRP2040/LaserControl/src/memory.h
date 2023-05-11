@@ -1,10 +1,20 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 #include <Arduino.h>
+#include <fram.h>
 
 class Memory{
     private:
+        struct __attribute__((__packed__)) Configuration {
+            uint64_t globalpulse;
+            float current;
+            float maxcurr;
+            uint32_t pulsedur;
+            uint32_t pulsefreq;
+            bool analog;
+        };
         //DueFlashStorage EEPROM;                             // EEPROM object
+        FRAM* _FRAM;
         const uint8_t base_data_addr = 4;                   // address of the data in the EEPROM
         const uint8_t base_crc_addr = 0;                    // address of the crc in the EEPROM (2 bytes)
         const uint8_t base_page_header = 2;                 // address of the page header in the EEPROM
@@ -14,22 +24,14 @@ class Memory{
         bool bad_pages[number_of_pages] = {0};              // array to store the bad pages
         uint8_t current_page = 0;                           // the current page we are writing to
         uint32_t current_index = 0;                         // the current index (ID of the blocks we are writing)
-        const uint32_t page_size = 256;       // size of a page in the EEPROM
+        const uint32_t page_size = sizeof(Configuration);       // size of a page in the EEPROM
         const uint16_t CRC16 = 0x8005;                      // CRC16 polynomial
-
-        struct __attribute__((__packed__)) Configuration {
-            uint64_t globalpulse;
-            float current;
-            float maxcurr;
-            uint32_t pulsedur;
-            uint32_t pulsefreq;
-            bool analog;
-        };
         
         bool readLeveled(bool storeStruct = true);              // read the EEPROM with wear leveling, used internally can break when called incorrectly
     public:
         Configuration config;                                   // the struct we want to store in the EEPROM    
-        Memory();                                               // constructor
+        Memory(arduino::MbedSPI* FRAM_SPI, uint8_t FRAM_CS);    // constructor
+        void init();                                            // initialize the EEPROM
         bool writePage(uint32_t page);                          // write the config to a page to the EEPROM includes CRC and struct
         bool writePage(uint32_t page, Configuration &c);        // write a config to a page to the EEPROM includes CRC and struct
         bool writeLeveled();                                    // write the config to the EEPROM with wear leveling
