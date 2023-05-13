@@ -65,11 +65,10 @@ void stop();
 uint32_t pwm_period;
 // why is this firing very often on low frequencies
 void trg(){
-    digitalWrite(TRIG_LED, HIGH);
     static bool running = false;
     // if trigger is HIGH and output is enabled we start PWM
     if (digitalRead(INTERRUPT_PIN) == HIGH && running == false){
-        
+        digitalWrite(TRIG_LED, HIGH);
         if(sw_pwm){
             swPWM.start();
         }else{
@@ -83,10 +82,16 @@ void trg(){
         }else{
             PWM.suspend();
         }
+        digitalWrite(TRIG_LED, LOW);
         digitalWrite(PULSE_PIN, LOW);
         running = false;
     }
-    digitalWrite(TRIG_LED, LOW);
+}
+
+void zero_ensurer(){
+    swPWM.stop();
+    PWM.suspend();
+    digitalWrite(PULSE_PIN, LOW);
 }
 
 void pulse(){
@@ -122,6 +127,7 @@ void setup() {
     // set up the PWM
     pinMode(INTERRUPT_PIN, INPUT);
     pinMode(PULSE_COUNT_PIN, INPUT);
+    attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), zero_ensurer, FALLING);
 
     // TODO 
     if(memory.loadCurrent() == true){
@@ -174,30 +180,30 @@ void set_values(){
         }else{
             // Not implemented
         }
-
+        // TODO going from hardware to software PWM is not working
         // calculate period in microseconds
         pwm_period = 1000000 / (comms.data.setPulseFrequency);
         // attach the interrupt pin
         // check if pulse duration is less than period
-        if (comms.data.setPulseDuration <= pwm_period){
+        if (comms.data.setPulseDuration < pwm_period){
             // our numbers are in 1e-6, but the library uses 1e-8
             Serial.println("Starting PWM");
             Serial.print("Period: ");
             Serial.println(pwm_period);
             Serial.print("Pulse Duration: ");
             Serial.println(comms.data.setPulseDuration);
-            // TODO, problem - can't generate low frequency pulses
-            // perhaps implement a software PWM
-            // https://os.mbed.com/handbook/Ticker
-            if(comms.data.setPulseFrequency >= 500){
+
+            if(comms.data.setPulseFrequency >= 600){
                 Serial.println("Hardware PWM");
+                swPWM.stop();
                 PWM.resume();
                 PWM.period_us(pwm_period);
                 PWM.pulsewidth_us(comms.data.setPulseDuration);
                 PWM.suspend();
                 sw_pwm = false;
             }else{
-                // TODO this does not take effect immediately (doesn't start the interrupt???)
+                PWM.suspend();
+                swPWM.resetPin();
                 swPWM.start();
                 Serial.println("Soft PWM");
                 swPWM.setFrequency((float)comms.data.setPulseFrequency);
@@ -205,20 +211,20 @@ void set_values(){
                 swPWM.stop();
                 sw_pwm = true;
             }
-            if(!enabled){
-                // this cursed code is to prevent the interrupt from firing when we attach it
-                attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), trg, CHANGE);
-                delay(1);
-                attachInterrupt(digitalPinToInterrupt(PULSE_COUNT_PIN), pulse, CHANGE);
-                enabled = true;
-            }
-            // trigger the PWM in case it's already high
-            trg();
         }else{
             Serial.println("Pulse duration is longer than period");
         }
+
+        if(!enabled){
+            attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), trg, CHANGE);
+            delay(1);
+            attachInterrupt(digitalPinToInterrupt(PULSE_COUNT_PIN), pulse, CHANGE);
+            enabled = true;
+        }
+
     }else{
         PWM.suspend();
+        swPWM.stop();
         digitalWrite(PULSE_PIN, LOW);
         digitalWrite(TRIG_LED, LOW);
         detachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN));
@@ -293,11 +299,9 @@ void loop() {
     pollADC();
     comms.readSerial();
     comms.parseBuffer();
-    delay(100);
     EEPROM_service();
     if(!estop){
         if(comms.valuesChanged){
-            Serial.println("Values changed");
             set_values();
             comms.valuesChanged = false;
         }
@@ -318,5 +322,5 @@ void loop() {
     }else{
         digitalWrite(FAULT_LED, LOW);
     }
-
+    delay(100);
 }

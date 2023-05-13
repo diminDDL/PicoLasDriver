@@ -67,6 +67,13 @@ class Software_PWM{
             digitalWrite(this->pin, LOW);
             this->timer_period_us = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::duration<float>(100));
             this->thread->start(callback(this, &Software_PWM::loop));
+            //this->thread->set_priority(osPriorityHigh);
+        }
+
+        void resetPin(){
+            timer.reset();
+            pinMode(this->pin, OUTPUT);
+            digitalWrite(this->pin, LOW);
         }
 
         void start(){
