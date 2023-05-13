@@ -4,8 +4,7 @@
 #include <memory.h>
 #include <mcp.h>
 #include <mbed.h>
-
-
+#include <sw_pwm.h>
 
 // TODO
 // lock state?
@@ -47,9 +46,14 @@ Memory memory = Memory(&FRAM_SPI, FRAM_SPI_CS);
 arduino::MbedI2C DAC_I2C(I2C_SDA, I2C_SCL);
 MCP mcp = MCP(&DAC_I2C);
 
+// TODO make this correct
 mbed::PwmOut PWM(digitalPinToPinName(PULSE_PIN));
 
 Communications comms = Communications();
+
+rtos::Thread thread;
+Software_PWM swPWM = Software_PWM(PULSE_PIN, &thread);
+bool sw_pwm = false;
 
 // if estop is true the driver will stop sending pulses to the laser
 
@@ -61,35 +65,34 @@ void stop();
 uint32_t pwm_period;
 // why is this firing very often on low frequencies
 void trg(){
-    detachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN));
     digitalWrite(TRIG_LED, HIGH);
     static bool running = false;
-
     // if trigger is HIGH and output is enabled we start PWM
     if (digitalRead(INTERRUPT_PIN) == HIGH && running == false){
-        PWM.resume();
+        
+        if(sw_pwm){
+            swPWM.start();
+        }else{
+            PWM.resume();
+        }
         running = true;
-        digitalWrite(TRIG_LED, HIGH);
     } else {
         // stop the PWM
-        PWM.suspend();
+        if(sw_pwm){
+            swPWM.stop();
+        }else{
+            PWM.suspend();
+        }
+        digitalWrite(PULSE_PIN, LOW);
         running = false;
-        digitalWrite(TRIG_LED, LOW);
     }
-    digitalWrite(57, running);
     digitalWrite(TRIG_LED, LOW);
-    attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), trg, CHANGE);
 }
 
 void pulse(){
     if(digitalRead(PULSE_COUNT_PIN) == HIGH){
         comms.data.globalPulseCount++;
     }
-}
-
-void dummy_pulse(){
-    // we do nothing here
-    __asm__ __volatile__ ("nop");
 }
 
 void setup() {
@@ -106,9 +109,7 @@ void setup() {
     }
     pinMode(EN_PIN, OUTPUT);
     digitalWrite(EN_PIN, HIGH);
-    pinMode(ESTOP_PIN, INPUT);   // TODO attach interrupt to this pin
-    // attachInterrupt(digitalPinToInterrupt(ESTOP_PIN), dummy_pulse, RISING);
-    // detachInterrupt(digitalPinToInterrupt(ESTOP_PIN));
+    pinMode(ESTOP_PIN, INPUT);
     delay(1);
     attachInterrupt(digitalPinToInterrupt(ESTOP_PIN), stop, FALLING);
     pinMode(OE_LED, OUTPUT);
@@ -118,14 +119,10 @@ void setup() {
     pinMode(PULSE_PIN, OUTPUT);
     digitalWrite(PULSE_PIN, LOW);
 
-    // set up interrupt to handle the e-stop
-
     // set up the PWM
     pinMode(INTERRUPT_PIN, INPUT);
-
     pinMode(PULSE_COUNT_PIN, INPUT);
-    // attachInterrupt(digitalPinToInterrupt(PULSE_COUNT_PIN), dummy_pulse, RISING);
-    // detachInterrupt(digitalPinToInterrupt(PULSE_COUNT_PIN));
+
     // TODO 
     if(memory.loadCurrent() == true){
         // read values from memory
@@ -146,6 +143,14 @@ void setup() {
     // {
     //   Serial.println("Could not attach to DAC");
     // }
+
+    // TODO verify if the timings are correct
+    delay(2000);
+    Serial.println("init swPWM");
+    swPWM.init();
+    // delay(1000000);
+
+    comms.valuesChanged = true;     // force the values to be sent to everything
 }
 
 void setAnalogCurrentSetpoint(float current){
@@ -177,9 +182,29 @@ void set_values(){
         if (comms.data.setPulseDuration <= pwm_period){
             // our numbers are in 1e-6, but the library uses 1e-8
             Serial.println("Starting PWM");
-            PWM.period_us(pwm_period);
-            PWM.pulsewidth_us(comms.data.setPulseDuration);
-            PWM.suspend();
+            Serial.print("Period: ");
+            Serial.println(pwm_period);
+            Serial.print("Pulse Duration: ");
+            Serial.println(comms.data.setPulseDuration);
+            // TODO, problem - can't generate low frequency pulses
+            // perhaps implement a software PWM
+            // https://os.mbed.com/handbook/Ticker
+            if(comms.data.setPulseFrequency >= 500){
+                Serial.println("Hardware PWM");
+                PWM.resume();
+                PWM.period_us(pwm_period);
+                PWM.pulsewidth_us(comms.data.setPulseDuration);
+                PWM.suspend();
+                sw_pwm = false;
+            }else{
+                // TODO this does not take effect immediately (doesn't start the interrupt???)
+                swPWM.start();
+                Serial.println("Soft PWM");
+                swPWM.setFrequency((float)comms.data.setPulseFrequency);
+                swPWM.setDutyCycle(((float)comms.data.setPulseDuration / 1000000.0));
+                swPWM.stop();
+                sw_pwm = true;
+            }
             if(!enabled){
                 // this cursed code is to prevent the interrupt from firing when we attach it
                 attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), trg, CHANGE);
@@ -187,10 +212,10 @@ void set_values(){
                 attachInterrupt(digitalPinToInterrupt(PULSE_COUNT_PIN), pulse, CHANGE);
                 enabled = true;
             }
-            // edge case, if the trigger is already high we need to start the PWM
-            if(digitalRead(INTERRUPT_PIN) == HIGH){
-                trg();
-            }
+            // trigger the PWM in case it's already high
+            trg();
+        }else{
+            Serial.println("Pulse duration is longer than period");
         }
     }else{
         PWM.suspend();
@@ -200,13 +225,13 @@ void set_values(){
         detachInterrupt(digitalPinToInterrupt(PULSE_COUNT_PIN));
         enabled = false;
     }
-    Serial.println("Setting GPIO");
     // GPIOs stay on regardless of OE, only turned off by E-STOP
     for(uint8_t i = 0; i < GPIO_NUM; i++){
         digitalWrite(GPIO_BASE_PIN + i, ((comms.data.gpioState >> i) & 1));
     }
 }
 
+// TODO why it only writes to 1 and 0?
 void EEPROM_service(){
     static uint32_t lastTime = 0;
     if (millis() - lastTime > 10000 || comms.valuesChanged){
@@ -279,13 +304,13 @@ void loop() {
     }else{
         stop();
     }
-    if (comms.data.outputEnabled){
-        Serial.print("Global Pulse counter: ");
-        comms.print_big_int(comms.data.globalPulseCount);
-        Serial.print("; Local: ");
-        comms.print_big_int(comms.data.localPulseCount);
-        Serial.println();
-    }
+    // if (comms.data.outputEnabled){
+    //     Serial.print("Global Pulse counter: ");
+    //     comms.print_big_int(comms.data.globalPulseCount);
+    //     Serial.print("; Local: ");
+    //     comms.print_big_int(comms.data.localPulseCount);
+    //     Serial.println();
+    // }
     digitalWrite(OE_LED, comms.data.outputEnabled);
     digitalWrite(E_STOP_LED, estop);
     if(eeprom_fault || comms.error2){

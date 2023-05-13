@@ -1,3 +1,5 @@
+#ifndef MCP_H
+#define MCP_H
 #include <Arduino.h>
 
 class MCP{
@@ -37,3 +39,4 @@ class MCP{
 
         // note: https://github.com/RobTillaart/MCP4725/blob/master/MCP4725.cpp
 };
+#endif
