@@ -16,7 +16,8 @@
 #define MAX_DAC_VOLTAGE 1.5                 // maximum voltage of the DAC
 #define DAC_VREF 3.3                        // DAC reference voltage
 #define DAC_VDIV 2                          // DAC voltage divider ratio 2 means we are using a 1:2 divider aka the output is half the input
-#define ADC_PIN A1                          // pin used to read the photodiode
+#define ADC_PIN_PD 27                       // pin used to read the photodiode
+#define ADC_MUX_PD 1                        // ADC mux channel for photodiode
 
 #define FRAM_SPI_SCLK 2                     // FRAM SPI clock pin
 #define FRAM_SPI_MOSI 3                     // FRAM SPI MOSI pin

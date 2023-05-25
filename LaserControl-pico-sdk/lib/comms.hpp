@@ -3,6 +3,9 @@
 
 #define EOL "\r\n"                          // end of line characters
 
+#include <stdio.h>
+#include "pico/stdio.h"
+
 /*
 The communications class is responsible for sending and receiving data.
 It does everything from parsing the data to maintaining the heartbeat.

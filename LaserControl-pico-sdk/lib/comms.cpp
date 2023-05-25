@@ -1,5 +1,9 @@
-#include <comms.h>
-#include <Arduino.h>
+#include <comms.hpp>
+#include <stdio.h>
+#include <stdlib.h>
+#include "pico/stdio.h"
+#include "tusb.h"
+#include <string.h>
 
 /*
 * Constructor
@@ -26,12 +30,12 @@ void Communications::readSerial(void){
     // read the data from serial port and store it in the dest array
     uint32_t i = 0;
     uint32_t size = sizeof(readBuff);
-    if (Serial.available() >0){
+    if (tud_cdc_available()){
         // clear the buffer
         memset(readBuff, 0, size);
     }
-    while (Serial.available() > 0) {
-        readBuff[i] = (char)Serial.read();
+    while (tud_cdc_available()) {
+        readBuff[i] = (char)tud_cdc_read_char();
         i++;
         newData = true;
         if (i >= size) {
@@ -61,8 +65,8 @@ void Communications::printErrorStr(bool commandType = false){
         errorStr[1] = '0';
     }
     // print the error string
-    Serial.print(errorStr);
-    Serial.print(EOL);
+    printf("%s%s", errorStr, EOL);
+
     if (commandType){
         valuesChanged = true;
     }
@@ -76,7 +80,7 @@ void Communications::print_big_int(uint64_t value){
     if ( value >= 10 ){
         print_big_int(value / 10);
     }
-    Serial.print((uint32_t)(value % 10));
+    printf("%d", (uint32_t)(value % 10));
 }
 
 /*
@@ -92,7 +96,7 @@ void Communications::updateValues(void){
 */
 void Communications::parseBuffer(void){
     // TODO remove this
-    Serial.print(readBuff);
+    printf("%s", readBuff);
 
     if(!newData){
         return;
@@ -125,38 +129,34 @@ void Communications::parseBuffer(void){
         char * value = strtok(NULL, " ");
 
         // check if the command is known
-        if (strcmp(command, setCurrentCommand.c_str()) == 0){
+        if (strcmp(command, setCurrentCommand) == 0){
             // set the current
             data.setCurrent = atof(value);
             if (data.setCurrent > data.maxCurrent){
                 data.setCurrent = data.maxCurrent;
             }
-            Serial.print(data.setCurrent);
-            Serial.print(EOL);
+            printf("%f%s", data.setCurrent, EOL);
             // since printErrorStr is called every time we update the values it updates the values changed flag as well
             printErrorStr(true);
-        } else if (strcmp(command, setMaxCurrentCommand.c_str()) == 0){
+        } else if (strcmp(command, setMaxCurrentCommand) == 0){
             // set the max current
             data.maxCurrent = atof(value);
             if(data.maxCurrent < data.setCurrent){
                 data.setCurrent = data.maxCurrent;
             }
-            Serial.print(data.maxCurrent);
-            Serial.print(EOL);
+            printf("%f%s", data.maxCurrent, EOL);
             printErrorStr(true);
-        } else if (strcmp(command, setPulseDurationCommand.c_str()) == 0){
+        } else if (strcmp(command, setPulseDurationCommand) == 0){
             // set the pulse duration
             data.setPulseDuration = atol(value);
-            Serial.print(data.setPulseDuration);
-            Serial.print(EOL);
+            printf("%lu%s", data.setPulseDuration, EOL);
             printErrorStr(true);
-        } else if (strcmp(command, setPulseFrequencyCommand.c_str()) == 0){
+        } else if (strcmp(command, setPulseFrequencyCommand) == 0){
             // set the pulse frequency
             data.setPulseFrequency = atol(value);
-            Serial.print(data.setPulseFrequency);
-            Serial.print(EOL);
+            printf("%lu%s", data.setPulseFrequency, EOL);
             printErrorStr(true);
-        } else if (strcmp(command, enableOutputCommand.c_str()) == 0){
+        } else if (strcmp(command, enableOutputCommand) == 0){
             // enable the output, 1 = enable, 0 = disable if the string is invalid it will still return 0 thus disabling the output if the host sends an invalid values
             if (atoi(value) == 1){
                 data.outputEnabled = true;
@@ -165,20 +165,18 @@ void Communications::parseBuffer(void){
             } else {
                 data.outputEnabled = false;
             }
-            Serial.print(data.outputEnabled, DEC);
-            Serial.print(EOL);
+            printf("%d%s", data.outputEnabled, EOL);
             printErrorStr(true);
-        } else if (strcmp(command, lockCommand.c_str()) == 0){
+        } else if (strcmp(command, lockCommand) == 0){
             // lock the driver, 1 = lock, 0 = unlock if the string is invalid it will not change the lock state
             if (atoi(value) == 1){
                 data.lockState = true;
             } else if (atoi(value) == 0){
                 data.lockState = false;
             }
-            Serial.print(data.lockState, DEC);
-            Serial.print(EOL);
+            printf("%d%s", data.lockState, EOL);
             printErrorStr(true);
-        } else if (strcmp(command, setAnalogModeCommand.c_str()) == 0){
+        } else if (strcmp(command, setAnalogModeCommand) == 0){
             // set the driver to analog mode
             if (atoi(value) == 1){
                 data.analogMode = true;
@@ -187,30 +185,27 @@ void Communications::parseBuffer(void){
             } else {
                 data.analogMode = false;
             }
-            Serial.print(data.analogMode, DEC);
-            Serial.print(EOL);
+            printf("%d%s", data.analogMode, EOL);
             printErrorStr(true);
-        } else if(strcmp(command, setGpioStateCommand.c_str()) == 0){ 
+        } else if(strcmp(command, setGpioStateCommand) == 0){ 
             // set the GPIO state 
             data.gpioState = (atoi(value) > 0) && (atoi(value) < 256) ? atoi(value) : 0;
-            Serial.print(data.gpioState, DEC);
-            Serial.print(EOL);
+            printf("%d%s", data.gpioState, EOL);
             printErrorStr(true);
 
-            Serial.println(data.gpioState, BIN);
-        } else if(strcmp(command, setPulseMode.c_str()) == 0){
+            // TODO remove this
+            printf("GPIO state: %d%s", data.gpioState, EOL);
+        } else if(strcmp(command, setPulseMode) == 0){
             if (atoi(value) == 1){
                 data.pulseMode = 1;
             } else if (atoi(value) == 0){
                 data.pulseMode = 0;
             }
-            Serial.print(data.pulseMode, DEC);
-            Serial.print(EOL);
+            printf("%d%s", data.pulseMode, EOL);
             printErrorStr(true);
         } else {
             // unknown command
-            Serial.print("UC");
-            Serial.print(EOL);
+            printf("UC%s", EOL);
             printErrorStr();
         }
     }else{
@@ -218,55 +213,48 @@ void Communications::parseBuffer(void){
         // remove all whitespace and new line characters
         char * command = strtok(readBuff, " \r\n");
         // check if the command is known
-        if (strcmp(readBuff, getGlobalPulseCountCommand.c_str()) == 0){
+        if (strcmp(readBuff, getGlobalPulseCountCommand) == 0){
             // get the global pulse count
             print_big_int(data.globalPulseCount);
-            Serial.print(EOL);
+            printf("%s", EOL);
             printErrorStr();
-        } else if (strcmp(readBuff, getLocalPulseCountCommand.c_str()) == 0){
+        } else if (strcmp(readBuff, getLocalPulseCountCommand) == 0){
             updateValues();
             // get the local pulse count
             print_big_int(data.localPulseCount);
-            Serial.print(EOL);
+            printf("%s", EOL);
             printErrorStr();
-        } else if (strcmp(readBuff, getCurrentCommand.c_str()) == 0){
+        } else if (strcmp(readBuff, getCurrentCommand) == 0){
             // get the current
-            Serial.print(data.setCurrent);
-            Serial.print(EOL);
+            printf("%f%s", data.setCurrent, EOL);
             printErrorStr();
-        } else if (strcmp(readBuff, getMaxCurrentCommand.c_str()) == 0){
+        } else if (strcmp(readBuff, getMaxCurrentCommand) == 0){
             // get the max current
-            Serial.print(data.setCurrent);
-            Serial.print(EOL);
+            printf("%f%s", data.maxCurrent, EOL);
             printErrorStr();
-        } else if (strcmp(readBuff, getPulseDurationCommand.c_str()) == 0){
+        } else if (strcmp(readBuff, getPulseDurationCommand) == 0){
             // get the pulse duration
-            Serial.print(data.setPulseDuration);
-            Serial.print(EOL);
+            printf("%lu%s", data.setPulseDuration, EOL);
             printErrorStr();
-        } else if (strcmp(readBuff, getPulseFrequencyCommand.c_str()) == 0){
+        } else if (strcmp(readBuff, getPulseFrequencyCommand) == 0){
             // get the pulse frequency
-            Serial.print(data.setPulseFrequency);
-            Serial.print(EOL);
+            printf("%lu%s", data.setPulseFrequency, EOL);
             printErrorStr();
-        } else if (strcmp(readBuff, getModeCommand.c_str()) == 0){
+        } else if (strcmp(readBuff, getModeCommand) == 0){
             // get the mode
-            Serial.print(data.analogMode, DEC);
-            Serial.print(EOL);
+            printf("%d%s", data.analogMode, EOL);
             printErrorStr();
-        } else if (strcmp(readBuff, getAdcCommand.c_str()) == 0){
+        } else if (strcmp(readBuff, getAdcCommand) == 0){
             // get the adc value
-            Serial.print(data.adcValue);
-            Serial.print(EOL);
+            printf("%d%s", data.adcValue, EOL);
             printErrorStr();
-        } else if (strcmp(readBuff, getPulseMode.c_str()) == 0){
-            // print the pulse mode
-            Serial.print(data.pulseMode);
-            Serial.print(EOL); 
+        } else if (strcmp(readBuff, getPulseMode) == 0){
+            // print the pulse mode 
+            printf("%d%s", data.pulseMode, EOL);
+            printErrorStr();
         } else {
             // unknown command
-            Serial.print("UC");
-            Serial.print(EOL);
+            printf("UC%s", EOL);
             printErrorStr();
         }
     }
@@ -276,29 +264,20 @@ void Communications::parseBuffer(void){
 
     ///// remove later
     // TODO test cahnges
-    Serial.println();
+    printf("\n");
     // print all the new values
-    Serial.print("Current: ");
-    Serial.println(data.setCurrent);
-    Serial.print("Max current: ");
-    Serial.println(data.maxCurrent);
-    Serial.print("Pulse duration: ");
+    printf("Current: %f\n", data.setCurrent);
+    printf("Max current: %f\n", data.maxCurrent);
+    printf("Pulse duration: ");
     print_big_int(data.setPulseDuration);
-    Serial.println();
-    Serial.print("Pulse frequency: ");
-    Serial.println(data.setPulseFrequency);
-    Serial.print("Output enabled: ");
-    Serial.println(data.outputEnabled);
-    Serial.print("Lock state: ");
-    Serial.println(data.lockState);
-    Serial.print("Analog mode: ");
-    Serial.println(data.analogMode);
-    Serial.print("GPIO state: ");
-    Serial.println(data.gpioState);
-    Serial.print("Pulse mode: ");
-    Serial.println(data.pulseMode);
-    Serial.print("Changed: ");
-    Serial.println(valuesChanged);
+    printf("\n");
+    printf("Pulse frequency: %lu\n", data.setPulseFrequency);
+    printf("Output enabled: %d\n", data.outputEnabled);
+    printf("Lock state: %d\n", data.lockState);
+    printf("Analog mode: %d\n", data.analogMode);
+    printf("GPIO state: %d\n", data.gpioState);
+    printf("Pulse mode: %d\n", data.pulseMode);
+    printf("Changed: %d\n", valuesChanged);
     /////
 }
 

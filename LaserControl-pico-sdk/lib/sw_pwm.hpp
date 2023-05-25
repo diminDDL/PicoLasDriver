@@ -23,7 +23,7 @@ public:
     private:
     bool enabled = false;
     struct repeating_timer timer;
-
+    static const uint32_t resolution_divider = 100;
     
 };
 

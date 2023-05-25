@@ -2,6 +2,7 @@
 #define FRAM_H
 
 #include "hardware/spi.h"
+#include "pico/stdlib.h"
 
 #define FRAM_SPI_BAUD 1000000               // FRAM SPI baud rate
 

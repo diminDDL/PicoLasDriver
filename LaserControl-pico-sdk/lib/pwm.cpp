@@ -1,8 +1,5 @@
 #include "pwm.hpp"
 #include "hardware/clocks.h"
-
-
-
 #include <stdio.h>
 
 PWM::PWM(uint pin, uint slice_num) {

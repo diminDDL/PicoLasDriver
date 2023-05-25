@@ -23,6 +23,9 @@ void SW_PWM::set_duty_cycle_us(uint duty_cycle) {
 
 void SW_PWM::set_freq(uint freq) {
     this->period = 1000000 / freq;
+    if(this->period / resolution_divider < 1) {
+        this->period = resolution_divider;
+    }
 }
 
 void SW_PWM::set_enabled(bool enabled) {
@@ -58,7 +61,7 @@ void SW_PWM::resume() {
     this->pause_state = false;
     // if the settings are correct we start the timer
     if(this->enabled && this->period > 0 && this->positive_width > 0 && !this->timer_running) {
-        add_repeating_timer_us(-1 * (this->period / 10), repeating_timer_callback, this, &this->timer);
+        add_repeating_timer_us(-1 * (this->period / resolution_divider), repeating_timer_callback, this, &this->timer);
         this->timer_running = true;
     }
 }
