@@ -13,7 +13,6 @@ set(CMAKE_CXX_STANDARD 17)
 # Creates a pico-sdk subdirectory in our project for the libraries
 pico_sdk_init()
 
-
 link_directories(${CMAKE_SOURCE_DIR}/lib)
 
 # Tell CMake where to find the executable source file
@@ -22,11 +21,13 @@ add_executable(${PROJECT_NAME}
 )
 
 AUX_SOURCE_DIRECTORY(lib SUB_SOURCES)
+AUX_SOURCE_DIRECTORY(lib/mcp4725 SUB_SOURCES_MCP)
 
 target_sources(
     ${PROJECT_NAME}
     PUBLIC
     ${SUB_SOURCES}
+    ${SUB_SOURCES_MCP}
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC

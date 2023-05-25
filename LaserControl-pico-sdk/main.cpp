@@ -15,15 +15,14 @@
 #include "lib/sw_pwm.hpp"
 #include "lib/comms.hpp"
 #include "lib/memory.hpp"
+#include "lib/mcp4725/mcp4725.hpp"
 #include "definitions.h"
 
 // create new PWM instance
 SW_PWM sw_PWM(PULSE_PIN);
 Communications comms = Communications();
 Memory memory = Memory(FRAM_SPI, FRAM_SPI_CS);
-
-// TODO 
-// write mcp DAC driver
+MCP4725_PICO MCP(DAC_VREF);
 
 bool estop = false;             // emergency stop flag
 bool eeprom_fault = false;      // eeprom fault flag
@@ -95,10 +94,12 @@ int main() {
     }
 
     // TODO
-    // if (MCP.begin() == false)
-    // {
-    //   Serial.println("Could not attach to DAC");
-    // }
+    sleep_ms(5000);
+    if (!MCP.begin(MCP4725A0_Addr_A00, i2c0, 100, DAC_SDA, DAC_SCL)){
+        printf("Could not attach to DAC\n");
+    }
+    // set the DAC to 0V
+    MCP.setInputCode(0, MCP4725_FastMode, MCP4725_PowerDown_Off);
 
     comms.valuesChanged = true;     // force the values to be sent to everything
 
@@ -151,8 +152,13 @@ void pollADC(){
 }
 
 void setAnalogCurrentSetpoint(float current){
-    // TODO
-    //analogWrite(DAC_PIN, current);
+    printf("Setting DAC to %f\n", current);
+    uint16_t raw = 0;
+    float volts = (current * MAX_DAC_VOLTAGE / comms.data.maxCurrent) * DAC_VDIV;
+    raw = (uint16_t)(volts * 4095 / DAC_VREF);
+    MCP.setInputCode(raw, MCP4725_FastMode, MCP4725_PowerDown_Off);
+    // print raw value
+    printf("Raw value: %d\n", raw);
 }
 
 // TODO why it only writes to 1 and 0?
@@ -214,7 +220,7 @@ void set_values(){
         }
 
         gpio_put(EN_PIN, 1);
-        
+
     }else{
         sw_PWM.pause();
         gpio_put(PULSE_PIN, 0);
@@ -235,8 +241,7 @@ void stop(){
     // turn off the output
     gpio_put(EN_PIN, 0);
     // set the DAC to 0V
-    // TODO
-    // MCP.setValue(0);
+    MCP.setInputCode(0, MCP4725_FastMode, MCP4725_PowerDown_Off);
     // set outputEnabled to false
     comms.data.outputEnabled = false;
     // detach the interrupt pin

@@ -25,3 +25,5 @@
 #define FRAM_SPI_CS 5                       // FRAM SPI CS pin
 #define FRAM_SPI spi0                       // FRAM SPI instance
 
+#define DAC_SDA 0                           // DAC I2C SDA pin
+#define DAC_SCL 1                           // DAC I2C SCL pin
