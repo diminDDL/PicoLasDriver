@@ -10,13 +10,21 @@
 #include "lib/utils.h"
 #include "lib/pwm.hpp"
 #include "lib/sw_pwm.hpp"
-
+#include "hardware/spi.h"
+#include "lib/fram.hpp"
+#include "lib/comms.hpp"
 
 #include "definitions.h"
 
 // create new PWM instance
 PWM hw_PWM(PULSE_PIN, pwm_gpio_to_slice_num(PULSE_PIN));
 SW_PWM sw_PWM(TRIG_LED);
+FRAM fram(FRAM_SPI, FRAM_SPI_CS);
+// TODO 
+// test fram
+// test sw_pwm
+// port serial parser
+// write mcp DAC driver
 
 int main() {
     set_sys_clock_khz(100000, true);
@@ -43,6 +51,14 @@ int main() {
     // pwm_set_chan_level(slice_num, pwm_gpio_to_channel(TRIG_LED), 31250);
     // pwm_set_clkdiv(slice_num, (float)1600.0);
     // pwm_set_enabled(slice_num, true);
+
+    gpio_set_function(FRAM_SPI_SCLK, GPIO_FUNC_SPI);
+    gpio_set_function(FRAM_SPI_MOSI, GPIO_FUNC_SPI);
+    gpio_set_function(FRAM_SPI_MISO, GPIO_FUNC_SPI);
+    gpio_init(FRAM_SPI_CS);
+    gpio_set_dir(FRAM_SPI_CS, GPIO_OUT);
+    gpio_put(FRAM_SPI_CS, true);
+    fram.init();
 
     hw_PWM.init();
     sleep_ms(2000);
@@ -86,7 +102,28 @@ int main() {
         printf("wrap: %d\n", hw_PWM.wrap);
         printf("resolution_us: %d\n", hw_PWM.resolution_us);
         printf("pause_state: %d\n", hw_PWM.pause_state);
-        
+
+        fram.setBP(true, true);
+        fram.setWEL(true);
+        printf("%d\n", fram.getStatus());
+        fram.setWEL(false);
+        fram.setBP(false, true);
+        printf("%d\n", fram.getStatus());
+        fram.setWEL(false);
+        fram.setBP(false, false);
+        printf("%d\n", fram.getStatus());
+        //fram.write(0x155, 0x69);
+        printf("%d\n", fram.read(0x155));
+        //fram.write(0x166, 0x96);
+        printf("%d\n", fram.read(0x166));
+
+        const char data[] = "Hello World!";
+        char data2[13];
+
+        fram.write((uint16_t)0x0, (uint8_t *)data, (uint16_t)sizeof(data));
+        fram.read((uint16_t)0x0, (uint8_t *)data2, (uint16_t)sizeof(data2));
+
+        printf("%s\n", data2);        
 
         // sleep_ms(10000);
         // printf("100Hz 25%\n");

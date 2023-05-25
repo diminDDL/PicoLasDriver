@@ -22,3 +22,5 @@
 #define FRAM_SPI_MOSI 3                     // FRAM SPI MOSI pin
 #define FRAM_SPI_MISO 4                     // FRAM SPI MISO pin
 #define FRAM_SPI_CS 5                       // FRAM SPI CS pin
+#define FRAM_SPI spi0                       // FRAM SPI instance
+
