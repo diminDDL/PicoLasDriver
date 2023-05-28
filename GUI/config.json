@@ -18,7 +18,8 @@
                 "bits":8,
                 "parity":"E",
                 "stopbits":1,
-                "magic":"0xB0BA"
+                "magicStr":"picoLas",
+                "EOL":"\r\n"
             },
             "set_current":{
                 "command":"scur",
@@ -333,6 +334,12 @@
                     "parameter":"byte",
                     "answer":"",
                     "description":"Sets the GPIO pins, 1 bit per IO"
+                },
+                "get_adc":{
+                    "command":"gadc",
+                    "parameter":"",
+                    "answer":"float",
+                    "description":"Returns the ADC value of photodiode"
                 }
             }
         }
@@ -356,7 +363,8 @@
                 "bits":8,
                 "parity":"E",
                 "stopbits":1,
-                "magic":"0xB0BB"
+                "magicStr":"picoBOB",
+                "EOL":"\r\n"
             },
             "set_current":{
                 "command":"scur",
@@ -449,6 +457,12 @@
                     "parameter":"byte",
                     "answer":"",
                     "description":"Sets the GPIO pins, 1 bit per IO"
+                },
+                "get_adc":{
+                    "command":"gadc",
+                    "parameter":"",
+                    "answer":"float",
+                    "description":"Returns the ADC value of photodiode"
                 }
             }
         }

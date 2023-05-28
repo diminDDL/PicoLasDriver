@@ -96,12 +96,24 @@ void Communications::updateValues(void){
 */
 void Communications::parseBuffer(void){
     // TODO remove this
-    printf("%s", readBuff);
-
+    // printf("%s", readBuff);
     if(!newData){
         return;
     }
+
     newData = false;
+
+    // if the message equals the magic string, then respond with the magic string backwards
+    if (strcmp(readBuff, magicString) == 0){
+        // print the reversed magic string
+        for(int i = strlen(magicString) - 1; i >= 0; i--){
+            printf("%c", magicString[i]);
+        }
+        // clear the buffer
+        memset(readBuff, 0, sizeof(readBuff));
+        return;
+    }
+
     // check if there is a " " in the string
     char * pch;
     pch = strchr(readBuff, ' ');
@@ -194,7 +206,7 @@ void Communications::parseBuffer(void){
             printErrorStr(true);
 
             // TODO remove this
-            printf("GPIO state: %d%s", data.gpioState, EOL);
+            // printf("GPIO state: %d%s", data.gpioState, EOL);
         } else if(strcmp(command, setPulseMode) == 0){
             if (atoi(value) == 1){
                 data.pulseMode = 1;
@@ -264,22 +276,19 @@ void Communications::parseBuffer(void){
 
     ///// remove later
     // TODO test cahnges
-    printf("\n");
+    // printf("\n");
     // print all the new values
-    printf("Current: %f\n", data.setCurrent);
-    printf("Max current: %f\n", data.maxCurrent);
-    printf("Pulse duration: ");
-    print_big_int(data.setPulseDuration);
-    printf("\n");
-    printf("Pulse frequency: %lu\n", data.setPulseFrequency);
-    printf("Output enabled: %d\n", data.outputEnabled);
-    printf("Lock state: %d\n", data.lockState);
-    printf("Analog mode: %d\n", data.analogMode);
-    printf("GPIO state: %d\n", data.gpioState);
-    printf("Pulse mode: %d\n", data.pulseMode);
-    printf("Changed: %d\n", valuesChanged);
+    // printf("Current: %f\n", data.setCurrent);
+    // printf("Max current: %f\n", data.maxCurrent);
+    // printf("Pulse duration: ");
+    // print_big_int(data.setPulseDuration);
+    // printf("\n");
+    // printf("Pulse frequency: %lu\n", data.setPulseFrequency);
+    // printf("Output enabled: %d\n", data.outputEnabled);
+    // printf("Lock state: %d\n", data.lockState);
+    // printf("Analog mode: %d\n", data.analogMode);
+    // printf("GPIO state: %d\n", data.gpioState);
+    // printf("Pulse mode: %d\n", data.pulseMode);
+    // printf("Changed: %d\n", valuesChanged);
     /////
 }
-
-
-

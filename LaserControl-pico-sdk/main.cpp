@@ -93,8 +93,6 @@ int main() {
         eeprom_fault = true;
     }
 
-    // TODO
-    sleep_ms(5000);
     if (!MCP.begin(MCP4725A0_Addr_A00, i2c0, 100, DAC_SDA, DAC_SCL)){
         printf("Could not attach to DAC\n");
     }
@@ -152,13 +150,13 @@ void pollADC(){
 }
 
 void setAnalogCurrentSetpoint(float current){
-    printf("Setting DAC to %f\n", current);
+    //printf("Setting DAC to %f\n", current);
     uint16_t raw = 0;
     float volts = (current * MAX_DAC_VOLTAGE / comms.data.maxCurrent) * DAC_VDIV;
     raw = (uint16_t)(volts * 4095 / DAC_VREF);
     MCP.setInputCode(raw, MCP4725_FastMode, MCP4725_PowerDown_Off);
     // print raw value
-    printf("Raw value: %d\n", raw);
+    //printf("Raw value: %d\n", raw);
 }
 
 // TODO why it only writes to 1 and 0?
@@ -198,19 +196,19 @@ void set_values(){
         // check if pulse duration is less than period
         if (comms.data.setPulseDuration < pwm_period){
             // our numbers are in 1e-6, but the library uses 1e-8
-            printf("Starting PWM\n");
-            printf("Period: ");
-            printf("%d\n", pwm_period);
-            printf("Pulse Duration: ");
-            printf("%d\n", comms.data.setPulseDuration);
-            printf("Pulse Frequency: ");
-            printf("%d\n", comms.data.setPulseFrequency);
+            // printf("Starting PWM\n");
+            // printf("Period: ");
+            // printf("%d\n", pwm_period);
+            // printf("Pulse Duration: ");
+            // printf("%d\n", comms.data.setPulseDuration);
+            // printf("Pulse Frequency: ");
+            // printf("%d\n", comms.data.setPulseFrequency);
 
             sw_PWM.set_freq(comms.data.setPulseFrequency);
             sw_PWM.set_duty_cycle_us(comms.data.setPulseDuration);
             sw_PWM.pause();
         }else{
-            printf("Pulse duration is longer than period");
+            // printf("Pulse duration is longer than period");
         }
 
         if(!enabled){

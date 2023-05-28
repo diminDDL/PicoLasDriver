@@ -24,6 +24,7 @@ class Communications{
     private:
         // TODO double check the command list in the json
         // command list
+        const char magicString[8] = "picoBOB";                     // string representation of the magic string
         const char getGlobalPulseCountCommand[5] = "gpsc";       // string representation of the pulse count command
         const char getLocalPulseCountCommand[5] = "gcpc";        // string representation of the local pulse count command
         const char setCurrentCommand[5] = "scur";                // string representation of the set current command
@@ -40,8 +41,8 @@ class Communications{
         const char getModeCommand[5] = "gmod";                   // string representation of the get mode command
         const char setGpioStateCommand[5] = "stio";              // string representation of the set GPIO state command
         const char getAdcCommand[5] = "gadc";                    // string representation of the get ADC command
-        const char setPulseMode[5] = "spmo";                     // string representation of the set pulse mode command
-        const char getPulseMode[5] = "gpmo";                     // string representation of the get pulse mode command
+        const char setPulseMode[5] = "spmo";  // NOT IMPLEMENTED // string representation of the set pulse mode command
+        const char getPulseMode[5] = "gpmo";  // NOT IMPLEMENTED // string representation of the get pulse mode command
         // internal variables
         char readBuff[128];          // array for the serial data
         char drivBuff[128];          // array for the serial data

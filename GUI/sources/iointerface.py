@@ -1,6 +1,8 @@
 import sys
 import glob
 import serial
+import traceback
+import asyncio
 from time import sleep
 
 
@@ -9,8 +11,11 @@ class IOInterface:
         # if config is empty throw an error
         if not config:
             raise ValueError("Config is empty")
+        self.port = None # the serial port
         self.conf = config
         self.debug = debug
+        if self.debug:
+            print("IOInterface debug mode enabled")
         self.driver = driver
         self.platform = platform
         if self.conf[self.driver]["protocol"]["connection"]["type"] == "serial":
@@ -21,8 +26,6 @@ class IOInterface:
 
         self.loop = loop
         self.loop.run_in_executor(None, self.init_comms)
-
-        self.commandQueue = [] # a string command queue that will be executed in order
 
     def init_comms(self):
         # scan for all serial ports
@@ -61,25 +64,8 @@ class IOInterface:
                                 self.stopbits = serial.STOPBITS_TWO
                             case _:
                                 raise ValueError("Invalid stopbits value")
-                        # print debug info
-                        if self.debug:
-                            print("Driver model: " + self.driver)
-                            print("Baudrate: " + str(self.baudrate))
-                            print("Bits: " + str(self.bits))
-                            print("Parity: " + str(self.parity))
-                            print("Stopbits: " + str(self.stopbits))
-                        s = serial.Serial(port, self.baudrate, timeout=1, stopbits=self.stopbits, parity=self.parity, bytesize=self.bits)
-                        sleep(3)
-                        # s.write(b"testtesttesttest\n\r")
-                        magic = int(self.conf[self.driver]["protocol"]["connection"]["magic"][2::], 16)
-                        print(magic)
-                        s.write("")
-                        sleep(0.1)
-                        res = s.read(10)
-                        sleep(0.1)
-                        if self.debug:
-                            print("Received: " + str(res))
-                        s.close()
+                        # not implemented
+                        print("Not implemented")
                     case "RS485":
                         print("Not implemented")
                     case "BOB":
@@ -118,24 +104,49 @@ class IOInterface:
                                 print("Bits: " + str(self.bits))
                                 print("Parity: " + str(self.parity))
                                 print("Stopbits: " + str(self.stopbits))
-                            s = serial.Serial(port, self.baudrate, timeout=1, stopbits=self.stopbits, parity=self.parity, bytesize=self.bits)
-                            sleep(0.5)
+                            self.port = serial.Serial(port, self.baudrate, timeout=1, stopbits=self.stopbits, parity=self.parity, bytesize=self.bits)
+                            sleep(1)
                             # s.write(b"testtesttesttest\n\r")
-                            magic = int(self.conf[self.driver]["protocol"]["connection"]["magic"][2::], 16)
-                            bytes_val = magic.to_bytes(2, byteorder='big') # convert the magic number to bytes
-                            s.write(bytes_val)
+                            magicStr = self.conf[self.driver]["protocol"]["connection"]["magicStr"]
+                            # convert the magic string to bytes
+                            magic = bytes(magicStr, 'ascii')
+                            print("magic: " + str(magic))
+                            self.port.write(magic)
                             sleep(0.1)
-                            res = s.read(10)
+                            res = self.port.read(10)
                             sleep(0.1)
                             if self.debug:
                                 print("Received: " + str(res))
-                            s.close()
+                            # if the result is equal to magic reversed then we break the loop
+                            if res == magic[::-1]:
+                                break
+                            self.port.close()
+
                         else: 
                             print("Not implemented")
                     case _:
                         print("Unknown protocol")
             except:
-                print(f"Could not connect to board on port: {port}")
+                traceback.print_exc()
+                # if it's a keyerror, then tell the user that the config file is missing a value
+                if sys.exc_info()[0] == KeyError:
+                    print("Missing magicStr in config file")
+                else:
+                    print(f"Could not connect to board on port: {port}")
+        if self.port is None:
+            print("Could not connect to board")
+        else:
+            if(self.debug):
+                print("Connected to board on port: " + port)
+            # start the event loop
+            self.loop.create_task(self.run())
+    # at the end of this we need to start some poolling function to keep the event loop running
+
+    async def run(self):
+        # run the event loop
+        while True:
+            #print("Running")
+            await asyncio.sleep(1)
 
     def execute(self, command: str, args):
         # execute a command

@@ -65,4 +65,3 @@ void SW_PWM::resume() {
         this->timer_running = true;
     }
 }
-

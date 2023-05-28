@@ -76,8 +76,11 @@ else:
 # run the program if this is this file being executed
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
+    driverSettings = gui.DriverSettings()
     io = ioint.IOInterface(debug, config, driverModel, platform, loop)
-    window = gui.GUI(loop=loop, version=version, config=config, driver=driverModel, platform=platform, io=io, debug=debug, fullscreen=fullscreen)
-    loop.run_forever()
+    window = gui.GUI(loop=loop, version=version, config=config, driver=driverModel, platform=platform, io=io, debug=debug, fullscreen=fullscreen, driverSettings=driverSettings)
+    #loop.run_forever()
+    loop.run_until_complete(window.updater(window.interval))
     loop.close()
+    exit(0)
     

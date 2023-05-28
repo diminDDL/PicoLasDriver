@@ -1,6 +1,7 @@
 import asyncio
 import tkinter as tk
 from random import randrange as rr
+from dataclasses import dataclass
 import si_prefix as si
 import time
 import os
@@ -12,29 +13,62 @@ def deg_color(deg, d_per_tick, color):
         color = '#%02x%02x%02x' % (rr(0, 256), rr(0, 256), rr(0, 256))
     return deg, color
 
-class GUI:
-    def __init__(self, loop, version, config, driver, platform, io, interval=1/60, debug=False, fullscreen=False):
-        self.debug = debug
-        self.version = version
-        self.config = config
-        self.driver = driver
-        self.platform = platform
-        self.io = io
-        self.maxCurent = self.config[self.driver]['MaxCurrent_A']
-        self.minPuseWidth = self.config[self.driver]['MinPulseWidth_us']/1000000
-        self.maxPulseWidth = self.config[self.driver]['MaxPulseWidth_us']/1000000
-        self.maxFrequency = self.config[self.driver]['MaxFrequency_Hz']
+
+class DriverSettings:
+    def __init__(self):
         self.setCurrent = 0.0
-        self.setPulseWidth = self.minPuseWidth
+        self.setPulseWidth = 0.0
         self.setFrequency = 0.0
         self.setPulseMode = False
-        self.globalPulseCoutner = 0
-        self.localPulseCoutner = 0
+        self.globalPulseCounter = 0
+        self.localPulseCounter = 0
         self.ADCReadoutValue = 0
         self.gpio_0 = False
         self.gpio_1 = False
         self.gpio_2 = False
         self.gpio_3 = False
+
+    def __eq__(self, other):
+        if not isinstance(other, DriverSettings):
+            return NotImplemented
+        return self.__dict__ == other.__dict__
+    
+    def copy(self):
+        new_instance = DriverSettings()
+        new_instance.setCurrent = self.setCurrent
+        new_instance.setPulseWidth = self.setPulseWidth
+        new_instance.setFrequency = self.setFrequency
+        new_instance.setPulseMode = self.setPulseMode
+        new_instance.globalPulseCounter = self.globalPulseCounter
+        new_instance.localPulseCounter = self.localPulseCounter
+        new_instance.ADCReadoutValue = self.ADCReadoutValue
+        new_instance.gpio_0 = self.gpio_0
+        new_instance.gpio_1 = self.gpio_1
+        new_instance.gpio_2 = self.gpio_2
+        new_instance.gpio_3 = self.gpio_3
+        return new_instance
+    
+
+class GUI:
+    def __init__(self, loop, version, config, driver, platform, io, driverSettings: DriverSettings, interval=1/60, debug=False, fullscreen=False):
+        self.debug = debug
+        if self.debug:
+            print("GUI debug mode enabled")
+        self.version = version
+        self.config = config
+        self.driver = driver
+        self.platform = platform
+        self.io = io
+        self.interval = interval
+        self.maxCurent = self.config[self.driver]['MaxCurrent_A']
+        self.minPuseWidth = self.config[self.driver]['MinPulseWidth_us']/1000000
+        self.maxPulseWidth = self.config[self.driver]['MaxPulseWidth_us']/1000000
+        self.maxFrequency = self.config[self.driver]['MaxFrequency_Hz']
+
+        self.driv = driverSettings
+        self.driv.setPulseWidth = self.minPuseWidth
+        self.old_driv = DriverSettings()
+
         self.root = tk.Tk()
         self.setCurrentSrt = tk.Variable()
         self.setPulseWidthSrt = tk.Variable()
@@ -60,7 +94,6 @@ class GUI:
 
         self.loop = loop
         self.tasks = []
-        self.tasks.append(loop.create_task(self.updater(interval)))
 
         self.GUIlastCall = 0
         self.GUIcallNumber = 1
@@ -73,6 +106,8 @@ class GUI:
             self.Yres = 480
             self.root.bind("<Escape>", self.close)
             self.root.focus_force()
+            #bind the close button to the close function
+            self.root.protocol("WM_DELETE_WINDOW", self.close)
         else:
             width= self.root.winfo_screenwidth()               
             height= self.root.winfo_screenheight()               
@@ -89,7 +124,7 @@ class GUI:
         self.root.resizable(False, False)
         self.root.attributes("-topmost", True)
         self.createMainWindow(version)
-        self.root.after(1000, self.comm)
+        self.loop.create_task(self.comm())
 
     async def updater(self, interval):
         while True:
@@ -98,17 +133,27 @@ class GUI:
 
     def close(self, event=None):
         print("closing window")
-        for task in self.tasks:
-            task.cancel()
-        self.loop.stop()
         self.root.destroy()
+        self.loop.stop()
         
-    def comm(self):
-        # communication with the laser controller will go here
+    async def comm(self):
+        while True:
+            # communication with the laser controller will go here
+            await asyncio.sleep(0.5)
+            
+            if self.debug:
+                print("checking for changes in driv")
+            # check if old driv is different from new driv
+            if self.old_driv != self.driv:
+                if self.debug:
+                    print("driv changed")
+                # if driv changed, send the new values to the controller
+                self.old_driv = self.driv.copy()
+                # self.io.send(self.driv)
 
-        # update the UI and restart the keep alive function
-        self.updateDisplayValues()
-        self.root.after(1000, self.comm)
+
+            # update the UI and restart the keep alive function
+            self.updateDisplayValues()
 
     def adjustValues(self, command=None, pressedTime=0):
         # change values, command provides a string describing what should change
@@ -123,43 +168,43 @@ class GUI:
                 self.GUIcallAcceleration = 100
             self.GUIlastCall = pressedTime
             if command == "currentUp" and not self.locked:
-                self.setCurrent += self.config[self.driver]['CurrentStep_A']
-                if self.setCurrent > self.maxCurent:
-                    self.setCurrent = self.maxCurent
+                self.driv.setCurrent += self.config[self.driver]['CurrentStep_A']
+                if self.driv.setCurrent > self.maxCurent:
+                    self.driv.setCurrent = self.maxCurent
                     #TODO implement color changes
                     #self.current_limit_up.configure()
             elif command == "currentDown" and not self.locked:
-                self.setCurrent -= self.config[self.driver]['CurrentStep_A']
-                if self.setCurrent < self.config[self.driver]['CurrentStep_A']:
-                    self.setCurrent = 0
+                self.driv.setCurrent -= self.config[self.driver]['CurrentStep_A']
+                if self.driv.setCurrent < self.config[self.driver]['CurrentStep_A']:
+                    self.driv.setCurrent = 0
             elif command == "pulseWidthUp" and not self.locked:
                 if self.GUIcallNumber >= callNumberThreshold:
-                    self.setPulseWidth += round(self.GUIcallNumber/(callNumberThreshold * 1000), 3)
+                    self.driv.setPulseWidth += round(self.GUIcallNumber/(callNumberThreshold * 1000), 3)
                 else:
-                    self.setPulseWidth += 0.001
-                if self.setPulseWidth > self.maxPulseWidth:
-                    self.setPulseWidth = self.maxPulseWidth
+                    self.driv.setPulseWidth += 0.001
+                if self.driv.setPulseWidth > self.maxPulseWidth:
+                    self.driv.setPulseWidth = self.maxPulseWidth
             elif command == "pulseWidthDown" and not self.locked:
                 if self.GUIcallNumber >= callNumberThreshold:
-                    self.setPulseWidth -= round(self.GUIcallNumber/(callNumberThreshold * 1000), 3)
+                    self.driv.setPulseWidth -= round(self.GUIcallNumber/(callNumberThreshold * 1000), 3)
                 else:
-                    self.setPulseWidth -= 0.001
-                if self.setPulseWidth < self.minPuseWidth:
-                    self.setPulseWidth = self.minPuseWidth
+                    self.driv.setPulseWidth -= 0.001
+                if self.driv.setPulseWidth < self.minPuseWidth:
+                    self.driv.setPulseWidth = self.minPuseWidth
             elif command == "frequencyUp" and not self.locked:
                 if self.GUIcallNumber >= callNumberThreshold:
-                    self.setFrequency += round(self.GUIcallNumber/callNumberThreshold, 0)
+                    self.driv.setFrequency += round(self.GUIcallNumber/callNumberThreshold, 0)
                 else:
-                    self.setFrequency += 1
-                if self.setFrequency > self.maxFrequency:
-                    self.setFrequency = self.maxFrequency
+                    self.driv.setFrequency += 1
+                if self.driv.setFrequency > self.maxFrequency:
+                    self.driv.setFrequency = self.maxFrequency
             elif command == "frequencyDown" and not self.locked:
                 if self.GUIcallNumber >= callNumberThreshold:
-                    self.setFrequency -= round(self.GUIcallNumber/callNumberThreshold, 0)
+                    self.driv.setFrequency -= round(self.GUIcallNumber/callNumberThreshold, 0)
                 else:
-                    self.setFrequency -= 1
-                if self.setFrequency < 0:
-                    self.setFrequency = 0
+                    self.driv.setFrequency -= 1
+                if self.driv.setFrequency < 0:
+                    self.driv.setFrequency = 0
             elif command == "lock":
                 if self.GUIcallNumber == 6:
                     self.locked = not self.locked
@@ -171,19 +216,19 @@ class GUI:
 
     def togglePulseMode(self):
         if not self.locked:
-            self.setPulseMode = not self.setPulseMode
+            self.driv.setPulseMode = not self.driv.setPulseMode
         self.updateDisplayValues()
 
     def gpioButton(self, gpio):
         if not self.locked:
             if gpio == 0:
-                self.gpio_0 = not self.gpio_0
+                self.driv.gpio_0 = not self.driv.gpio_0
             elif gpio == 1:
-                self.gpio_1 = not self.gpio_1
+                self.driv.gpio_1 = not self.driv.gpio_1
             elif gpio == 2:
-                self.gpio_2 = not self.gpio_2
+                self.driv.gpio_2 = not self.driv.gpio_2
             elif gpio == 3:
-                self.gpio_3 = not self.gpio_3
+                self.driv.gpio_3 = not self.driv.gpio_3
         self.updateDisplayValues()
 
     def createMainWindow(self, version):
@@ -197,8 +242,6 @@ class GUI:
             self.root.columnconfigure(i, weight=1)
         for i in range(rowNum):
             self.root.rowconfigure(i, weight=1)
-
-        
 
         # general labels
         self.version_label = tk.Label(self.root, text="V" + version, fg="#bdbdbd", font=("Arial", 8))
@@ -297,21 +340,31 @@ class GUI:
         
     def updateDisplayValues(self):
         # update the display values
-        self.setCurrentSrt.set("Value set:\n" + str(str(round(self.setCurrent, 1)) if self.setCurrent >= self.config[self.driver]['CurrentStep_A'] else '0.0') + "A")
+        self.setCurrentSrt.set("Value set:\n" + str(str(round(self.driv.setCurrent, 1)) if self.driv.setCurrent >= self.config[self.driver]['CurrentStep_A'] else '0.0') + "A")
         
-        if self.setPulseWidth <= 1: 
-            self.setPulseWidthSrt.set("Value set:\n" + str(si.si_format(self.setPulseWidth, precision=0)) + "s")
+        if self.driv.setPulseWidth <= 1: 
+            self.setPulseWidthSrt.set("Value set:\n" + str(si.si_format(self.driv.setPulseWidth, precision=0)) + "s")
         else:
-            self.setPulseWidthSrt.set("Value set:\n" + str(si.si_format(self.setPulseWidth, precision=3)) + "s")
-        self.setFrequencySrt.set("Value set:\n" + str(si.si_format(self.setFrequency, precision=0)) + "Hz")
+            self.setPulseWidthSrt.set("Value set:\n" + str(si.si_format(self.driv.setPulseWidth, precision=3)) + "s")
+        self.setFrequencySrt.set("Value set:\n" + str(si.si_format(self.driv.setFrequency, precision=0)) + "Hz")
+
+        # update the globalPulseCounterLabel
+        self.globalPulseCounterLabel.set("Global pulse counter:\n" + str(self.driv.globalPulseCounter))
+
+        # update the localPulseCounterLabel
+        self.localPulseCounterLabel.set("Local pulse counter:\n" + str(self.driv.localPulseCounter))
+
+        # update adc readout
+        self.ADCReadoutStr.set("ADC readout:\n" + str(self.driv.ADCReadoutValue))
+
         # update the pulse mode
-        self.setPulseModeSrt.set(f"Pulse mode:\n{'Pulsed' if self.setPulseMode else 'Single'}")
-        self.pulse_mode.configure(textvariable=self.setPulseModeSrt, bg='green' if self.setPulseMode else 'black', activebackground='green' if self.setPulseMode else 'black')
+        self.setPulseModeSrt.set(f"Pulse mode:\n{'Pulsed' if self.driv.setPulseMode else 'Single'}")
+        self.pulse_mode.configure(textvariable=self.setPulseModeSrt, bg='green' if self.driv.setPulseMode else 'black', activebackground='green' if self.driv.setPulseMode else 'black')
         # update the GPIO buttons
-        self.gpio_button_0.configure(bg='green' if self.gpio_0 else 'black', activebackground='green' if self.gpio_0 else 'black')
-        self.gpio_button_1.configure(bg='green' if self.gpio_1 else 'black', activebackground='green' if self.gpio_1 else 'black')
-        self.gpio_button_2.configure(bg='green' if self.gpio_2 else 'black', activebackground='green' if self.gpio_2 else 'black')
-        self.gpio_button_3.configure(bg='green' if self.gpio_3 else 'black', activebackground='green' if self.gpio_3 else 'black')
+        self.gpio_button_0.configure(bg='green' if self.driv.gpio_0 else 'black', activebackground='green' if self.driv.gpio_0 else 'black')
+        self.gpio_button_1.configure(bg='green' if self.driv.gpio_1 else 'black', activebackground='green' if self.driv.gpio_1 else 'black')
+        self.gpio_button_2.configure(bg='green' if self.driv.gpio_2 else 'black', activebackground='green' if self.driv.gpio_2 else 'black')
+        self.gpio_button_3.configure(bg='green' if self.driv.gpio_3 else 'black', activebackground='green' if self.driv.gpio_3 else 'black')
         
         # if the self.errorReadout changed update the error label
         if self.errorReadout != self.errorReadoutOld:

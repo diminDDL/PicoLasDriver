@@ -325,7 +325,7 @@ bool Memory::writeLeveled(){
     correct = readPage(current_page, c);
     if(correct){
         if (config.globalpulse == c.globalpulse && config.current == c.current && config.maxcurr == c.maxcurr && config.pulsedur == c.pulsedur && config.pulsefreq == c.pulsefreq && config.analog == c.analog){
-            printf("Config is the same, not writing\n");
+            // printf("Config is the same, not writing\n");
             return true;
         }
     }
@@ -337,10 +337,10 @@ bool Memory::writeLeveled(){
         this->_FRAM->write((base_page_header) + current_page * page_size, current_index);
         if(!correct){
             bad_pages[current_page] = true;
-            printf("Bad page: %d\n", current_page);
+            //printf("Bad page: %d\n", current_page);
         }
-        printf("Wrote to: %d\n", current_page);
-        printf("   Index: %d\n", current_index);
+        //printf("Wrote to: %d\n", current_page);
+        //printf("   Index: %d\n", current_index);
         count--;
     }while((bad_pages[current_page] || !correct) && count > 0);
     return correct;
