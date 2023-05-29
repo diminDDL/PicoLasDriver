@@ -4,16 +4,18 @@ import serial
 import traceback
 import asyncio
 from time import sleep
+from gui import DriverSettings
 
 
 class IOInterface:
-    def __init__(self, debug: bool, config: dict, driver: str, platform: str, loop):
+    def __init__(self, debug: bool, config: dict, driver: str, platform: str, loop, driverSettings: DriverSettings):
         # if config is empty throw an error
         if not config:
             raise ValueError("Config is empty")
         self.port = None # the serial port
         self.conf = config
         self.debug = debug
+        self.driverSettings = driverSettings
         if self.debug:
             print("IOInterface debug mode enabled")
         self.driver = driver
@@ -104,7 +106,7 @@ class IOInterface:
                                 print("Bits: " + str(self.bits))
                                 print("Parity: " + str(self.parity))
                                 print("Stopbits: " + str(self.stopbits))
-                            self.port = serial.Serial(port, self.baudrate, timeout=1, stopbits=self.stopbits, parity=self.parity, bytesize=self.bits)
+                            self.port = serial.Serial(port, self.baudrate, timeout=3, stopbits=self.stopbits, parity=self.parity, bytesize=self.bits)
                             sleep(1)
                             # s.write(b"testtesttesttest\n\r")
                             magicStr = self.conf[self.driver]["protocol"]["connection"]["magicStr"]
@@ -113,7 +115,7 @@ class IOInterface:
                             print("magic: " + str(magic))
                             self.port.write(magic)
                             sleep(0.1)
-                            res = self.port.read(10)
+                            res = self.port.read(len(magic))
                             sleep(0.1)
                             if self.debug:
                                 print("Received: " + str(res))
@@ -137,7 +139,7 @@ class IOInterface:
             print("Could not connect to board")
         else:
             if(self.debug):
-                print("Connected to board on port: " + port)
+                print("Connected to board on port: " + str(self.port.name))
             # start the event loop
             self.loop.create_task(self.run())
     # at the end of this we need to start some poolling function to keep the event loop running
@@ -152,6 +154,28 @@ class IOInterface:
         # execute a command
         if self.debug:
             print("Executing command: " + command)
+
+    def sendAll(self, driverSettings: DriverSettings):
+        # send all the settings to the board
+        if self.debug:
+            print("Sending all settings")
+        # send the settings to the board
+        if self.port is not None:
+            # send the settings to the board
+            currentCommand = ""
+            currentResponse = ""
+            currentStatus = ""
+            # setCurrent
+            currentCommand = self.conf[self.driver]["protocol"]["commands"]["setCurrent"] + " " + str(driverSettings.setCurrent) + "\n\r"
+            self.port.write(bytes(currentCommand, 'ascii'))
+            currentResponse = self.port.read_until(b"\n\r").decode('ascii')
+            currentStatus = self.port.read_until(b"\n\r").decode('ascii')
+            if self.debug:
+                print("Sent: " + currentCommand)
+                print("currentResponse: " + currentResponse)
+                print("currentStatus: " + currentStatus)
+
+            self.port.write(b"testtesttesttest\n\r")
 
     def get_serial_ports(self):
         """ Lists serial port names

@@ -68,5 +68,5 @@ pico_enable_stdio_uart(${PROJECT_NAME} 0)
 
 add_custom_target( FinalMessage ALL
     ${CMAKE_COMMAND} -E cmake_echo_color --cyan "Compilation is over!"
-    COMMENT "Done 🥺" )
+    COMMENT "Done ✅" )
 add_dependencies( FinalMessage ${PROJECT_NAME} )
