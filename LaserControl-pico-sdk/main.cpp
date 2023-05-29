@@ -18,6 +18,11 @@
 #include "lib/mcp4725/mcp4725.hpp"
 #include "definitions.h"
 
+// TODO
+// pulse mode - single or continuous
+// handle errors
+// GPIO not working
+
 // create new PWM instance
 SW_PWM sw_PWM(PULSE_PIN);
 Communications comms = Communications();
@@ -228,7 +233,7 @@ void set_values(){
         gpio_set_irq_enabled(PULSE_COUNT_PIN, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, false);
         enabled = false;
     }
-    // GPIOs stay on regardless of OE, only turned off by E-STOP
+    // TODO fix this; GPIOs stay on regardless of OE, only turned off by E-STOP
     for(uint8_t i = 0; i < GPIO_NUM; i++){
         gpio_put(GPIO_BASE_PIN + i, ((comms.data.gpioState >> i) & 1));
     }

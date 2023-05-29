@@ -3,6 +3,7 @@ import json
 import sources.gui as gui
 import sources.iointerface as ioint
 import asyncio
+import threading
 
 debug = False
 version = "0.0.1"
@@ -77,9 +78,12 @@ else:
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     driverSettings = gui.DriverSettings()
-    io = ioint.IOInterface(debug, config, driverModel, platform, loop, driverSettings)
+    io = ioint.IOInterface(debug, config, driverModel, platform, driverSettings)
     window = gui.GUI(loop=loop, version=version, config=config, driver=driverModel, platform=platform, io=io, debug=debug, fullscreen=fullscreen, driverSettings=driverSettings)
     #loop.run_forever()
+    # TODO figure out how to kill thread on exit
+    thread = threading.Thread(target=io.run)
+    thread.start()
     loop.run_until_complete(window.updater(window.interval))
     loop.close()
     exit(0)

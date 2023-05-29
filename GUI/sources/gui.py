@@ -6,6 +6,8 @@ import si_prefix as si
 import time
 import os
 
+# TODO add data send on no change logic
+
 def deg_color(deg, d_per_tick, color):
     deg += d_per_tick
     if 360 <= deg:
@@ -27,6 +29,18 @@ class DriverSettings:
         self.gpio_1 = False
         self.gpio_2 = False
         self.gpio_3 = False
+        self.globalEnable = False
+
+    def setCommands(self, setCurrent, setPulseWidth, setFrequency, setPulseMode, globalPulseCounter, localPulseCounter, ADCReadoutValue, gpio, globalEnable):
+        self.setCurrentCommand = setCurrent
+        self.setPulseWidthCommand = setPulseWidth
+        self.setFrequencyCommand = setFrequency
+        self.setPulseModeCommand = setPulseMode
+        self.globalPulseCounterCommand = globalPulseCounter
+        self.localPulseCounterCommand = localPulseCounter
+        self.ADCReadoutValueCommand = ADCReadoutValue
+        self.gpioCommand = gpio
+        self.globalEnableCommand = globalEnable
 
     def __eq__(self, other):
         if not isinstance(other, DriverSettings):
@@ -46,8 +60,74 @@ class DriverSettings:
         new_instance.gpio_1 = self.gpio_1
         new_instance.gpio_2 = self.gpio_2
         new_instance.gpio_3 = self.gpio_3
+        new_instance.globalEnable = self.globalEnable
         return new_instance
     
+    def getAllCommands(self):
+        command_attrs = [attr for attr in self.__dict__ if 'Command' in attr]
+        commands_list = []
+        for attr in command_attrs:
+            if attr == "gpioCommand":
+                # Collect the gpio attributes and convert them to 8 bit binary string
+                gpio_attrs = [f"gpio_{i}" for i in range(4)]
+                gpio_values = [int(getattr(self, gpio)) for gpio in gpio_attrs]
+                binary_gpio_values = "".join(map(str, gpio_values))
+                padded_binary_gpio_values = binary_gpio_values.rjust(8, '0')
+                decimal_gpio_values = int(padded_binary_gpio_values, 2)
+
+                commands_list += [f"{getattr(self, attr)} " + str(decimal_gpio_values) + "\r\n"]
+            elif attr == "setPulseWidthCommand":
+                commands_list += [f"{getattr(self, attr)} " + str(int(self.setPulseWidth * 1000000)) + "\r\n"]
+            else:
+                value_attr = attr.replace("Command", "")
+                value = getattr(self, value_attr)
+                curr_atr = getattr(self, attr, None)
+                if isinstance(value, bool):
+                    value = int(value)
+                elif value is None or value == "":
+                    continue
+                if curr_atr is None:
+                    continue
+                if str(curr_atr).startswith("g"):   # if it starts with a g it means it's a get command
+                    commands_list += [f"{curr_atr}" + "\r\n"]
+                else:
+                    commands_list += [f"{curr_atr} " + str(value) + "\r\n"]
+        
+        return commands_list
+
+    def setValueByCommand(self, command, value):
+        floatAttrs = ["setCurrent", "setPulseWidth", "setFrequency"]
+        intAttrs = ["globalPulseCounter", "localPulseCounter", "ADCReadoutValue"]
+        boolAttrs = ["setPulseMode", "gpio_0", "gpio_1", "gpio_2", "gpio_3", "globalEnable"]
+
+        command_attrs = [attr for attr in dir(self) if 'Command' in attr]
+        for attr in command_attrs:
+            if getattr(self, attr) == command:
+                value_attr = attr.replace("Command", "")
+                print(f"Found command '{command}' for attribute '{value_attr}'")
+                if value_attr == "gpio":  # Handle GPIO command as a special case
+                    # we need to unpack the int into 4 bools
+                    binary_gpio_values = bin(int(value))[2:].zfill(4)
+                    print("binary_gpio_values: " + binary_gpio_values)
+                    for i, bit in enumerate(binary_gpio_values):
+                        setattr(self, f"gpio_{i}", bool(int(bit)))
+                    print(f"Set GPIOs to {binary_gpio_values}")
+                    return
+                elif hasattr(self, value_attr):
+                    if value_attr in floatAttrs:
+                        if value_attr == "setPulseWidth":
+                            value = float(value)/1000000
+                        setattr(self, value_attr, float(value))
+                    elif value_attr in intAttrs:
+                        setattr(self, value_attr, int(value))
+                    elif value_attr in boolAttrs:
+                        setattr(self, value_attr, bool(int(value)))
+                    else:
+                        setattr(self, value_attr, value)
+                    print(f"Set {value_attr} to {value}")
+                    return
+        print(f"Command '{command}' not found")
+
 
 class GUI:
     def __init__(self, loop, version, config, driver, platform, io, driverSettings: DriverSettings, interval=1/60, debug=False, fullscreen=False):
@@ -69,6 +149,17 @@ class GUI:
         self.driv.setPulseWidth = self.minPuseWidth
         self.old_driv = DriverSettings()
 
+        self.driv.setCommands(setCurrent=self.config[self.driver]["protocol"]["set_current"]["command"],
+                                setPulseWidth=self.config[self.driver]["protocol"]["io_commands"]["set_pulse_duration"]["command"],
+                                setFrequency=self.config[self.driver]["protocol"]["io_commands"]["set_pulse_frequency"]["command"],
+                                setPulseMode=None,
+                                globalPulseCounter=self.config[self.driver]["protocol"]["io_commands"]["get_global_pulse_count"]["command"],
+                                localPulseCounter=self.config[self.driver]["protocol"]["io_commands"]["get_current_pulse_count"]["command"],
+                                ADCReadoutValue=self.config[self.driver]["protocol"]["io_commands"]["get_adc"]["command"],
+                                gpio=self.config[self.driver]["protocol"]["io_commands"]["set_gpio"]["command"],
+                                globalEnable=self.config[self.driver]["protocol"]["io_commands"]["output_enable"]["command"]
+                              )
+
         self.root = tk.Tk()
         self.setCurrentSrt = tk.Variable()
         self.setPulseWidthSrt = tk.Variable()
@@ -82,13 +173,12 @@ class GUI:
         self.localPulseCounterLabel.set('Pulse counter:\n' + '0')
         self.errorReadout = "No Errors"
         self.errorReadoutOld = ""
-        self.globalEnable = False
+        self.driv.globalEnable = False
 
         # read the ./sources/assets/ folder and copy the images into a dictionary with the file name as key
         self.images = {}
         for file in os.listdir("./sources/assets/"):
             if file.endswith(".png"):
-
                 self.images[file[:-4]] = tk.PhotoImage(file="./sources/assets/" + file).subsample(3, 3)
         self.locked = False
 
@@ -209,7 +299,7 @@ class GUI:
                 if self.GUIcallNumber == 6:
                     self.locked = not self.locked
             elif command == "enable" and not self.locked:
-                self.globalEnable = not self.globalEnable
+                self.driv.globalEnable = not self.driv.globalEnable
             
         
         self.updateDisplayValues()
@@ -342,6 +432,13 @@ class GUI:
         # update the display values
         self.setCurrentSrt.set("Value set:\n" + str(str(round(self.driv.setCurrent, 1)) if self.driv.setCurrent >= self.config[self.driver]['CurrentStep_A'] else '0.0') + "A")
         
+        # cap the pulse width depending on the frequency
+        if self.driv.setFrequency > 0:
+            if self.driv.setPulseWidth > 1/self.driv.setFrequency:
+                self.driv.setPulseWidth = 1/self.driv.setFrequency
+        else:
+            self.driv.setPulseWidth = 0
+
         if self.driv.setPulseWidth <= 1: 
             self.setPulseWidthSrt.set("Value set:\n" + str(si.si_format(self.driv.setPulseWidth, precision=0)) + "s")
         else:
@@ -378,4 +475,4 @@ class GUI:
         self.lock_button.configure(image=self.images["locked" if self.locked else "unlocked"], activebackground="red" if self.locked else "green", background="red" if self.locked else "green")
 
         # update the enable button
-        self.enable_button.configure(text="ENABLED" if self.globalEnable else "DISABLED", bg="green" if self.globalEnable else "red", activebackground="green" if self.globalEnable else "red")
+        self.enable_button.configure(text="ENABLED" if self.driv.globalEnable else "DISABLED", bg="green" if self.driv.globalEnable else "red", activebackground="green" if self.driv.globalEnable else "red")
