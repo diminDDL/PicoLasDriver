@@ -1,13 +1,68 @@
 import sys
 import glob
 import serial
+import asyncio
+import serial_asyncio
 import traceback
 from time import sleep
 from sources.gui import DriverSettings
 
 
+class SerialDriver(asyncio.Protocol):
+    def __init__(self, driverSettings: DriverSettings, debug: bool = False, port: str = '/dev/ttyUSB0', baudrate: int = 115200, bits: int = 8, parity: str = 'N', stopbits: int = 1):
+        self.driverSettings = driverSettings
+        self.debug = debug
+        self.port = port
+        self.baudrate = baudrate
+        self.bits = bits
+        self.parity = parity
+        self.stopbits = stopbits
+
+    def connection_made(self, transport):
+        self.transport = transport
+        self.connected = True
+        print("Connection made")
+
+    def data_received(self, data):
+        response, status, _ = data.split(b"\r\n")
+        response = response.decode('ascii')
+        status = status.decode('ascii')
+        print("response: ", response)
+        print("status: ", status)
+        if status.strip() == "00":
+            # get the value from the response
+            value = response.strip()
+            print("value: ", value)
+            # write the value to the driverSettings object
+            self.driverSettings.setValueByCommand(self.current_command[:4], value)
+
+    async def sendAll(self):
+        # send all the settings to the board
+        if self.debug:
+            print("Sending all settings")
+        # send the settings to the board
+        commands = self.driverSettings.getAllCommands()
+        print("commands: " + str(commands))
+        for command in commands:
+            # convert the command to bytes
+            # send the command to the board
+            # get a response and a status
+            # write the response values into the driverSettings object
+            self.current_command = command
+            self.transport.write(bytes(command, 'ascii'))
+            print("Sent: ", command)
+            await asyncio.sleep(0.3) # give some time for response
+
+    async def main(self, loop):
+        self.transport, _ = await serial_asyncio.create_serial_connection(loop, lambda: self, self.port, baudrate=self.baudrate, bytesize=self.bits, parity=self.parity, stopbits=self.stopbits)
+
+        while True:
+            await self.sendAll()
+            await asyncio.sleep(1.0) # TODO every 100ms
+
+
 class IOInterface:
-    def __init__(self, debug: bool, config: dict, driver: str, platform: str, driverSettings: DriverSettings):
+    def __init__(self, debug: bool, config: dict, driver: str, platform: str, driverSettings: DriverSettings, loop: asyncio.AbstractEventLoop):
         # if config is empty throw an error
         if not config:
             raise ValueError("Config is empty")
@@ -25,9 +80,13 @@ class IOInterface:
             self.parity = self.conf[self.driver]["protocol"]["connection"]["parity"]
             self.stopbits = int(self.conf[self.driver]["protocol"]["connection"]["stopbits"])
 
-        # self.loop = loop
+        self.loop = loop
+        self.serialDriver = None
         # self.loop.run_in_executor(None, self.init_comms)
+        # TODO this blocks the event loop, figure out how to make it async
         self.init_comms()
+        self.serialDriver = SerialDriver(self.driverSettings, self.debug, self.port.name, self.baudrate, self.bits, self.parity, self.stopbits)
+
 
     def init_comms(self):
         # scan for all serial ports
@@ -121,6 +180,7 @@ class IOInterface:
                                 print("Received: " + str(res))
                             # if the result is equal to magic reversed then we break the loop
                             if res == magic[::-1]:
+                                self.port.close()
                                 break
                             self.port.close()
 
@@ -135,7 +195,7 @@ class IOInterface:
                     print("Missing magicStr in config file")
                 else:
                     print(f"Could not connect to board on port: {port}")
-        if self.port is None:
+        if self.port is None or not self.port.is_open:
             print("Could not connect to board")
         else:
             if(self.debug):
@@ -147,58 +207,10 @@ class IOInterface:
             # self.loop.create_task(self.run())
     # at the end of this we need to start some poolling function to keep the event loop running
 
-    def sendAll(self, driverSettings: DriverSettings):
-        # send all the settings to the board
-        if self.debug:
-            print("Sending all settings")
-        # send the settings to the board
-        if self.port is not None:
-            # # send the settings to the board
-            # currentCommand = ""
-            # currentResponse = ""
-            # currentStatus = ""
-            # # setCurrent
-            # currentCommand = self.driverSettings.setCurrentCommand + " " + str(driverSettings.setCurrent) + "\r\n"
-            # self.port.write(bytes(currentCommand, 'ascii'))
-            # currentResponse = self.port.read_until(b"\r\n").decode('ascii')
-            # currentStatus = self.port.read_until(b"\r\n").decode('ascii')
-            # if self.debug:
-            #     print("Sent: " + currentCommand)
-            #     print("currentResponse: " + currentResponse)
-            #     print("currentStatus: " + currentStatus)
+    #def run(self):
+        #self.serialDriver = SerialDriver(self.driverSettings, self.debug, self.port.name, self.baudrate, self.bits, self.parity, self.stopbits)
+        #self.loop.run_until_complete(serialDriver.main(self.loop))
 
-            commands = self.driverSettings.getAllCommands()
-            print("commands: " + str(commands))
-            for command in commands:
-                # convert the command to bytes
-                # send the command to the board
-                # get a reponse and a status
-                # write the reponse values into the driverSettings object
-                self.port.write(bytes(command, 'ascii'))
-                print("Sent: " + command)
-                response = self.port.read_until(b"\r\n").decode('ascii')
-                status = self.port.read_until(b"\r\n").decode('ascii')
-                print("response: " + response)
-                print("status: " + status)
-                if status.strip() == "00":
-                    # get the value from the response
-                    value = response.strip()
-                    print("command: " + command)
-                    print("value: " + value)
-                    # write the value to the driverSettings object
-                    driverSettings.setValueByCommand(command[:4], value)
-
-
-            #self.port.write(b"testtesttesttest\n\r")
-
-    def run(self):
-        # run the event loop
-        while True:
-            #print("Running")
-            #await asyncio.sleep(1)
-            sleep(1)
-            #await self.sendAll(self.driverSettings)
-            self.sendAll(self.driverSettings)
 
     def execute(self, command: str, args):
         # execute a command

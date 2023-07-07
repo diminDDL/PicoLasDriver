@@ -78,13 +78,19 @@ else:
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     driverSettings = gui.DriverSettings()
-    io = ioint.IOInterface(debug, config, driverModel, platform, driverSettings)
+    io = ioint.IOInterface(debug, config, driverModel, platform, driverSettings, loop)
     window = gui.GUI(loop=loop, version=version, config=config, driver=driverModel, platform=platform, io=io, debug=debug, fullscreen=fullscreen, driverSettings=driverSettings)
     #loop.run_forever()
     # TODO figure out how to kill thread on exit
-    thread = threading.Thread(target=io.run)
-    thread.start()
-    loop.run_until_complete(window.updater(window.interval))
-    loop.close()
+    #thread = threading.Thread(target=io.run)
+    #thread.start()
+    # io.run()
+    # loop.run_until_complete(window.updater(window.interval))
+    # loop.close()
+    async def startTasks():
+        await asyncio.gather(window.updater(window.interval), io.serialDriver.main(loop), window.comm())
+    
+    loop.run_until_complete(startTasks())
+
     exit(0)
     

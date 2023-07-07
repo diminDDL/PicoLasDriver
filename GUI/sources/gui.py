@@ -214,9 +214,9 @@ class GUI:
         self.root.resizable(False, False)
         self.root.attributes("-topmost", True)
         self.createMainWindow(version)
-        self.loop.create_task(self.comm())
+        #self.loop.create_task(self.comm())
 
-    async def updater(self, interval):
+    async def updater(self, interval):   # this is non-blocking now
         while True:
             self.root.update()
             await asyncio.sleep(interval)
@@ -226,11 +226,10 @@ class GUI:
         self.root.destroy()
         self.loop.stop()
         
-    async def comm(self):
+    async def comm(self):  # this is non-blocking now
         while True:
-            # communication with the laser controller will go here
             await asyncio.sleep(0.5)
-            
+    
             if self.debug:
                 print("checking for changes in driv")
             # check if old driv is different from new driv
@@ -240,8 +239,7 @@ class GUI:
                 # if driv changed, send the new values to the controller
                 self.old_driv = self.driv.copy()
                 # self.io.send(self.driv)
-
-
+    
             # update the UI and restart the keep alive function
             self.updateDisplayValues()
 

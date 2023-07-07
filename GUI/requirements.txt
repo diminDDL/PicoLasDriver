@@ -1,3 +1,4 @@
 asyncio==3.4.3
 si-prefix==1.2.2
 pyserial==3.5
+pyserial-asyncio
