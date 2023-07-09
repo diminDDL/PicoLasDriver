@@ -17,6 +17,7 @@ class SerialDriver(asyncio.Protocol):
         self.bits = bits
         self.parity = parity
         self.stopbits = stopbits
+        self.enabled = False
 
     def connection_made(self, transport):
         self.transport = transport
@@ -57,7 +58,8 @@ class SerialDriver(asyncio.Protocol):
         self.transport, _ = await serial_asyncio.create_serial_connection(loop, lambda: self, self.port, baudrate=self.baudrate, bytesize=self.bits, parity=self.parity, stopbits=self.stopbits)
 
         while True:
-            await self.sendAll()
+            if self.enabled:
+                await self.sendAll()
             await asyncio.sleep(1.0) # TODO every 100ms
 
 
@@ -70,6 +72,7 @@ class IOInterface:
         self.conf = config
         self.debug = debug
         self.driverSettings = driverSettings
+        self.correctDevice = False
         if self.debug:
             print("IOInterface debug mode enabled")
         self.driver = driver
@@ -86,6 +89,7 @@ class IOInterface:
         # TODO this blocks the event loop, figure out how to make it async
         self.init_comms()
         self.serialDriver = SerialDriver(self.driverSettings, self.debug, self.port.name, self.baudrate, self.bits, self.parity, self.stopbits)
+        self.serialDriver.enabled = self.correctDevice
 
 
     def init_comms(self):
@@ -181,7 +185,10 @@ class IOInterface:
                             # if the result is equal to magic reversed then we break the loop
                             if res == magic[::-1]:
                                 self.port.close()
+                                self.correctDevice = True
                                 break
+                            else:
+                                self.correctDevice = False
                             self.port.close()
 
                         else: 

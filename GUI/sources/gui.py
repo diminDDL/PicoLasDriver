@@ -61,6 +61,16 @@ class DriverSettings:
         new_instance.gpio_2 = self.gpio_2
         new_instance.gpio_3 = self.gpio_3
         new_instance.globalEnable = self.globalEnable
+        new_instance.setCurrentCommand = self.setCurrentCommand
+        new_instance.setPulseWidthCommand = self.setPulseWidthCommand
+        new_instance.setFrequencyCommand = self.setFrequencyCommand
+        new_instance.setPulseModeCommand = self.setPulseModeCommand
+        new_instance.globalPulseCounterCommand = self.globalPulseCounterCommand
+        new_instance.localPulseCounterCommand = self.localPulseCounterCommand
+        new_instance.ADCReadoutValueCommand = self.ADCReadoutValueCommand
+        new_instance.gpioCommand = self.gpioCommand
+        new_instance.globalEnableCommand = self.globalEnableCommand
+        
         return new_instance
     
     def getAllCommands(self):
@@ -171,7 +181,9 @@ class GUI:
         self.globalPulseCounterLabel.set('Global pulse\n counter:\n' + '0')
         self.localPulseCounterLabel = tk.Variable()
         self.localPulseCounterLabel.set('Pulse counter:\n' + '0')
-        self.errorReadout = "No Errors"
+        self.errorReadout = ""
+        if(self.io.correctDevice == False):
+            self.errorReadout = "Error: could not connect to device, reboot required"
         self.errorReadoutOld = ""
         self.driv.globalEnable = False
 
@@ -229,17 +241,20 @@ class GUI:
     async def comm(self):  # this is non-blocking now
         while True:
             await asyncio.sleep(0.5)
-    
+
             if self.debug:
                 print("checking for changes in driv")
             # check if old driv is different from new driv
             if self.old_driv != self.driv:
                 if self.debug:
                     print("driv changed")
+                    print("old driv: " + str(self.old_driv.__dict__))
+                    print("new driv: " + str(self.driv.__dict__))
+
                 # if driv changed, send the new values to the controller
                 self.old_driv = self.driv.copy()
                 # self.io.send(self.driv)
-    
+
             # update the UI and restart the keep alive function
             self.updateDisplayValues()
 
