@@ -18,6 +18,7 @@ class SerialDriver(asyncio.Protocol):
         self.parity = parity
         self.stopbits = stopbits
         self.enabled = False
+        self.buffer = b""
 
     def connection_made(self, transport):
         self.transport = transport
@@ -25,17 +26,42 @@ class SerialDriver(asyncio.Protocol):
         print("Connection made")
 
     def data_received(self, data):
-        response, status, _ = data.split(b"\r\n")
-        response = response.decode('ascii')
-        status = status.decode('ascii')
-        print("response: ", response)
-        print("status: ", status)
-        if status.strip() == "00":
-            # get the value from the response
-            value = response.strip()
-            print("value: ", value)
-            # write the value to the driverSettings object
-            self.driverSettings.setValueByCommand(self.current_command[:4], value)
+        self.buffer += data
+
+    async def process_buffer(self):
+        while self.connected:
+            if b'\r\n' in self.buffer:
+                data, self.buffer = self.buffer.split(b'\r\n', 1)
+                self.process_data(data + b'\r\n')
+            else:
+                try:
+                    await asyncio.wait_for(self.check_buffer(), timeout=0.1)
+                except asyncio.TimeoutError:
+                    if self.buffer:
+                        self.process_data(self.buffer)
+                        self.buffer = b""
+
+    async def check_buffer(self):
+        while b'\r\n' not in self.buffer:
+            await asyncio.sleep(0.01)
+
+    def process_data(self, data):
+        print("Data received: ", data)
+        split_data = data.split(b"\r\n")
+        if len(split_data) >= 2:
+            response, status = split_data[:2]
+            response = response.decode('ascii')
+            status = status.decode('ascii')
+            print("response: ", response)
+            print("status: ", status)
+            if status.strip() == "00":
+                # get the value from the response
+                value = response.strip()
+                print("value: ", value)
+                # write the value to the driverSettings object
+                self.driverSettings.setValueByCommand(self.current_command[:4], value)
+        else:
+            print("Received unexpected data format.")
 
     async def sendAll(self):
         # send all the settings to the board
@@ -57,10 +83,11 @@ class SerialDriver(asyncio.Protocol):
     async def main(self, loop):
         self.transport, _ = await serial_asyncio.create_serial_connection(loop, lambda: self, self.port, baudrate=self.baudrate, bytesize=self.bits, parity=self.parity, stopbits=self.stopbits)
 
+        asyncio.ensure_future(self.process_buffer())
         while True:
             if self.enabled:
                 await self.sendAll()
-            await asyncio.sleep(1.0) # TODO every 100ms
+            await asyncio.sleep(0.1) # every 100ms
 
 
 class IOInterface:

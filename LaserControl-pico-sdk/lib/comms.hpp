@@ -41,8 +41,8 @@ class Communications{
         const char getModeCommand[5] = "gmod";                   // string representation of the get mode command
         const char setGpioStateCommand[5] = "stio";              // string representation of the set GPIO state command
         const char getAdcCommand[5] = "gadc";                    // string representation of the get ADC command
-        const char setPulseMode[5] = "spmo";  // NOT IMPLEMENTED // string representation of the set pulse mode command
-        const char getPulseMode[5] = "gpmo";  // NOT IMPLEMENTED // string representation of the get pulse mode command
+        const char setPulseMode[5] = "spmo";  // TODO NOT IMPLEMENTED // string representation of the set pulse mode command
+        const char getPulseMode[5] = "gpmo";  // TODO NOT IMPLEMENTED // string representation of the get pulse mode command
         // internal variables
         char readBuff[128];          // array for the serial data
         char drivBuff[128];          // array for the serial data
