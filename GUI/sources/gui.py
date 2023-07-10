@@ -30,6 +30,18 @@ class DriverSettings:
         self.gpio_2 = False
         self.gpio_3 = False
         self.globalEnable = False
+        self.setCurrentCommand = None
+        self.setPulseWidthCommand = None
+        self.setFrequencyCommand = None
+        self.setPulseModeCommand = None
+        self.globalPulseCounterCommand = None
+        self.localPulseCounterCommand = None
+        self.ADCReadoutValueCommand = None
+        self.gpioCommand = None
+        self.globalEnableCommand = None
+        # attributes to be compared
+        self.attrs_to_compare = ['setCurrent', 'setPulseWidth', 'setFrequency', 'setPulseMode',
+                            'gpio_0', 'gpio_1', 'gpio_2', 'gpio_3', 'globalEnable']
 
     def setCommands(self, setCurrent, setPulseWidth, setFrequency, setPulseMode, globalPulseCounter, localPulseCounter, ADCReadoutValue, gpio, globalEnable):
         self.setCurrentCommand = setCurrent
@@ -42,20 +54,11 @@ class DriverSettings:
         self.gpioCommand = gpio
         self.globalEnableCommand = globalEnable
 
-    # def __eq__(self, other):
-    #     if not isinstance(other, DriverSettings):
-    #         return NotImplemented
-    #     return self.__dict__ == other.__dict__
-
     def __eq__(self, other):
         if not isinstance(other, DriverSettings):
             return NotImplemented
 
-        # attributes to be compared
-        attrs_to_compare = ['setCurrent', 'setPulseWidth', 'setFrequency', 'setPulseMode',
-                            'gpio_0', 'gpio_1', 'gpio_2', 'gpio_3', 'globalEnable']
-
-        for attr in attrs_to_compare:
+        for attr in self.attrs_to_compare:
             if getattr(self, attr) != getattr(other, attr):
                 return False
 
@@ -152,6 +155,44 @@ class DriverSettings:
                     print(f"Set {value_attr} to {value}")
                     return
         print(f"Command '{command}' not found")
+
+    def getChangedCommands(self, other):
+        if not isinstance(other, DriverSettings):
+            raise ValueError("other must be an instance of DriverSettings")
+
+        changed_attrs = [attr for attr in self.attrs_to_compare if getattr(self, attr) != getattr(other, attr)]
+
+        commands_list = []
+        for attr in changed_attrs:
+            command_attr = attr + "Command"
+            command = getattr(self, command_attr, None)
+            value = getattr(self, attr)
+
+            if command is None or value is None or value == "":
+                continue
+
+            if attr.startswith("gpio"):
+                # Collect the gpio attributes and convert them to 8 bit binary string
+                binary_gpio_values = "".join(str(int(getattr(self, attr))) for attr in self.attrs_to_compare if attr.startswith("gpio"))
+                padded_binary_gpio_values = binary_gpio_values.rjust(8, '0')
+                decimal_gpio_values = int(padded_binary_gpio_values, 2)
+                commands_list += [f"{command} " + str(decimal_gpio_values) + "\r\n"]
+            elif attr == "setPulseWidth":
+                commands_list += [f"{command} " + str(int(value * 1000000)) + "\r\n"]
+            else:
+                if isinstance(value, bool):
+                    value = int(value)
+                if command.startswith("g"):   # if it starts with a g it means it's a get command
+                    commands_list += [f"{command}" + "\r\n"]
+                else:
+                    commands_list += [f"{command} " + str(value) + "\r\n"]
+
+        return commands_list
+    
+    def __str__(self):
+        # just convert the attributes to a string
+        return str(self.__dict__)
+
 
 
 class GUI:

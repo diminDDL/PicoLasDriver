@@ -7,10 +7,13 @@ import traceback
 from time import sleep
 from sources.gui import DriverSettings
 
+# TODO implement a pooling thing that pools values like pulse duration and adc values periodicallys
 
 class SerialDriver(asyncio.Protocol):
     def __init__(self, driverSettings: DriverSettings, debug: bool = False, port: str = '/dev/ttyUSB0', baudrate: int = 115200, bits: int = 8, parity: str = 'N', stopbits: int = 1):
         self.driverSettings = driverSettings
+        # copy the driverSettings object
+        self.old_driverSettings = driverSettings.copy()
         self.debug = debug
         self.port = port
         self.baudrate = baudrate
@@ -66,10 +69,15 @@ class SerialDriver(asyncio.Protocol):
     async def sendAll(self):
         # send all the settings to the board
         if self.debug:
+            print("old settings: ", self.old_driverSettings)
+            print("new settings: ", self.driverSettings)
             print("Sending all settings")
+            print(self.driverSettings.getChangedCommands(self.old_driverSettings))
+            print("Done sending all settings")
         # send the settings to the board
-        commands = self.driverSettings.getAllCommands()
-        print("commands: " + str(commands))
+        #commands = self.driverSettings.getAllCommands()
+        commands = self.driverSettings.getChangedCommands(self.old_driverSettings)
+        #print("commands: " + str(commands))
         for command in commands:
             # convert the command to bytes
             # send the command to the board
@@ -81,6 +89,7 @@ class SerialDriver(asyncio.Protocol):
             await asyncio.sleep(0.2) # give some time for response
         print("Done sending all settings")
         self.enabled = False
+        self.old_driverSettings = self.driverSettings.copy()
 
     async def main(self, loop):
         self.transport, _ = await serial_asyncio.create_serial_connection(loop, lambda: self, self.port, baudrate=self.baudrate, bytesize=self.bits, parity=self.parity, stopbits=self.stopbits)
