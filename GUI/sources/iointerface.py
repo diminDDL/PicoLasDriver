@@ -78,7 +78,9 @@ class SerialDriver(asyncio.Protocol):
             self.current_command = command
             self.transport.write(bytes(command, 'ascii'))
             print("Sent: ", command)
-            await asyncio.sleep(0.3) # give some time for response
+            await asyncio.sleep(0.2) # give some time for response
+        print("Done sending all settings")
+        self.enabled = False
 
     async def main(self, loop):
         self.transport, _ = await serial_asyncio.create_serial_connection(loop, lambda: self, self.port, baudrate=self.baudrate, bytesize=self.bits, parity=self.parity, stopbits=self.stopbits)
@@ -87,7 +89,9 @@ class SerialDriver(asyncio.Protocol):
         while True:
             if self.enabled:
                 await self.sendAll()
-            await asyncio.sleep(0.1) # every 100ms
+            await asyncio.sleep(0.1)
+            #print("Enabled: ", self.enabled)
+
 
 
 class IOInterface:
@@ -229,13 +233,13 @@ class IOInterface:
                     print("Missing magicStr in config file")
                 else:
                     print(f"Could not connect to board on port: {port}")
-        if self.port is None or not self.port.is_open:
-            print("Could not connect to board")
-        else:
-            if(self.debug):
-                print("Connected to board on port: " + str(self.port.name))
-                # TODO proper setup of the board
-                self.port.write(bytes("anmo 1", 'ascii'))
+        # if self.port is None or not self.port.is_open:
+        #     print("Could not connect to board")
+        # else:
+        #     if(self.debug):
+        #         print("Connected to board on port: " + str(self.port.name))
+        #         # TODO proper setup of the board
+        #         self.port.write(bytes("anmo 1", 'ascii'))
                 # read out the config
             # start the event loop
             # self.loop.create_task(self.run())

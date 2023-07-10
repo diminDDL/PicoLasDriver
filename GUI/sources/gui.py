@@ -6,7 +6,7 @@ import si_prefix as si
 import time
 import os
 
-# TODO add data send on no change logic
+# TODO figure out why the board doesn't start pulsing now.
 
 def deg_color(deg, d_per_tick, color):
     deg += d_per_tick
@@ -42,10 +42,25 @@ class DriverSettings:
         self.gpioCommand = gpio
         self.globalEnableCommand = globalEnable
 
+    # def __eq__(self, other):
+    #     if not isinstance(other, DriverSettings):
+    #         return NotImplemented
+    #     return self.__dict__ == other.__dict__
+
     def __eq__(self, other):
         if not isinstance(other, DriverSettings):
             return NotImplemented
-        return self.__dict__ == other.__dict__
+
+        # attributes to be compared
+        attrs_to_compare = ['setCurrent', 'setPulseWidth', 'setFrequency', 'setPulseMode',
+                            'gpio_0', 'gpio_1', 'gpio_2', 'gpio_3', 'globalEnable']
+
+        for attr in attrs_to_compare:
+            if getattr(self, attr) != getattr(other, attr):
+                return False
+
+        return True
+
     
     def copy(self):
         new_instance = DriverSettings()
@@ -70,7 +85,7 @@ class DriverSettings:
         new_instance.ADCReadoutValueCommand = self.ADCReadoutValueCommand
         new_instance.gpioCommand = self.gpioCommand
         new_instance.globalEnableCommand = self.globalEnableCommand
-        
+
         return new_instance
     
     def getAllCommands(self):
@@ -239,24 +254,37 @@ class GUI:
         self.loop.stop()
         
     async def comm(self):  # this is non-blocking now
+        prev_driv = None  # store the driv from the previous iteration
+        change_detected = False  # this flag will tell us when a change has been detected
+
         while True:
             await asyncio.sleep(0.5)
 
             if self.debug:
                 print("checking for changes in driv")
+
             # check if old driv is different from new driv
             if self.old_driv != self.driv:
                 if self.debug:
                     print("driv changed")
-                    print("old driv: " + str(self.old_driv.__dict__))
-                    print("new driv: " + str(self.driv.__dict__))
 
                 # if driv changed, send the new values to the controller
                 self.old_driv = self.driv.copy()
-                # self.io.send(self.driv)
+                change_detected = True  # change has been detected
+                self.io.serialDriver.enabled = False  # disable serialDriver
+            elif change_detected:  # no change was detected in this iteration, but there was a change in the previous iteration
+                change_detected = False  # reset the flag
+                self.io.serialDriver.enabled = True  # enable serialDriver
+                if self.debug:
+                    print("driv stopped changing, enabling serialDriver")
+
+            # store the current driv for the next iteration
+            prev_driv = self.driv.copy()
 
             # update the UI and restart the keep alive function
             self.updateDisplayValues()
+
+    
 
     def adjustValues(self, command=None, pressedTime=0):
         # change values, command provides a string describing what should change
@@ -457,6 +485,12 @@ class GUI:
         else:
             self.setPulseWidthSrt.set("Value set:\n" + str(si.si_format(self.driv.setPulseWidth, precision=3)) + "s")
         self.setFrequencySrt.set("Value set:\n" + str(si.si_format(self.driv.setFrequency, precision=0)) + "Hz")
+
+        # update the error readout
+        if self.io.serialDriver.enabled:
+            self.errorReadout = "Sending..."
+        else:
+            self.errorReadout = ""
 
         # update the globalPulseCounterLabel
         self.globalPulseCounterLabel.set("Global pulse counter:\n" + str(self.driv.globalPulseCounter))
