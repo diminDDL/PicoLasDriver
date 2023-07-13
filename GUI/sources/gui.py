@@ -42,6 +42,8 @@ class DriverSettings:
         # attributes to be compared
         self.attrs_to_compare = ['setCurrent', 'setPulseWidth', 'setFrequency', 'setPulseMode',
                             'gpio_0', 'gpio_1', 'gpio_2', 'gpio_3', 'globalEnable']
+        # attributes that need perodic reading
+        self.attrs_to_read = ['globalPulseCounter', 'localPulseCounter', 'ADCReadoutValue']
 
     def setCommands(self, setCurrent, setPulseWidth, setFrequency, setPulseMode, globalPulseCounter, localPulseCounter, ADCReadoutValue, gpio, globalEnable):
         self.setCurrentCommand = setCurrent
@@ -189,6 +191,26 @@ class DriverSettings:
 
         return commands_list
     
+    def getReadCommands(self):
+        # Using the attrs_to_read attributes list
+        read_attrs = self.attrs_to_read
+
+        commands_list = []
+        for attr in read_attrs:
+            command_attr = attr + "Command"
+            command = getattr(self, command_attr, None)
+            value = getattr(self, attr)
+
+            if command is None or value is None or value == "":
+                continue
+
+            if command.startswith("g"):   # if it starts with a g it means it's a get command
+                commands_list += [f"{command}" + "\r\n"]
+            else:
+                commands_list += [f"{command} " + str(value) + "\r\n"]
+
+        return commands_list
+
     def __str__(self):
         # just convert the attributes to a string
         return str(self.__dict__)
@@ -528,7 +550,7 @@ class GUI:
         self.setFrequencySrt.set("Value set:\n" + str(si.si_format(self.driv.setFrequency, precision=0)) + "Hz")
 
         # update the error readout
-        if self.io.serialDriver.enabled:
+        if self.io.serialDriver.sending:
             self.errorReadout = "Sending..."
         else:
             self.errorReadout = ""
