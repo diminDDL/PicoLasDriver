@@ -5,14 +5,16 @@ import asyncio
 import serial_asyncio
 import traceback
 from time import sleep
+import datetime
 from sources.gui import DriverSettings
 
 # TODO implement a pooling thing that pools values like pulse duration and adc values periodicallys
 
+# TODO old_driverSettings and driverSettings seem to be the same, on boolean varialbes? figure that out
+
 class SerialDriver(asyncio.Protocol):
     def __init__(self, driverSettings: DriverSettings, debug: bool = False, port: str = '/dev/ttyUSB0', baudrate: int = 115200, bits: int = 8, parity: str = 'N', stopbits: int = 1):
         self.driverSettings = driverSettings
-        # copy the driverSettings object
         self.old_driverSettings = driverSettings.copy()
         self.debug = debug
         self.port = port
@@ -23,6 +25,10 @@ class SerialDriver(asyncio.Protocol):
         self.enabled = False
         self.sending = False
         self.buffer = b""
+        self.command_queue = asyncio.Queue()
+        self.is_sending = asyncio.Lock()
+        self.command_processed = asyncio.Event()  # Flag to indicate a command has been processed
+        self.response_timeout = 1.0  # Timeout value in seconds
 
     def connection_made(self, transport):
         self.transport = transport
@@ -33,10 +39,15 @@ class SerialDriver(asyncio.Protocol):
         self.buffer += data
 
     async def wait_for_complete_message(self):
+        """Wait for a complete response of the form '{value}\r\n{status}\r\n'."""
         while self.buffer.count(b'\r\n') < 2:
             await asyncio.sleep(0.1)
         end_of_message = self.buffer.index(b'\r\n', self.buffer.index(b'\r\n') + 2)
-        return self.buffer[:end_of_message]
+        complete_message = self.buffer[:end_of_message]
+        if b'\r\n' in complete_message:  # Check if the message has the correct format
+            return complete_message
+        else:
+            return None
 
     async def process_buffer(self):
         while self.connected:
@@ -49,10 +60,6 @@ class SerialDriver(asyncio.Protocol):
                     self.process_data(self.buffer)
                     self.buffer = b""
 
-    async def check_buffer(self):
-        while b'\r\n' not in self.buffer:
-            await asyncio.sleep(0.1)
-
     def process_data(self, data):
         print("Data received: ", data)
         split_data = data.split(b"\r\n")
@@ -63,43 +70,54 @@ class SerialDriver(asyncio.Protocol):
             print("response: ", response)
             print("status: ", status)
             if status.strip() == "00":
-                # get the value from the response
                 value = response.strip()
                 print("value: ", value)
-                # write the value to the driverSettings object
                 self.driverSettings.setValueByCommand(self.current_command[:4], value)
+                self.command_processed.set()  # Indicate the command has been processed
         else:
             print("Received unexpected data format.")
 
     async def sendAll(self, mode : int = 0):
         self.sending = True
-        # send all the settings to the board
-        if self.debug:
-            print("old settings: ", self.old_driverSettings)
-            print("new settings: ", self.driverSettings)
-            print("All settings:")
-            print(self.driverSettings.getChangedCommands(self.old_driverSettings))
-        # send the settings to the board
         if mode == 0:
             commands = self.driverSettings.getAllCommands()
         elif mode == 1:
             commands = self.driverSettings.getChangedCommands(self.old_driverSettings)
         elif mode == 2:
             commands = self.driverSettings.getReadCommands()
-        #print("commands: " + str(commands))
+        print("commands: " + str(commands))
+        print("###################")
+        print("Old driver settings: " + str(self.old_driverSettings))
+        print("New driver settings: " + str(self.driverSettings))
         for command in commands:
-            # convert the command to bytes
-            # send the command to the board
-            # get a response and a status
-            # write the response values into the driverSettings object
-            self.current_command = command
-            self.transport.write(bytes(command, 'ascii'))
-            print("Sent: ", command)
-            await asyncio.sleep(0.5) # give some time for response
-        print("Done sending all settings")
+           await self.command_queue.put(command)
         self.enabled = False
         self.old_driverSettings = self.driverSettings.copy()
         self.sending = False
+
+    async def wait_for_command_processed(self):
+        while not self.command_processed.is_set():
+            await asyncio.sleep(0.1)
+        self.command_processed.clear()  # Reset the flag
+
+    async def process_queue(self):
+        while True:
+            command = await self.command_queue.get()
+
+            async with self.is_sending:
+                self.current_command = command
+                self.transport.write(bytes(command, 'ascii'))
+                print("Sent: ", command)
+                
+                try:
+                    await asyncio.wait_for(self.wait_for_command_processed(), timeout=self.response_timeout)  # Wait for the command to be processed with a timeout
+                except asyncio.TimeoutError:
+                    print(f"Warning: Response to command {command} timed out.")
+                    
+            self.command_queue.task_done()
+            print("Done sending command: ", command)
+            # print a timestamp
+            print("Timestamp: " + str(datetime.datetime.now()))
 
     async def main(self, loop):
         self.transport, _ = await serial_asyncio.create_serial_connection(loop, lambda: self, self.port, baudrate=self.baudrate, bytesize=self.bits, parity=self.parity, stopbits=self.stopbits)
@@ -107,16 +125,16 @@ class SerialDriver(asyncio.Protocol):
         last_time = loop.time()
 
         asyncio.ensure_future(self.process_buffer())
+        asyncio.ensure_future(self.process_queue())
+
         while True:
             if self.enabled:
                 await self.sendAll(mode=1)
-            # if 1 second has passed, send all the settings to the board
-            if loop.time() - last_time >= 5:
+            elif loop.time() - last_time >= 5 and not self.sending:
                 last_time = loop.time()
                 await self.sendAll(mode=2)
 
             await asyncio.sleep(0.1)
-            #print("Enabled: ", self.enabled)
 
 
 

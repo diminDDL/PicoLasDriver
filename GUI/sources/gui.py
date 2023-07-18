@@ -324,7 +324,8 @@ class GUI:
             await asyncio.sleep(0.5)
 
             if self.debug:
-                print("checking for changes in driv")
+                #print("checking for changes in driv")
+                pass
 
             # check if old driv is different from new driv
             if self.old_driv != self.driv:
