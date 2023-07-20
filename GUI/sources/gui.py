@@ -55,6 +55,7 @@ class DriverSettings:
         self.ADCReadoutValueCommand = ADCReadoutValue
         self.gpioCommand = gpio
         self.globalEnableCommand = globalEnable
+        
 
     def __eq__(self, other):
         if not isinstance(other, DriverSettings):
@@ -304,7 +305,6 @@ class GUI:
         self.root.resizable(False, False)
         self.root.attributes("-topmost", True)
         self.createMainWindow(version)
-        #self.loop.create_task(self.comm())
 
     async def updater(self, interval):   # this is non-blocking now
         while True:

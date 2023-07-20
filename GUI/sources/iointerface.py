@@ -8,9 +8,8 @@ from time import sleep
 import datetime
 from sources.gui import DriverSettings
 
-# TODO implement a pooling thing that pools values like pulse duration and adc values periodicallys
-
-# TODO old_driverSettings and driverSettings seem to be the same, on boolean varialbes? figure that out
+# TODO IO buttons not working
+# TODO setup of the driver
 
 class SerialDriver(asyncio.Protocol):
     def __init__(self, driverSettings: DriverSettings, debug: bool = False, port: str = '/dev/ttyUSB0', baudrate: int = 115200, bits: int = 8, parity: str = 'N', stopbits: int = 1):
@@ -33,7 +32,8 @@ class SerialDriver(asyncio.Protocol):
     def connection_made(self, transport):
         self.transport = transport
         self.connected = True
-        print("Connection made")
+        if self.debug:
+            print("Connection made")
 
     def data_received(self, data):
         self.buffer += data
@@ -61,21 +61,25 @@ class SerialDriver(asyncio.Protocol):
                     self.buffer = b""
 
     def process_data(self, data):
-        print("Data received: ", data)
+        if self.debug:
+            print("Data received: ", data)
         split_data = data.split(b"\r\n")
         if len(split_data) >= 2:
             response, status = split_data[:2]
             response = response.decode('ascii')
             status = status.decode('ascii')
-            print("response: ", response)
-            print("status: ", status)
+            if self.debug:
+                print("response: ", response)
+                print("status: ", status)
             if status.strip() == "00":
                 value = response.strip()
-                print("value: ", value)
+                if self.debug:
+                    print("value: ", value)
                 self.driverSettings.setValueByCommand(self.current_command[:4], value)
                 self.command_processed.set()  # Indicate the command has been processed
         else:
-            print("Received unexpected data format.")
+            if self.debug:
+                print("Received unexpected data format.")
 
     async def sendAll(self, mode : int = 0):
         self.sending = True
@@ -83,16 +87,15 @@ class SerialDriver(asyncio.Protocol):
             commands = self.driverSettings.getAllCommands()
         elif mode == 1:
             commands = self.driverSettings.getChangedCommands(self.old_driverSettings)
+            self.old_driverSettings = self.driverSettings.copy()
         elif mode == 2:
             commands = self.driverSettings.getReadCommands()
-        print("commands: " + str(commands))
-        print("###################")
-        print("Old driver settings: " + str(self.old_driverSettings))
-        print("New driver settings: " + str(self.driverSettings))
         for command in commands:
-           await self.command_queue.put(command)
+            await self.command_queue.put(command)
         self.enabled = False
-        self.old_driverSettings = self.driverSettings.copy()
+
+        # Wait for all commands to be processed before setting sending to False
+        await self.command_queue.join()
         self.sending = False
 
     async def wait_for_command_processed(self):
@@ -107,17 +110,17 @@ class SerialDriver(asyncio.Protocol):
             async with self.is_sending:
                 self.current_command = command
                 self.transport.write(bytes(command, 'ascii'))
-                print("Sent: ", command)
+                if self.debug:
+                    print("Sent: ", command)
                 
                 try:
-                    await asyncio.wait_for(self.wait_for_command_processed(), timeout=self.response_timeout)  # Wait for the command to be processed with a timeout
+                    await asyncio.wait_for(self.wait_for_command_processed(), timeout=self.response_timeout)
                 except asyncio.TimeoutError:
                     print(f"Warning: Response to command {command} timed out.")
                     
             self.command_queue.task_done()
-            print("Done sending command: ", command)
-            # print a timestamp
-            print("Timestamp: " + str(datetime.datetime.now()))
+            if self.debug:
+                print("Done sending command: ", command)
 
     async def main(self, loop):
         self.transport, _ = await serial_asyncio.create_serial_connection(loop, lambda: self, self.port, baudrate=self.baudrate, bytesize=self.bits, parity=self.parity, stopbits=self.stopbits)
@@ -130,7 +133,7 @@ class SerialDriver(asyncio.Protocol):
         while True:
             if self.enabled:
                 await self.sendAll(mode=1)
-            elif loop.time() - last_time >= 5 and not self.sending:
+            elif loop.time() - last_time >= 1 and not self.sending:     #TODO decrease this value
                 last_time = loop.time()
                 await self.sendAll(mode=2)
 
@@ -158,6 +161,11 @@ class IOInterface:
             self.parity = self.conf[self.driver]["protocol"]["connection"]["parity"]
             self.stopbits = int(self.conf[self.driver]["protocol"]["connection"]["stopbits"])
 
+        self.maxCurent = self.conf[self.driver]['MaxCurrent_A']
+        self.minPuseWidth = self.conf[self.driver]['MinPulseWidth_us']/1000000
+        self.maxPulseWidth = self.conf[self.driver]['MaxPulseWidth_us']/1000000
+        self.maxFrequency = self.conf[self.driver]['MaxFrequency_Hz']
+
         self.loop = loop
         self.serialDriver = None
         # self.loop.run_in_executor(None, self.init_comms)
@@ -166,6 +174,23 @@ class IOInterface:
         self.serialDriver = SerialDriver(self.driverSettings, self.debug, self.port.name, self.baudrate, self.bits, self.parity, self.stopbits)
         self.serialDriver.enabled = self.correctDevice
 
+    def convert_to_type(self, data_type, value):
+        try:
+            if data_type == "boolean":
+                if value == "0":
+                    return False
+                elif value == "1":
+                    return True
+                else:
+                    return None
+            elif data_type == "64bit":
+                data_type = "int"
+            elif data_type == "32bit":
+                data_type = "int"
+            converted_value = eval(f"{data_type}({value})")
+            return converted_value
+        except (SyntaxError, NameError, TypeError, ValueError):
+            return None
 
     def init_comms(self):
         # scan for all serial ports
@@ -244,7 +269,7 @@ class IOInterface:
                                 print("Bits: " + str(self.bits))
                                 print("Parity: " + str(self.parity))
                                 print("Stopbits: " + str(self.stopbits))
-                            self.port = serial.Serial(port, self.baudrate, timeout=3, stopbits=self.stopbits, parity=self.parity, bytesize=self.bits)
+                            self.port = serial.Serial(port, self.baudrate, timeout=5.0, stopbits=self.stopbits, parity=self.parity, bytesize=self.bits)
                             sleep(1)
                             # s.write(b"testtesttesttest\n\r")
                             magicStr = self.conf[self.driver]["protocol"]["connection"]["magicStr"]
@@ -259,8 +284,130 @@ class IOInterface:
                                 print("Received: " + str(res))
                             # if the result is equal to magic reversed then we break the loop
                             if res == magic[::-1]:
-                                self.port.close()
                                 self.correctDevice = True
+
+                                if(self.debug):
+                                    print("Connected to board on port: " + str(self.port.name))
+                                # setup of the board
+                                # read out the config
+
+                                # set the maximum current
+                                self.port.reset_input_buffer()
+                                sleep(0.1)
+                                command = self.conf[self.driver]["protocol"]["io_commands"]["set_max_current"]["command"]
+                                msg_type = self.conf[self.driver]["protocol"]["io_commands"]["set_max_current"]["parameter"]
+                                message = bytes(command + " " + str(self.maxCurent) +"\r\n", 'ascii')
+                                print("Sending: " + str(message))
+                                self.port.write(message)
+                                sleep(0.1)
+                                # keep reading until we get a \r\n
+                                res = self.port.read_until(b"\r\n").decode('ascii').strip("\r\n")
+                                status = self.port.read_until(b"\r\n")
+                                # convert the result to the correct type
+                                res = self.convert_to_type(msg_type, res)
+                                expected_res = self.convert_to_type(msg_type, self.maxCurent)
+                                if res == expected_res:
+                                    pass
+                                else:
+                                    print("Error setting maximum current")
+                                
+                                if self.debug:
+                                    print("Expected: " + str(expected_res))
+                                    print("Received: " + str(res))
+                                    print("Status: " + str(status))
+                                sleep(0.1)
+
+                                # read in the previous set current if it's above the maximum current then set it to the maximum current, store in config variable
+                                self.port.reset_input_buffer()
+                                self.port.reset_output_buffer()
+                                sleep(0.1)
+                                command = self.conf[self.driver]["protocol"]["get_current"]["command"]
+                                msg_type = self.conf[self.driver]["protocol"]["get_current"]["answer"]
+                                message = bytes(command + "\r\n", 'ascii')
+                                print("Sending: " + str(message))
+                                self.port.write(message)
+                                sleep(0.1)
+                                res = self.port.read_until(b"\r\n").decode('ascii').strip("\r\n")
+                                status = self.port.read_until(b"\r\n")
+                                res = self.convert_to_type(msg_type, res)
+                                if res > self.maxCurent:
+                                    res = self.maxCurent
+                                    # send the current to the board
+                                    self.port.reset_input_buffer()
+                                    self.port.reset_output_buffer()
+                                    sleep(0.1)
+                                    command = self.conf[self.driver]["protocol"]["set_current"]["command"]
+                                    msg_type = self.conf[self.driver]["protocol"]["set_current"]["parameter"]
+                                    message = bytes(command + " " + str(self.driverSettings.setCurrent) +"\r\n", 'ascii')
+                                    print("Sending: " + str(message))
+                                    self.port.write(message)
+                                    sleep(0.1)
+                                    # keep reading until we get a \r\n
+                                    res = self.port.read_until(b"\r\n").decode('ascii').strip("\r\n")
+                                    status = self.port.read_until(b"\r\n")
+                                    # convert the result to the correct type
+                                    res = self.convert_to_type(msg_type, res)
+                                    expected_res = self.convert_to_type(msg_type, self.maxCurent)
+                                    if res == expected_res:
+                                        pass
+                                    else:
+                                        print("Error setting current")
+
+                                    sleep(0.1)
+
+                                    if self.debug:
+                                        print("Expected: " + str(expected_res))
+                                        print("Received: " + str(res))
+                                        print("Status: " + str(status))
+                                self.driverSettings.setCurrent = res
+                                sleep(0.1)
+
+                                if self.debug:
+                                    print("Received: " + str(res))
+                                    print("Status: " + str(status))
+
+                                # read frequency, store in config variable
+                                for comm in ["get_pulse_duration", "get_pulse_frequency"]:
+                                    msg_type = self.conf[self.driver]["protocol"]["io_commands"][comm]["answer"]
+                                    command = self.conf[self.driver]["protocol"]["io_commands"][comm]["command"]
+                                    message = bytes(command + "\r\n", 'ascii')
+                                    print("Sending: " + str(message))
+                                    self.port.write(message)
+                                    sleep(0.1)
+                                    res = self.port.read_until(b"\r\n").decode('ascii').strip("\r\n")
+                                    status = self.port.read_until(b"\r\n")
+                                    res = self.convert_to_type(msg_type, res)
+                                    if comm == "get_pulse_duration":
+                                        if self.minPuseWidth <= res <= self.maxPulseWidth:
+                                            self.driverSettings.setPulseWidth = res/1000
+                                    else:
+                                        if 0 <= res <= self.maxFrequency:
+                                            self.driverSettings.setFrequency = res
+
+                                    if self.debug:
+                                        print("Received: " + str(res))
+                                        print("Status: " + str(status))
+
+                                # set mode to analog
+                                self.port.reset_input_buffer()
+                                self.port.reset_output_buffer()
+                                command = self.conf[self.driver]["protocol"]["io_commands"]["set_analog_mode"]["command"]
+                                msg_type = self.conf[self.driver]["protocol"]["io_commands"]["set_analog_mode"]["parameter"]
+                                message = bytes(command + " 1\r\n", 'ascii')
+                                print("Sending: " + str(message))
+                                self.port.write(message)
+                                sleep(0.1)
+                                res = self.port.read_until(b"\r\n").decode('ascii').strip("\r\n")
+                                status = self.port.read_until(b"\r\n")
+                                res = self.convert_to_type(msg_type, res)
+                                if res != True:
+                                    print("Error setting mode to analog")
+
+                                if self.debug:
+                                    print("Received: " + str(res))
+                                    print("Status: " + str(status))
+
+                                self.port.close()
                                 break
                             else:
                                 self.correctDevice = False
@@ -280,21 +427,9 @@ class IOInterface:
         if not self.correctDevice:
             print("Could not connect to board")
             self.port = None
-            # TODO throw an error
+            # throw an error
         else:
-            if(self.debug):
-                print("Connected to board on port: " + str(self.port.name))
-                # TODO proper setup of the board
-                # self.port.write(bytes("anmo 1", 'ascii'))
-                # read out the config
-            # start the event loop
-            # self.loop.create_task(self.run())
-    # at the end of this we need to start some poolling function to keep the event loop running
-
-    #def run(self):
-        #self.serialDriver = SerialDriver(self.driverSettings, self.debug, self.port.name, self.baudrate, self.bits, self.parity, self.stopbits)
-        #self.loop.run_until_complete(serialDriver.main(self.loop))
-
+            pass
 
     def execute(self, command: str, args):
         # execute a command
