@@ -8,7 +8,6 @@ from time import sleep
 import datetime
 from sources.gui import DriverSettings
 
-# TODO IO buttons not working
 # TODO setup of the driver
 
 class SerialDriver(asyncio.Protocol):
@@ -23,6 +22,7 @@ class SerialDriver(asyncio.Protocol):
         self.stopbits = stopbits
         self.enabled = False
         self.sending = False
+        self.first_start = True
         self.buffer = b""
         self.command_queue = asyncio.Queue()
         self.is_sending = asyncio.Lock()
@@ -75,8 +75,14 @@ class SerialDriver(asyncio.Protocol):
                 value = response.strip()
                 if self.debug:
                     print("value: ", value)
-                self.driverSettings.setValueByCommand(self.current_command[:4], value)
-                self.command_processed.set()  # Indicate the command has been processed
+                if value:  # Only set the value if it's not empty
+                    try:
+                        self.driverSettings.setValueByCommand(self.current_command[:4], value)
+                    except ValueError as e:
+                        print(f"Error setting value for command {self.current_command[:4]}: {e}")
+                    finally:
+                        self.command_processed.set()  # Always set the event, even if an error occurs
+
         else:
             if self.debug:
                 print("Received unexpected data format.")
@@ -132,7 +138,11 @@ class SerialDriver(asyncio.Protocol):
 
         while True:
             if self.enabled:
-                await self.sendAll(mode=1)
+                if self.first_start:
+                    await self.sendAll(mode=0)
+                    self.first_start = False
+                else:
+                    await self.sendAll(mode=1)
             elif loop.time() - last_time >= 1 and not self.sending:     #TODO decrease this value
                 last_time = loop.time()
                 await self.sendAll(mode=2)

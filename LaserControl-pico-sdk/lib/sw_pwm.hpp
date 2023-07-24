@@ -19,9 +19,11 @@ public:
     uint64_t period = 0;
     uint64_t positive_width = 0;
     bool timer_running = false;
+    bool single_shot = false;
+    bool enabled = false;
+    bool pulse_flag = false;
 
     private:
-    bool enabled = false;
     struct repeating_timer timer;
     static const uint32_t resolution_divider = 100;
     

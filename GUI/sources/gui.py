@@ -164,9 +164,18 @@ class DriverSettings:
             raise ValueError("other must be an instance of DriverSettings")
 
         changed_attrs = [attr for attr in self.attrs_to_compare if getattr(self, attr) != getattr(other, attr)]
+        print("GPIO STATES: " + str(self.gpio_0) + str(self.gpio_1) + str(self.gpio_2) + str(self.gpio_3))
+        print("CHANGEDE ATTRS: " + str(changed_attrs))
 
         commands_list = []
+        gpio_changed = False
         for attr in changed_attrs:
+            print("CURRENT ATTR: " + attr)
+
+            if attr.startswith("gpio"):
+                gpio_changed = True
+                continue
+
             command_attr = attr + "Command"
             command = getattr(self, command_attr, None)
             value = getattr(self, attr)
@@ -174,13 +183,7 @@ class DriverSettings:
             if command is None or value is None or value == "":
                 continue
 
-            if attr.startswith("gpio"):
-                # Collect the gpio attributes and convert them to 8 bit binary string
-                binary_gpio_values = "".join(str(int(getattr(self, attr))) for attr in self.attrs_to_compare if attr.startswith("gpio"))
-                padded_binary_gpio_values = binary_gpio_values.rjust(8, '0')
-                decimal_gpio_values = int(padded_binary_gpio_values, 2)
-                commands_list += [f"{command} " + str(decimal_gpio_values) + "\r\n"]
-            elif attr == "setPulseWidth":
+            if attr == "setPulseWidth":
                 commands_list += [f"{command} " + str(int(value * 1000000)) + "\r\n"]
             else:
                 if isinstance(value, bool):
@@ -190,7 +193,17 @@ class DriverSettings:
                 else:
                     commands_list += [f"{command} " + str(value) + "\r\n"]
 
+        if gpio_changed:
+            print("GENERATING GPIO COMMAND")
+            # Collect the gpio attributes and convert them to 8 bit binary string
+            binary_gpio_values = "".join(str(int(getattr(self, attr))) for attr in self.attrs_to_compare if attr.startswith("gpio"))
+            padded_binary_gpio_values = binary_gpio_values.rjust(8, '0')
+            decimal_gpio_values = int(padded_binary_gpio_values, 2)
+            commands_list += [f"{self.gpioCommand} " + str(decimal_gpio_values) + "\r\n"]
+            print(f"GPIO command: {self.gpioCommand} {decimal_gpio_values}")
+
         return commands_list
+
     
     def getReadCommands(self):
         # Using the attrs_to_read attributes list

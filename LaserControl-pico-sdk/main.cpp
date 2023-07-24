@@ -21,7 +21,6 @@
 // TODO
 // pulse mode - single or continuous
 // handle errors
-// GPIO not working
 
 // create new PWM instance
 SW_PWM sw_PWM(PULSE_PIN);
@@ -55,23 +54,33 @@ int main() {
     adc_gpio_init(ADC_PIN_PD);
 
     for(uint8_t i = 0; i < GPIO_NUM; i++){
+        gpio_init(GPIO_BASE_PIN + i);
         gpio_set_dir(GPIO_BASE_PIN + i, GPIO_OUT);
         gpio_put(GPIO_BASE_PIN + i, 0);
     }
+    gpio_init(EN_PIN);
     gpio_set_dir(EN_PIN, GPIO_OUT);
     gpio_put(EN_PIN, 0);
     gpio_init(ESTOP_PIN);
     gpio_set_dir(ESTOP_PIN, GPIO_IN);
+    gpio_set_pulls(ESTOP_PIN, true, false);
     sleep_ms(1);
     gpio_set_irq_enabled_with_callback(ESTOP_PIN, GPIO_IRQ_EDGE_FALL, true, &gpio_callback);
+    gpio_init(OE_LED);
     gpio_set_dir(OE_LED, GPIO_OUT);
+    gpio_init(TRIG_LED);
     gpio_set_dir(TRIG_LED, GPIO_OUT);
+    gpio_init(E_STOP_LED);
     gpio_set_dir(E_STOP_LED, GPIO_OUT);
+    gpio_init(FAULT_LED);
     gpio_set_dir(FAULT_LED, GPIO_OUT);
 
     sw_PWM.init();
     sw_PWM.set_enabled(true);
+
+    gpio_init(INTERRUPT_PIN);
     gpio_set_dir(INTERRUPT_PIN, GPIO_IN);
+    gpio_init(PULSE_COUNT_PIN);
     gpio_set_dir(PULSE_COUNT_PIN, GPIO_IN);
 
     gpio_set_function(FRAM_SPI_SCLK, GPIO_FUNC_SPI);
@@ -107,6 +116,24 @@ int main() {
     comms.valuesChanged = true;     // force the values to be sent to everything
 
     bool stopped = false;
+
+
+    // test all LEDs
+    for(uint8_t i = 0; i < 2; i++){
+        gpio_put(OE_LED, 1);
+        gpio_put(E_STOP_LED, 1);
+        gpio_put(FAULT_LED, 1);
+        gpio_put(TRIG_LED, 1);
+        gpio_put(25, 1);
+        sleep_ms(100);
+        gpio_put(OE_LED, 0);
+        gpio_put(E_STOP_LED, 0);
+        gpio_put(FAULT_LED, 0);
+        gpio_put(TRIG_LED, 0);
+        gpio_put(25, 0);
+        sleep_ms(100);
+    }
+    gpio_put(25, 1);
 
     while (true) {
 
@@ -233,14 +260,14 @@ void set_values(){
         gpio_set_irq_enabled(PULSE_COUNT_PIN, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, false);
         enabled = false;
     }
-    // TODO fix this; GPIOs stay on regardless of OE, only turned off by E-STOP
+
     for(uint8_t i = 0; i < GPIO_NUM; i++){
         gpio_put(GPIO_BASE_PIN + i, ((comms.data.gpioState >> i) & 1));
     }
 }
 
 void stop(){
-    printf("Stopping\n");
+    // printf("Stopping\n");
     // turn off the output
     gpio_put(EN_PIN, 0);
     // set the DAC to 0V
@@ -269,7 +296,7 @@ void stop(){
         comms.valuesChanged = true;
         EEPROM_service();
         comms.valuesChanged = false;
-        printf("Stopping\n");
+        printf("Stopping EEPROM\n");
     }
     estop = true;
 }

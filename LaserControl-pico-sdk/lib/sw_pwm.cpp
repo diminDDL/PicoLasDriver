@@ -49,10 +49,16 @@ bool repeating_timer_callback(struct repeating_timer *t) {
     if(current_time - sw_pwm->last_time >= sw_pwm->period) {
         sw_pwm->last_time = current_time;
     }
+    //TODO test this single mode
     if(current_time - sw_pwm->last_time < sw_pwm->positive_width) {
         gpio_put(sw_pwm->pin, 1);
+        sw_pwm->pulse_flag = true;
     } else {
         gpio_put(sw_pwm->pin, 0);
+        if(sw_pwm->pulse_flag && sw_pwm->single_shot) {
+            sw_pwm->pause_state = true;
+        }
+        sw_pwm->pulse_flag = false;
     }
     return true;
 }
