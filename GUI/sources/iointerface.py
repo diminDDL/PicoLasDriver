@@ -8,7 +8,8 @@ from time import sleep
 import datetime
 from sources.gui import DriverSettings
 
-# TODO setup of the driver
+# TODO 
+# stretch goal - auto reconnect
 
 class SerialDriver(asyncio.Protocol):
     def __init__(self, driverSettings: DriverSettings, debug: bool = False, port: str = '/dev/ttyUSB0', baudrate: int = 115200, bits: int = 8, parity: str = 'N', stopbits: int = 1):

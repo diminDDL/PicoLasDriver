@@ -6,7 +6,10 @@ import si_prefix as si
 import time
 import os
 
-# TODO figure out why the board doesn't start pulsing now.
+# TODO 
+# single pulse mode
+# pulse length investigation for more precise pulse length
+# output errors to the GUI (timtout of seiral mainly)
 
 def deg_color(deg, d_per_tick, color):
     deg += d_per_tick
