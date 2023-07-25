@@ -78,8 +78,8 @@ class Communications{
             bool lockState = false;                                 // lock state of the driver and UI (locked = true, unlocked = false)
             bool analogMode = false;                                // analog mode flag
             uint16_t adcValue = 0;                                  // has the latest ADC value
-            uint8_t gpioState = 0;                                     // state of the GPIO pins
-            uint8_t pulseMode = 0;                                     // pulse mode, 0 - continuous, 1 - single pulse
+            uint8_t gpioState = 0;                                  // state of the GPIO pins
+            uint8_t pulseMode = 0;                                  // pulse mode, 0 - continuous, 1 - single pulse
         } data;
         bool error1 = false;        // Not implemented (should be used to read error states of the driver)
         bool error2 = false;        // Used to indicate critical errors (driver halted, etc.)

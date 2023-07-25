@@ -13,6 +13,7 @@ class Memory{
             uint32_t pulsedur;
             uint32_t pulsefreq;
             bool analog;
+            bool pulseMode;
         };
         //DueFlashStorage EEPROM;                             // EEPROM object
         FRAM* _FRAM;

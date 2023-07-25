@@ -257,7 +257,7 @@ class GUI:
         self.driv.setCommands(setCurrent=self.config[self.driver]["protocol"]["set_current"]["command"],
                                 setPulseWidth=self.config[self.driver]["protocol"]["io_commands"]["set_pulse_duration"]["command"],
                                 setFrequency=self.config[self.driver]["protocol"]["io_commands"]["set_pulse_frequency"]["command"],
-                                setPulseMode=None,
+                                setPulseMode=None,      # TODO
                                 globalPulseCounter=self.config[self.driver]["protocol"]["io_commands"]["get_global_pulse_count"]["command"],
                                 localPulseCounter=self.config[self.driver]["protocol"]["io_commands"]["get_current_pulse_count"]["command"],
                                 ADCReadoutValue=self.config[self.driver]["protocol"]["io_commands"]["get_adc"]["command"],

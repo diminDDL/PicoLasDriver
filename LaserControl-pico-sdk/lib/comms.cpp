@@ -205,9 +205,8 @@ void Communications::parseBuffer(void){
             printf("%d%s", data.gpioState, EOL);
             printErrorStr(true);
 
-            // TODO remove this
-            // printf("GPIO state: %d%s", data.gpioState, EOL);
         } else if(strcmp(command, setPulseMode) == 0){
+            // 0 - continuous, 1 - single pulse
             if (atoi(value) == 1){
                 data.pulseMode = 1;
             } else if (atoi(value) == 0){

@@ -21,6 +21,8 @@
 // TODO
 // pulse mode - single or continuous
 // handle errors
+// EEPROM weirdness with the new pulse type thing
+// random estops
 
 // create new PWM instance
 SW_PWM sw_PWM(PULSE_PIN);
@@ -59,8 +61,8 @@ int main() {
         gpio_put(GPIO_BASE_PIN + i, 0);
     }
     gpio_init(EN_PIN);
-    gpio_set_dir(EN_PIN, GPIO_OUT);
-    gpio_put(EN_PIN, 0);
+    gpio_set_dir(EN_PIN, GPIO_IN);
+    gpio_set_pulls(EN_PIN, true, false);
     gpio_init(ESTOP_PIN);
     gpio_set_dir(ESTOP_PIN, GPIO_IN);
     gpio_set_pulls(ESTOP_PIN, true, false);
@@ -102,6 +104,7 @@ int main() {
         comms.data.setPulseDuration = memory.config.pulsedur;
         comms.data.setPulseFrequency = memory.config.pulsefreq;
         comms.data.analogMode = memory.config.analog;
+        comms.data.pulseMode = memory.config.pulseMode; 
     }else{
         printf("EEPROM fault\n");
         eeprom_fault = true;
@@ -204,7 +207,7 @@ void EEPROM_service(){
         memory.config.pulsedur = comms.data.setPulseDuration;
         memory.config.pulsefreq = comms.data.setPulseFrequency;
         memory.config.analog = comms.data.analogMode;
-
+        memory.config.pulseMode = comms.data.pulseMode;
         // commit to memory
         eeprom_fault = !memory.writeLeveled();
     }
@@ -238,6 +241,11 @@ void set_values(){
 
             sw_PWM.set_freq(comms.data.setPulseFrequency);
             sw_PWM.set_duty_cycle_us(comms.data.setPulseDuration);
+            if(comms.data.pulseMode == 1){
+                sw_PWM.single_shot = true;
+            }else{
+                sw_PWM.single_shot = false;
+            }
             sw_PWM.pause();
         }else{
             // printf("Pulse duration is longer than period");
@@ -249,13 +257,15 @@ void set_values(){
             enabled = true;
         }
 
+        gpio_set_dir(EN_PIN, GPIO_OUT);
         gpio_put(EN_PIN, 1);
 
     }else{
         sw_PWM.pause();
         gpio_put(PULSE_PIN, 0);
         gpio_put(TRIG_LED, 0);
-        gpio_put(EN_PIN, 0);
+        gpio_set_dir(EN_PIN, GPIO_IN);
+        gpio_set_pulls(EN_PIN, true, false);
         gpio_set_irq_enabled(INTERRUPT_PIN, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, false);
         gpio_set_irq_enabled(PULSE_COUNT_PIN, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, false);
         enabled = false;
@@ -269,6 +279,7 @@ void set_values(){
 void stop(){
     // printf("Stopping\n");
     // turn off the output
+    gpio_set_dir(EN_PIN, GPIO_OUT);
     gpio_put(EN_PIN, 0);
     // set the DAC to 0V
     MCP.setInputCode(0, MCP4725_FastMode, MCP4725_PowerDown_Off);
