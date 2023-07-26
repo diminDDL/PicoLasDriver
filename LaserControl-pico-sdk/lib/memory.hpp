@@ -39,6 +39,7 @@ class Memory{
         bool readPage(uint32_t page);                           // read a page from the EEPROM to the the config, checking CRC
         bool readPage(uint32_t page, Configuration &c);         // read a page from the EEPROM, store the result regardless of the CRC, return true if CRC is correct
         bool loadCurrent();                                     // loads the latest config from the EEPROM
+        bool erase();                                           // erase the EEPROM
         uint16_t gen_crc16(const uint8_t *data, uint16_t size); // generate a CRC16 checksum
 };
 

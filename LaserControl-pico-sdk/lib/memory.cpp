@@ -93,6 +93,7 @@ bool Memory::readPage(uint32_t page){
         config.pulsedur = c.pulsedur;
         config.pulsefreq = c.pulsefreq;
         config.analog = c.analog;
+        config.pulseMode = c.pulseMode;
         return true;
     } else {
         return false;
@@ -150,7 +151,7 @@ bool Memory::writePage(uint32_t page){
     bool correct = readPage(page, c);
     if (correct){
         // check if the config changed
-        if (config.globalpulse == c.globalpulse && config.current == c.current && config.maxcurr == c.maxcurr && config.pulsedur == c.pulsedur && config.pulsefreq == c.pulsefreq && config.analog == c.analog){
+        if ((memcmp(&config, &c, sizeof(Configuration)) == 0)){
             // the config didn't change, so we don't need to write it
             return true;
         }else{
@@ -306,6 +307,7 @@ bool Memory::readLeveled(bool storeStruct){
         config.pulsedur = c[max_index_page].pulsedur;
         config.pulsefreq = c[max_index_page].pulsefreq;
         config.analog = c[max_index_page].analog;
+        config.pulseMode = c[max_index_page].pulseMode;
     }
 
     return correct[max_index_page];
@@ -324,8 +326,9 @@ bool Memory::writeLeveled(){
     Configuration c;
     correct = readPage(current_page, c);
     if(correct){
-        if (config.globalpulse == c.globalpulse && config.current == c.current && config.maxcurr == c.maxcurr && config.pulsedur == c.pulsedur && config.pulsefreq == c.pulsefreq && config.analog == c.analog){
-            // printf("Config is the same, not writing\n");
+        // check if the binary representation of the two configs is the same
+        if ((memcmp(&config, &c, sizeof(Configuration)) == 0)){
+            //printf("Config is the same, not writing\n");
             return true;
         }
     }
@@ -352,4 +355,25 @@ bool Memory::writeLeveled(){
 */
 bool Memory::loadCurrent(){
     return readLeveled(true);
+}
+
+
+/* 
+* Erases the EEPROM
+* @return true if the EEPROM was erased successfully
+*/
+bool Memory::erase(){
+    // set the config variables to 0
+    config.globalpulse = 0;
+    config.current = 0.0;
+    config.maxcurr = 0.0;
+    config.pulsedur = 0;
+    config.pulsefreq = 0;
+    config.analog = false;
+    config.pulseMode = false;
+    // write to each page
+    for (uint8_t i = 0; i < number_of_pages; ++i){
+        writePage(i);
+    }
+    return true;
 }

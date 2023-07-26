@@ -95,32 +95,6 @@ int main() {
     
     comms.init();
 
-    if(memory.loadCurrent() == true){
-        // read values from memory
-        comms.data.globalPulseCount = memory.config.globalpulse;
-        comms.data.initPulseCount = memory.config.globalpulse;
-        comms.data.setCurrent = memory.config.current;
-        comms.data.maxCurrent = memory.config.maxcurr;
-        comms.data.setPulseDuration = memory.config.pulsedur;
-        comms.data.setPulseFrequency = memory.config.pulsefreq;
-        comms.data.analogMode = memory.config.analog;
-        comms.data.pulseMode = memory.config.pulseMode; 
-    }else{
-        printf("EEPROM fault\n");
-        eeprom_fault = true;
-    }
-
-    if (!MCP.begin(MCP4725A0_Addr_A00, i2c0, 100, DAC_SDA, DAC_SCL)){
-        printf("Could not attach to DAC\n");
-    }
-    // set the DAC to 0V
-    MCP.setInputCode(0, MCP4725_FastMode, MCP4725_PowerDown_Off);
-
-    comms.valuesChanged = true;     // force the values to be sent to everything
-
-    bool stopped = false;
-
-
     // test all LEDs
     for(uint8_t i = 0; i < 2; i++){
         gpio_put(OE_LED, 1);
@@ -137,6 +111,43 @@ int main() {
         sleep_ms(100);
     }
     gpio_put(25, 1);
+    sleep_ms(3000);
+
+    if(memory.loadCurrent() == true){
+        // read values from memory
+        printf("Reading memory\n");
+        comms.data.globalPulseCount = memory.config.globalpulse;
+        printf("Global pulse count:");
+        comms.print_big_int(comms.data.globalPulseCount);
+        comms.data.initPulseCount = memory.config.globalpulse;
+        printf("\nInit pulse count:");
+        comms.print_big_int(comms.data.initPulseCount);
+        comms.data.setCurrent = memory.config.current;
+        printf("\nCurrent: %f\n", comms.data.setCurrent);
+        comms.data.maxCurrent = memory.config.maxcurr;
+        printf("Max current: %f\n", comms.data.maxCurrent);
+        comms.data.setPulseDuration = memory.config.pulsedur;
+        printf("Pulse duration: %d\n", comms.data.setPulseDuration);
+        comms.data.setPulseFrequency = memory.config.pulsefreq;
+        printf("Pulse frequency: %d\n", comms.data.setPulseFrequency);
+        comms.data.analogMode = memory.config.analog;
+        printf("Analog mode: %d\n", comms.data.analogMode);
+        comms.data.pulseMode = memory.config.pulseMode; 
+        printf("Pulse mode: %d\n", comms.data.pulseMode);
+    }else{
+        printf("EEPROM fault\n");
+        eeprom_fault = true;
+    }
+
+    if (!MCP.begin(MCP4725A0_Addr_A00, i2c0, 100, DAC_SDA, DAC_SCL)){
+        printf("Could not attach to DAC\n");
+    }
+    // set the DAC to 0V
+    MCP.setInputCode(0, MCP4725_FastMode, MCP4725_PowerDown_Off);
+
+    comms.valuesChanged = true;     // force the values to be sent to everything
+
+    bool stopped = false;
 
     while (true) {
 
@@ -198,8 +209,15 @@ void setAnalogCurrentSetpoint(float current){
 void EEPROM_service(){
     static uint64_t lastTime = 0;
     
+    if(comms.eraseFlag){
+        comms.eraseFlag = false;
+        printf("Erasing memory\n");
+        memory.erase();
+    }
+
     if (time_us_64() - lastTime > 10000000 || comms.valuesChanged){
         lastTime = time_us_64();
+        // printf("Writing memory\n");
         // write to memory struct
         memory.config.globalpulse = comms.data.globalPulseCount;
         memory.config.current = comms.data.setCurrent;

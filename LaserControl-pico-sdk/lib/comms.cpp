@@ -214,7 +214,16 @@ void Communications::parseBuffer(void){
             }
             printf("%d%s", data.pulseMode, EOL);
             printErrorStr(true);
-        } else {
+        } else if (strcmp(command, countReset) == 0){
+            // 1 - reset, 0 - do nothing
+            if (atoi(value) == 1){
+                data.globalPulseCount = 0;
+                data.initPulseCount = 0;
+            }
+            print_big_int(data.globalPulseCount);
+            printf("%s", EOL);
+            printErrorStr(true);
+        }else {
             // unknown command
             printf("UC%s", EOL);
             printErrorStr();
@@ -262,6 +271,11 @@ void Communications::parseBuffer(void){
         } else if (strcmp(readBuff, getPulseMode) == 0){
             // print the pulse mode 
             printf("%d%s", data.pulseMode, EOL);
+            printErrorStr();
+        } else if (strcmp(readBuff, eraseMemory) == 0){
+            // erase the memory
+            eraseFlag = true;
+            printf("EM%s", EOL);
             printErrorStr();
         } else {
             // unknown command

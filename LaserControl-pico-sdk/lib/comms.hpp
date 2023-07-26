@@ -24,7 +24,7 @@ class Communications{
     private:
         // TODO double check the command list in the json
         // command list
-        const char magicString[8] = "picoBOB";                     // string representation of the magic string
+        const char magicString[8] = "picoBOB";                   // string representation of the magic string
         const char getGlobalPulseCountCommand[5] = "gpsc";       // string representation of the pulse count command
         const char getLocalPulseCountCommand[5] = "gcpc";        // string representation of the local pulse count command
         const char setCurrentCommand[5] = "scur";                // string representation of the set current command
@@ -41,8 +41,10 @@ class Communications{
         const char getModeCommand[5] = "gmod";                   // string representation of the get mode command
         const char setGpioStateCommand[5] = "stio";              // string representation of the set GPIO state command
         const char getAdcCommand[5] = "gadc";                    // string representation of the get ADC command
-        const char setPulseMode[5] = "spmo";  // TODO NOT IMPLEMENTED // string representation of the set pulse mode command
-        const char getPulseMode[5] = "gpmo";  // TODO NOT IMPLEMENTED // string representation of the get pulse mode command
+        const char setPulseMode[5] = "spmo";                     // string representation of the set pulse mode command
+        const char getPulseMode[5] = "gpmo";                     // string representation of the get pulse mode command
+        const char eraseMemory[5] = "eras";                      // string representation of the erase memory command
+        const char countReset [5] = "cres";                        // string representation of the count reset command
         // internal variables
         char readBuff[128];          // array for the serial data
         char drivBuff[128];          // array for the serial data
@@ -65,6 +67,7 @@ class Communications{
         void updateValues(void);
 
         bool valuesChanged = false;     // flag to indicate if the values have changed
+        bool eraseFlag = false;         // flag to indicate if the memory should be erased
         // struct with the data
         struct Data{
             uint64_t globalPulseCount = 0;                          // counts the total number of pulses sent do the driver
