@@ -7,9 +7,7 @@ import time
 import os
 
 # TODO 
-# single pulse mode
 # pulse length investigation for more precise pulse length
-# output errors to the GUI (timtout of seiral mainly)
 
 def deg_color(deg, d_per_tick, color):
     deg += d_per_tick
@@ -288,6 +286,7 @@ class GUI:
             if file.endswith(".png"):
                 self.images[file[:-4]] = tk.PhotoImage(file="./sources/assets/" + file).subsample(3, 3)
         self.locked = False
+        self.permaLock = False
 
         self.loop = loop
         self.tasks = []
@@ -567,8 +566,13 @@ class GUI:
         self.setFrequencySrt.set("Value set:\n" + str(si.si_format(self.driv.setFrequency, precision=0)) + "Hz")
 
         # update the error readout
-        if self.io.serialDriver.sending:
+        if self.io.serialDriver.sending and self.io.serialDriver.timedOut == False:
             self.errorReadout = "Sending..."
+        elif self.io.serialDriver.connEstablished == False:
+            self.errorReadout = "Error: could not connect to device, reboot required"
+            self.permaLock = True
+        elif self.io.serialDriver.timedOut == True:
+            self.errorReadout = "Error: connection timed out, reconnecting..."
         else:
             self.errorReadout = ""
 
@@ -599,6 +603,8 @@ class GUI:
             self.error_text.configure(state=tk.DISABLED)
         
         # update the locked button image
+        if(self.permaLock):
+            self.locked = True
         self.lock_button.configure(image=self.images["locked" if self.locked else "unlocked"], activebackground="red" if self.locked else "green", background="red" if self.locked else "green")
 
         # update the enable button

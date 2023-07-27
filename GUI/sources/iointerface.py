@@ -9,8 +9,7 @@ import datetime
 from sources.gui import DriverSettings
 
 # TODO 
-# stretch goal - auto reconnect
-# single mode pull in on startup
+# stretch goal - auto reconnect stop board from pulsing if GUI disconnected for a long time
 # error readout into the GUI
 
 class SerialDriver(asyncio.Protocol):
@@ -25,6 +24,8 @@ class SerialDriver(asyncio.Protocol):
         self.stopbits = stopbits
         self.enabled = False
         self.sending = False
+        self.connEstablished = None
+        self.timedOut = False
         self.first_start = True
         self.buffer = b""
         self.command_queue = asyncio.Queue()
@@ -74,6 +75,7 @@ class SerialDriver(asyncio.Protocol):
             if self.debug:
                 print("response: ", response)
                 print("status: ", status)
+            self.timedOut = False
             if status.strip() == "00":
                 value = response.strip()
                 if self.debug:
@@ -126,13 +128,20 @@ class SerialDriver(asyncio.Protocol):
                     await asyncio.wait_for(self.wait_for_command_processed(), timeout=self.response_timeout)
                 except asyncio.TimeoutError:
                     print(f"Warning: Response to command {command} timed out.")
+                    self.timedOut = True
                     
             self.command_queue.task_done()
             if self.debug:
                 print("Done sending command: ", command)
 
     async def main(self, loop):
-        self.transport, _ = await serial_asyncio.create_serial_connection(loop, lambda: self, self.port, baudrate=self.baudrate, bytesize=self.bits, parity=self.parity, stopbits=self.stopbits)
+        try:
+            self.transport, _ = await serial_asyncio.create_serial_connection(loop, lambda: self, self.port, baudrate=self.baudrate, bytesize=self.bits, parity=self.parity, stopbits=self.stopbits)
+            self.connEstablished = True
+        except serial.serialutil.SerialException:
+            self.connEstablished = False
+            print("Could not connect to board")
+            return
 
         last_time = loop.time()
 
@@ -184,7 +193,11 @@ class IOInterface:
         # self.loop.run_in_executor(None, self.init_comms)
         # TODO this blocks the event loop, figure out how to make it async
         self.init_comms()
-        self.serialDriver = SerialDriver(self.driverSettings, self.debug, self.port.name, self.baudrate, self.bits, self.parity, self.stopbits)
+        # if port.name is not None that means we want to init the port
+        if self.port is not None:
+            self.serialDriver = SerialDriver(self.driverSettings, self.debug, self.port.name, self.baudrate, self.bits, self.parity, self.stopbits)
+        else:
+            self.serialDriver = SerialDriver(self.driverSettings, self.debug, None, self.baudrate, self.bits, self.parity, self.stopbits)
         self.serialDriver.enabled = self.correctDevice
 
     def convert_to_type(self, data_type, value):
