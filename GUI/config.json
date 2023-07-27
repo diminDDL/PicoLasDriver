@@ -256,7 +256,7 @@
                 "description":"Returns the actual measured compliance voltage"
             },
             "io_commands":{
-                "platform":"Arduino DUE",
+                "platform":"Raspberry Pi Pico",
                 "output_enable":{
                     "command":"enab",
                     "parameter":"boolean",
@@ -340,6 +340,18 @@
                     "parameter":"",
                     "answer":"float",
                     "description":"Returns the ADC value of photodiode"
+                },
+                "set_pulse_mode":{
+                    "command":"spmo",
+                    "parameter":"boolean",
+                    "answer":"",
+                    "description":"Sets the pulse mode. 1 for pulse mode, 0 for continuous mode"
+                },
+                "get_pulse_mode":{
+                    "command":"gpmo",
+                    "parameter":"",
+                    "answer":"bool",
+                    "description":"Returns the current pulse mode, 0 for continuous mode, 1 for pulse mode"
                 }
             }
         }
@@ -379,7 +391,7 @@
                 "description":"Outputs the present output current"
             },
             "io_commands":{
-                "platform":"Arduino DUE",
+                "platform":"Raspberry Pi Pico",
                 "output_enable":{
                     "command":"enab",
                     "parameter":"boolean",
@@ -463,6 +475,18 @@
                     "parameter":"",
                     "answer":"float",
                     "description":"Returns the ADC value of photodiode"
+                },
+                "set_pulse_mode":{
+                    "command":"spmo",
+                    "parameter":"boolean",
+                    "answer":"",
+                    "description":"Sets the pulse mode. 1 for pulse mode, 0 for continuous mode"
+                },
+                "get_pulse_mode":{
+                    "command":"gpmo",
+                    "parameter":"",
+                    "answer":"bool",
+                    "description":"Returns the current pulse mode, 0 for continuous mode, 1 for pulse mode"
                 }
             }
         }

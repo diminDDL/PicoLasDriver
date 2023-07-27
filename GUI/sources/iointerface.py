@@ -11,6 +11,7 @@ from sources.gui import DriverSettings
 # TODO 
 # stretch goal - auto reconnect
 # single mode pull in on startup
+# error readout into the GUI
 
 class SerialDriver(asyncio.Protocol):
     def __init__(self, driverSettings: DriverSettings, debug: bool = False, port: str = '/dev/ttyUSB0', baudrate: int = 115200, bits: int = 8, parity: str = 'N', stopbits: int = 1):
@@ -43,7 +44,7 @@ class SerialDriver(asyncio.Protocol):
     async def wait_for_complete_message(self):
         """Wait for a complete response of the form '{value}\r\n{status}\r\n'."""
         while self.buffer.count(b'\r\n') < 2:
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.2)
         end_of_message = self.buffer.index(b'\r\n', self.buffer.index(b'\r\n') + 2)
         complete_message = self.buffer[:end_of_message]
         if b'\r\n' in complete_message:  # Check if the message has the correct format
@@ -108,7 +109,7 @@ class SerialDriver(asyncio.Protocol):
 
     async def wait_for_command_processed(self):
         while not self.command_processed.is_set():
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.2)
         self.command_processed.clear()  # Reset the flag
 
     async def process_queue(self):
@@ -287,6 +288,9 @@ class IOInterface:
                             magicStr = self.conf[self.driver]["protocol"]["connection"]["magicStr"]
                             # convert the magic string to bytes
                             magic = bytes(magicStr, 'ascii')
+                            self.port.reset_input_buffer()
+                            self.port.reset_output_buffer()
+                            sleep(0.1)
                             print("magic: " + str(magic))
                             self.port.write(magic)
                             sleep(0.1)
@@ -399,6 +403,24 @@ class IOInterface:
                                     if self.debug:
                                         print("Received: " + str(res))
                                         print("Status: " + str(status))
+
+                                # read the pulse mode and store in config variable
+                                self.port.reset_input_buffer()
+                                self.port.reset_output_buffer()
+                                sleep(0.1)
+                                command = self.conf[self.driver]["protocol"]["io_commands"]["get_pulse_mode"]["command"]
+                                msg_type = self.conf[self.driver]["protocol"]["io_commands"]["get_pulse_mode"]["answer"]
+                                message = bytes(command + "\r\n", 'ascii')
+                                print("Sending: " + str(message))
+                                self.port.write(message)
+                                sleep(0.1)
+                                res = self.port.read_until(b"\r\n").decode('ascii').strip("\r\n")
+                                status = self.port.read_until(b"\r\n")
+                                res = self.convert_to_type(msg_type, res)
+                                self.driverSettings.setPulseMode = res
+                                if self.debug:
+                                    print("Received: " + str(res))
+                                    print("Status: " + str(status))    
 
                                 # set mode to analog
                                 self.port.reset_input_buffer()

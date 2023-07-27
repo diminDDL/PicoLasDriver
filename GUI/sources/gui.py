@@ -257,7 +257,7 @@ class GUI:
         self.driv.setCommands(setCurrent=self.config[self.driver]["protocol"]["set_current"]["command"],
                                 setPulseWidth=self.config[self.driver]["protocol"]["io_commands"]["set_pulse_duration"]["command"],
                                 setFrequency=self.config[self.driver]["protocol"]["io_commands"]["set_pulse_frequency"]["command"],
-                                setPulseMode=None,      # TODO
+                                setPulseMode=self.config[self.driver]["protocol"]["io_commands"]["set_pulse_mode"]["command"],
                                 globalPulseCounter=self.config[self.driver]["protocol"]["io_commands"]["get_global_pulse_count"]["command"],
                                 localPulseCounter=self.config[self.driver]["protocol"]["io_commands"]["get_current_pulse_count"]["command"],
                                 ADCReadoutValue=self.config[self.driver]["protocol"]["io_commands"]["get_adc"]["command"],
@@ -582,7 +582,7 @@ class GUI:
         self.ADCReadoutStr.set("ADC readout:\n" + str(self.driv.ADCReadoutValue))
 
         # update the pulse mode
-        self.setPulseModeSrt.set(f"Pulse mode:\n{'Pulsed' if self.driv.setPulseMode else 'Single'}")
+        self.setPulseModeSrt.set(f"Pulse mode:\n{'Single' if self.driv.setPulseMode else 'Pulsed'}")
         self.pulse_mode.configure(textvariable=self.setPulseModeSrt, bg='green' if self.driv.setPulseMode else 'black', activebackground='green' if self.driv.setPulseMode else 'black')
         # update the GPIO buttons
         self.gpio_button_0.configure(bg='green' if self.driv.gpio_0 else 'black', activebackground='green' if self.driv.gpio_0 else 'black')

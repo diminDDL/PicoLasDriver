@@ -39,7 +39,7 @@ void PWM::set_freq(uint freq) {
     // decrease the resolution until wrap doesn't exceed 65535
     while (wrap_float > 65535) {
         this->resolution_us++;
-        printf("loop resolution_us: %d\n", this->resolution_us);
+        //printf("loop resolution_us: %d\n", this->resolution_us);
         set_resolution_us(this->resolution_us);
         wrap_float = (float)(1000000.0 / this->resolution_us) / (float)freq;
         this->wrap = (uint16_t)wrap_float;

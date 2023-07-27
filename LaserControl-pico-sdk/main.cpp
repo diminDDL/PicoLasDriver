@@ -115,25 +115,25 @@ int main() {
 
     if(memory.loadCurrent() == true){
         // read values from memory
-        printf("Reading memory\n");
+        //printf("Reading memory\n");
         comms.data.globalPulseCount = memory.config.globalpulse;
-        printf("Global pulse count:");
-        comms.print_big_int(comms.data.globalPulseCount);
+        //printf("Global pulse count:");
+        //comms.print_big_int(comms.data.globalPulseCount);
         comms.data.initPulseCount = memory.config.globalpulse;
-        printf("\nInit pulse count:");
-        comms.print_big_int(comms.data.initPulseCount);
+        //printf("\nInit pulse count:");
+        //comms.print_big_int(comms.data.initPulseCount);
         comms.data.setCurrent = memory.config.current;
-        printf("\nCurrent: %f\n", comms.data.setCurrent);
+        //printf("\nCurrent: %f\n", comms.data.setCurrent);
         comms.data.maxCurrent = memory.config.maxcurr;
-        printf("Max current: %f\n", comms.data.maxCurrent);
+        //printf("Max current: %f\n", comms.data.maxCurrent);
         comms.data.setPulseDuration = memory.config.pulsedur;
-        printf("Pulse duration: %d\n", comms.data.setPulseDuration);
+        //printf("Pulse duration: %d\n", comms.data.setPulseDuration);
         comms.data.setPulseFrequency = memory.config.pulsefreq;
-        printf("Pulse frequency: %d\n", comms.data.setPulseFrequency);
+        //printf("Pulse frequency: %d\n", comms.data.setPulseFrequency);
         comms.data.analogMode = memory.config.analog;
-        printf("Analog mode: %d\n", comms.data.analogMode);
+        //printf("Analog mode: %d\n", comms.data.analogMode);
         comms.data.pulseMode = memory.config.pulseMode; 
-        printf("Pulse mode: %d\n", comms.data.pulseMode);
+        //printf("Pulse mode: %d\n", comms.data.pulseMode);
     }else{
         printf("EEPROM fault\n");
         eeprom_fault = true;
@@ -325,7 +325,7 @@ void stop(){
         comms.valuesChanged = true;
         EEPROM_service();
         comms.valuesChanged = false;
-        printf("Stopping EEPROM\n");
+        printf("estp%s", EOL);
     }
     estop = true;
 }
