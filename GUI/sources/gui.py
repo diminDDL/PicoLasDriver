@@ -6,8 +6,6 @@ import si_prefix as si
 import time
 import os
 
-# TODO 
-# pulse length investigation for more precise pulse length
 
 def deg_color(deg, d_per_tick, color):
     deg += d_per_tick
@@ -560,7 +558,7 @@ class GUI:
             self.driv.setPulseWidth = 0
 
         if self.driv.setPulseWidth <= 1: 
-            self.setPulseWidthSrt.set("Value set:\n" + str(si.si_format(self.driv.setPulseWidth, precision=0)) + "s")
+            self.setPulseWidthSrt.set("Value set:\n" + str(si.si_format(self.driv.setPulseWidth, precision=1)) + "s")
         else:
             self.setPulseWidthSrt.set("Value set:\n" + str(si.si_format(self.driv.setPulseWidth, precision=3)) + "s")
         self.setFrequencySrt.set("Value set:\n" + str(si.si_format(self.driv.setFrequency, precision=0)) + "Hz")

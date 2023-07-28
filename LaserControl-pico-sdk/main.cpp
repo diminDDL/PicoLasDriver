@@ -45,7 +45,8 @@ void gpio_callback(uint gpio, uint32_t events);
 void stop();
 
 int main() {
-    set_sys_clock_khz(100000, true);
+    vreg_set_voltage(VREG_VOLTAGE_MAX);
+    set_sys_clock_khz(400000, true);
     stdio_init_all();
 
     gpio_init(25);
@@ -244,7 +245,7 @@ void set_values(){
             // digital mode not implemented
         }
         // calculate period in microseconds
-        pwm_period = 1000000 / (comms.data.setPulseFrequency);
+        pwm_period = (1000000 / (comms.data.setPulseFrequency));
         // attach the interrupt pin
         // check if pulse duration is less than period
         if (comms.data.setPulseDuration < pwm_period){

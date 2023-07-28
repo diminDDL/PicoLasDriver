@@ -160,12 +160,21 @@ void Communications::parseBuffer(void){
             printErrorStr(true);
         } else if (strcmp(command, setPulseDurationCommand) == 0){
             // set the pulse duration
-            data.setPulseDuration = atol(value);
+            uint32_t val = atol(value);
+            uint32_t pwm_period = (1000000 / (data.setPulseFrequency));
+            if(val + 50 >= pwm_period){
+                val = pwm_period - 50;
+            }
+            data.setPulseDuration = val;
             printf("%lu%s", data.setPulseDuration, EOL);
             printErrorStr(true);
         } else if (strcmp(command, setPulseFrequencyCommand) == 0){
             // set the pulse frequency
             data.setPulseFrequency = atol(value);
+            uint32_t pwm_period = (1000000 / (data.setPulseFrequency));
+            if(data.setPulseDuration + 50 >= pwm_period){
+                data.setPulseDuration = pwm_period - 50;
+            }
             printf("%lu%s", data.setPulseFrequency, EOL);
             printErrorStr(true);
         } else if (strcmp(command, enableOutputCommand) == 0){
