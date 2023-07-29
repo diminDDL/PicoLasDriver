@@ -66,6 +66,9 @@ void Communications::printErrorStr(bool commandType = false){
     }
     // print the error string
     printf("%s%s", errorStr, EOL);
+    if(estopFlag){
+        printf("%s%s", estop, EOL);
+    }
 
     if (commandType){
         valuesChanged = true;

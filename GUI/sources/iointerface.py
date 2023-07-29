@@ -8,9 +8,6 @@ from time import sleep
 import datetime
 from sources.gui import DriverSettings
 
-# TODO 
-# stretch goal - auto reconnect stop board from pulsing if GUI disconnected for a long time
-# error readout into the GUI
 
 class SerialDriver(asyncio.Protocol):
     def __init__(self, driverSettings: DriverSettings, debug: bool = False, port: str = '/dev/ttyUSB0', baudrate: int = 115200, bits: int = 8, parity: str = 'N', stopbits: int = 1):
@@ -27,6 +24,7 @@ class SerialDriver(asyncio.Protocol):
         self.connEstablished = None
         self.timedOut = False
         self.first_start = True
+        self.eStop = False
         self.buffer = b""
         self.command_queue = asyncio.Queue()
         self.is_sending = asyncio.Lock()
@@ -46,6 +44,8 @@ class SerialDriver(asyncio.Protocol):
         """Wait for a complete response of the form '{value}\r\n{status}\r\n'."""
         while self.buffer.count(b'\r\n') < 2:
             await asyncio.sleep(0.2)
+        if "estp" in self.buffer.decode('ascii'):
+            self.eStop = True
         end_of_message = self.buffer.index(b'\r\n', self.buffer.index(b'\r\n') + 2)
         complete_message = self.buffer[:end_of_message]
         if b'\r\n' in complete_message:  # Check if the message has the correct format
@@ -56,7 +56,7 @@ class SerialDriver(asyncio.Protocol):
     async def process_buffer(self):
         while self.connected:
             try:
-                message = await asyncio.wait_for(self.wait_for_complete_message(), timeout=0.1)
+                message = await asyncio.wait_for(self.wait_for_complete_message(), timeout=0.3)
                 self.process_data(message + b'\r\n')
                 self.buffer = self.buffer[len(message) + 2:]
             except asyncio.TimeoutError:
@@ -135,31 +135,43 @@ class SerialDriver(asyncio.Protocol):
                 print("Done sending command: ", command)
 
     async def main(self, loop):
-        try:
-            self.transport, _ = await serial_asyncio.create_serial_connection(loop, lambda: self, self.port, baudrate=self.baudrate, bytesize=self.bits, parity=self.parity, stopbits=self.stopbits)
-            self.connEstablished = True
-        except serial.serialutil.SerialException:
-            self.connEstablished = False
-            print("Could not connect to board")
-            return
-
-        last_time = loop.time()
-
-        asyncio.ensure_future(self.process_buffer())
-        asyncio.ensure_future(self.process_queue())
-
         while True:
-            if self.enabled:
+            try:
+                print("Connecting to board")
+                self.transport, _ = await serial_asyncio.create_serial_connection(loop, lambda: self, self.port, baudrate=self.baudrate, bytesize=self.bits, parity=self.parity, stopbits=self.stopbits)
+                self.connEstablished = True
+                self.timedOut = False
+            except serial.serialutil.SerialException:
+                print("Could not connect to board")
                 if self.first_start:
-                    await self.sendAll(mode=0)
-                    self.first_start = False
-                else:
-                    await self.sendAll(mode=1)
-            elif loop.time() - last_time >= 1 and not self.sending:     #TODO decrease this value
-                last_time = loop.time()
-                await self.sendAll(mode=2)
+                    self.connEstablished = False
+                    return
 
-            await asyncio.sleep(0.1)
+
+            last_time = loop.time()
+
+            if self.first_start:
+                asyncio.ensure_future(self.process_buffer())
+                asyncio.ensure_future(self.process_queue())
+
+            try:
+                while not self.timedOut:
+                    if self.enabled:
+                        if self.first_start:
+                            await self.sendAll(mode=0)
+                            self.first_start = False
+                        else:
+                            await self.sendAll(mode=1)
+                    elif loop.time() - last_time >= 1 and not self.sending:
+                        last_time = loop.time()
+                        await self.sendAll(mode=2)
+
+                    await asyncio.sleep(0.1)
+                self.transport.close()
+            except:
+                traceback.print_exc()
+            
+            await asyncio.sleep(3)
 
 
 

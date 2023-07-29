@@ -164,6 +164,7 @@ int main() {
         }else{
             if(!stopped){
                 stop();
+                comms.estopFlag = true;
                 stopped = true;
             }
         }
@@ -326,7 +327,7 @@ void stop(){
         comms.valuesChanged = true;
         EEPROM_service();
         comms.valuesChanged = false;
-        printf("estp%s", EOL);
+        printf("%s%s", comms.estop, EOL);
     }
     estop = true;
 }

@@ -564,15 +564,26 @@ class GUI:
         self.setFrequencySrt.set("Value set:\n" + str(si.si_format(self.driv.setFrequency, precision=0)) + "Hz")
 
         # update the error readout
-        if self.io.serialDriver.sending and self.io.serialDriver.timedOut == False:
-            self.errorReadout = "Sending..."
-        elif self.io.serialDriver.connEstablished == False:
+        if self.io.serialDriver.connEstablished == False:
             self.errorReadout = "Error: could not connect to device, reboot required"
             self.permaLock = True
-        elif self.io.serialDriver.timedOut == True:
+        elif self.io.serialDriver.timedOut and not self.io.serialDriver.eStop:
+            if self.errorReadout == "timed out":
+                self.locked = True
             self.errorReadout = "Error: connection timed out, reconnecting..."
+        elif self.io.serialDriver.eStop:
+            self.errorReadout = "Error: emergency stop active, reboot required"
+            self.driv.globalEnable = False
+            self.permaLock = True
+        elif self.io.serialDriver.sending:
+            self.errorReadout = "Sending..."
         else:
+            if "timed out" in self.errorReadout:
+                self.locked = False
             self.errorReadout = ""
+        
+        if self.debug:
+            print(self.errorReadout)
 
         # update the globalPulseCounterLabel
         self.globalPulseCounterLabel.set("Global pulse counter:\n" + str(self.driv.globalPulseCounter))

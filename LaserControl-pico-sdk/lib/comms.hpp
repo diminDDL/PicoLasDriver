@@ -51,6 +51,7 @@ class Communications{
         bool newData = false;       // flag to indicate that new data has been received
         char errorStr[3] = "00";    // string to hold the error code
     public:
+        const char estop [5] = "estp";                        // string representation of the estop command
         // data structure: 
         // get commands: <command>\n
         // return values: <value>\r\n<00>\r\n
@@ -68,6 +69,7 @@ class Communications{
 
         bool valuesChanged = false;     // flag to indicate if the values have changed
         bool eraseFlag = false;         // flag to indicate if the memory should be erased
+        bool estopFlag = false;         // flag to indicate if the driver should be stopped
         // struct with the data
         struct Data{
             uint64_t globalPulseCount = 0;                          // counts the total number of pulses sent do the driver
