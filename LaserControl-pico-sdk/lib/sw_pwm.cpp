@@ -45,26 +45,40 @@ bool repeating_timer_callback(struct repeating_timer *t) {
     uint64_t current_time = time_us_64();
     if(sw_pwm->last_time == 0) {
         sw_pwm->last_time = current_time;
-    }
-    if(current_time - sw_pwm->last_time >= sw_pwm->period) {
-        sw_pwm->last_time = current_time;
-    }
-    //TODO test this single mode
-    if(current_time - sw_pwm->last_time < sw_pwm->positive_width) {
+        sw_pwm->next_positive_width_end = current_time + sw_pwm->positive_width;
+        sw_pwm->next_period_end = current_time + sw_pwm->period;
         gpio_put(sw_pwm->pin, 1);
         sw_pwm->pulse_flag = true;
-    } else {
-        gpio_put(sw_pwm->pin, 0);
-        if(sw_pwm->pulse_flag && sw_pwm->single_shot) {
-            sw_pwm->pause_state = true;
-        }
-        sw_pwm->pulse_flag = false;
+        return true;
     }
+    
+    if(sw_pwm->pulse_flag && current_time >= sw_pwm->next_positive_width_end) {
+        gpio_put(sw_pwm->pin, 0);
+        sw_pwm->pulse_flag = false;
+        if(sw_pwm->single_shot) {
+            sw_pwm->pause_state = true;
+            sw_pwm->timer_running = false;
+            return false;
+        }
+    }
+    
+    if(current_time >= sw_pwm->next_period_end) {
+        sw_pwm->last_time = current_time;
+        sw_pwm->next_positive_width_end = current_time + sw_pwm->positive_width;
+        sw_pwm->next_period_end = current_time + sw_pwm->period;
+        gpio_put(sw_pwm->pin, 1);
+        sw_pwm->pulse_flag = true;
+    }
+
     return true;
 }
 
 void SW_PWM::resume() {
     this->pause_state = false;
+    this->last_time = 0;
+    this->next_positive_width_end = 0;
+    this->next_period_end = 0;
+
     // if the settings are correct we start the timer
     if(this->enabled && this->period > 0 && this->positive_width > 0 && !this->timer_running) {
         add_repeating_timer_us(-1 * (this->period / resolution_divider), repeating_timer_callback, this, &this->timer);

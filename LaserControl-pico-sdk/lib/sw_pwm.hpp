@@ -18,6 +18,8 @@ public:
     uint pin = 0;
     uint64_t period = 0;
     uint64_t positive_width = 0;
+    uint64_t next_positive_width_end = 0;
+    uint64_t next_period_end = 0;
     bool timer_running = false;
     bool single_shot = false;
     bool enabled = false;

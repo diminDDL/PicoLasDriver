@@ -170,6 +170,9 @@ void Communications::parseBuffer(void){
             uint32_t pwm_period = (1000000 / (data.setPulseFrequency));
             if(val >= pwm_period){
                 val = pwm_period - 1;
+                if(data.setPulseFrequency <= 50){
+                    val = pwm_period - 1000;
+                }
             }
             data.setPulseDuration = val;
             printf("%lu%s", data.setPulseDuration, EOL);
@@ -184,6 +187,9 @@ void Communications::parseBuffer(void){
             uint32_t pwm_period = (1000000 / (data.setPulseFrequency));
             if(data.setPulseDuration >= pwm_period){
                 data.setPulseDuration = pwm_period - 1;
+                if(data.setPulseFrequency <= 50){
+                    data.setPulseDuration = pwm_period - 1000;
+                }
             }
             printf("%lu%s", data.setPulseFrequency, EOL);
             printErrorStr(true);

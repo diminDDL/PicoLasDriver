@@ -247,7 +247,6 @@ class GUI:
         self.maxFrequency = self.config[self.driver]['MaxFrequency_Hz']
 
         self.driv = driverSettings
-        self.driv.setPulseWidth = self.minPuseWidth
         self.old_driv = DriverSettings()
 
         self.driv.setCommands(setCurrent=self.config[self.driver]["protocol"]["set_current"]["command"],
@@ -399,7 +398,7 @@ class GUI:
                 if self.GUIcallNumber >= callNumberThreshold:
                     self.driv.setPulseWidth -= round(self.GUIcallNumber/(callNumberThreshold * 1000), 3)
                 else:
-                    self.driv.setPulseWidth -= 0.001
+                    self.driv.setPulseWidth -= self.config[self.driver]['MinPulseWidth_us']/1000000
                 if self.driv.setPulseWidth < self.minPuseWidth:
                     self.driv.setPulseWidth = self.minPuseWidth
                 # if it's not a multiple of MinPulseWidth_us then round it to the nearest multiple

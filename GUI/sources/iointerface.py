@@ -432,8 +432,8 @@ class IOInterface:
                                     status = self.port.read_until(b"\r\n")
                                     res = self.convert_to_type(msg_type, res)
                                     if comm == "get_pulse_duration":
-                                        if self.minPuseWidth <= res <= self.maxPulseWidth:
-                                            self.driverSettings.setPulseWidth = res/1000
+                                        if self.minPuseWidth <= float(res)/1000000 <= self.maxPulseWidth:
+                                            self.driverSettings.setPulseWidth = float(res)/1000000
                                     else:
                                         if 0 <= res <= self.maxFrequency:
                                             self.driverSettings.setFrequency = res
