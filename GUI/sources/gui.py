@@ -389,9 +389,12 @@ class GUI:
                 if self.GUIcallNumber >= callNumberThreshold:
                     self.driv.setPulseWidth += round(self.GUIcallNumber/(callNumberThreshold * 1000), 3)
                 else:
-                    self.driv.setPulseWidth += 0.001
+                    self.driv.setPulseWidth += self.config[self.driver]['MinPulseWidth_us']/1000000
                 if self.driv.setPulseWidth > self.maxPulseWidth:
                     self.driv.setPulseWidth = self.maxPulseWidth
+                # if it's not a multiple of MinPulseWidth_us then round it to the nearest multiple
+                if self.driv.setPulseWidth % (self.config[self.driver]['MinPulseWidth_us']/1000000) != 0:
+                    self.driv.setPulseWidth = round(self.driv.setPulseWidth/(self.config[self.driver]['MinPulseWidth_us']/1000000)) * (self.config[self.driver]['MinPulseWidth_us']/1000000)
             elif command == "pulseWidthDown" and not self.locked:
                 if self.GUIcallNumber >= callNumberThreshold:
                     self.driv.setPulseWidth -= round(self.GUIcallNumber/(callNumberThreshold * 1000), 3)
@@ -399,6 +402,9 @@ class GUI:
                     self.driv.setPulseWidth -= 0.001
                 if self.driv.setPulseWidth < self.minPuseWidth:
                     self.driv.setPulseWidth = self.minPuseWidth
+                # if it's not a multiple of MinPulseWidth_us then round it to the nearest multiple
+                if self.driv.setPulseWidth % (self.config[self.driver]['MinPulseWidth_us']/1000000) != 0:
+                    self.driv.setPulseWidth = round(self.driv.setPulseWidth/(self.config[self.driver]['MinPulseWidth_us']/1000000)) * (self.config[self.driver]['MinPulseWidth_us']/1000000)
             elif command == "frequencyUp" and not self.locked:
                 if self.GUIcallNumber >= callNumberThreshold:
                     self.driv.setFrequency += round(self.GUIcallNumber/callNumberThreshold, 0)
@@ -571,6 +577,7 @@ class GUI:
             if self.errorReadout == "timed out":
                 self.locked = True
             self.errorReadout = "Error: connection timed out, reconnecting..."
+            self.driv.globalEnable = False
         elif self.io.serialDriver.eStop:
             self.errorReadout = "Error: emergency stop active, reboot required"
             self.driv.globalEnable = False
@@ -582,8 +589,8 @@ class GUI:
                 self.locked = False
             self.errorReadout = ""
         
-        if self.debug:
-            print(self.errorReadout)
+        # if self.debug:
+        #     print(self.errorReadout)
 
         # update the globalPulseCounterLabel
         self.globalPulseCounterLabel.set("Global pulse counter:\n" + str(self.driv.globalPulseCounter))

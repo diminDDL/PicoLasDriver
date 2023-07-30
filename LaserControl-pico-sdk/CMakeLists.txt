@@ -37,13 +37,13 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 
 # set SPI clock slower than CPU clock so that it works
 pico_define_boot_stage2(slower_boot2 ${PICO_DEFAULT_BOOT_STAGE2_FILE})
-target_compile_definitions(slower_boot2 PRIVATE PICO_FLASH_SPI_CLKDIV=4)
+target_compile_definitions(slower_boot2 PRIVATE PICO_FLASH_SPI_CLKDIV=2)
 pico_set_boot_stage2(${PROJECT_NAME} slower_boot2)
 
 
 # Create C header file with the name <pio program>.pio.h
 pico_generate_pio_header(${PROJECT_NAME}  
-        ${CMAKE_CURRENT_LIST_DIR}/blink.pio
+        ${CMAKE_CURRENT_LIST_DIR}/pwm.pio
 )
 
 # Create map/bin/hex/uf2 files

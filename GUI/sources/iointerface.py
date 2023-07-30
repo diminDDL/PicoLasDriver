@@ -8,6 +8,15 @@ from time import sleep
 import datetime
 from sources.gui import DriverSettings
 
+# TODO investigate (when set to 1Hz 1S)
+# File "/home/dmytro/Documents/projects/PicoLasDriver/GUI/sources/iointerface.py", line 422, in init_comms
+#     if self.minPuseWidth <= res <= self.maxPulseWidth:
+# TypeError: '<=' not supported between instances of 'float' and 'NoneType'
+
+# 1Hz period not working at >490ms
+# 10Hz nothing above 84ms
+# 50Hz nothing above 5ms
+# 100Hz works at 9ms tho
 
 class SerialDriver(asyncio.Protocol):
     def __init__(self, driverSettings: DriverSettings, debug: bool = False, port: str = '/dev/ttyUSB0', baudrate: int = 115200, bits: int = 8, parity: str = 'N', stopbits: int = 1):
@@ -29,7 +38,7 @@ class SerialDriver(asyncio.Protocol):
         self.command_queue = asyncio.Queue()
         self.is_sending = asyncio.Lock()
         self.command_processed = asyncio.Event()  # Flag to indicate a command has been processed
-        self.response_timeout = 1.0  # Timeout value in seconds
+        self.response_timeout = 2.0  # Timeout value in seconds
 
     def connection_made(self, transport):
         self.transport = transport
@@ -46,6 +55,8 @@ class SerialDriver(asyncio.Protocol):
             await asyncio.sleep(0.2)
         if "estp" in self.buffer.decode('ascii'):
             self.eStop = True
+        elif "wdcr" in self.buffer.decode('ascii'):
+            print("Watchdog reset")
         end_of_message = self.buffer.index(b'\r\n', self.buffer.index(b'\r\n') + 2)
         complete_message = self.buffer[:end_of_message]
         if b'\r\n' in complete_message:  # Check if the message has the correct format
@@ -56,7 +67,7 @@ class SerialDriver(asyncio.Protocol):
     async def process_buffer(self):
         while self.connected:
             try:
-                message = await asyncio.wait_for(self.wait_for_complete_message(), timeout=0.3)
+                message = await asyncio.wait_for(self.wait_for_complete_message(), timeout=self.response_timeout)
                 self.process_data(message + b'\r\n')
                 self.buffer = self.buffer[len(message) + 2:]
             except asyncio.TimeoutError:
@@ -313,6 +324,8 @@ class IOInterface:
                             magicStr = self.conf[self.driver]["protocol"]["connection"]["magicStr"]
                             # convert the magic string to bytes
                             magic = bytes(magicStr, 'ascii')
+                            self.port.write(b"A")
+                            sleep(0.1)
                             self.port.reset_input_buffer()
                             self.port.reset_output_buffer()
                             sleep(0.1)

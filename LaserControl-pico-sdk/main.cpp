@@ -9,9 +9,10 @@
 #include "hardware/pwm.h"
 #include "hardware/adc.h"
 #include "hardware/spi.h"
-#include "blink.pio.h"
+#include "hardware/pio.h"
+#include "hardware/watchdog.h"
 #include "lib/utils.h"
-#include "lib/pwm.hpp"
+#include "lib/pio_pwm.hpp"
 #include "lib/sw_pwm.hpp"
 #include "lib/comms.hpp"
 #include "lib/memory.hpp"
@@ -19,17 +20,20 @@
 #include "definitions.h"
 
 // TODO
-// pulse mode - single or continuous
-// handle errors
-// EEPROM weirdness with the new pulse type thing
-// random estops
+// pulse mode - single or continuous for HW PWM (use IRQ on wrap, issue a disable -> set duty cycle to 0 and disable, and reset count to zero)
+// pulse durations are funny with swPWM
 
 // create new PWM instance
+// SW_PWM sw_PWM(PULSE_PIN);
+PIO pio = pio0;
+uint sm = 0;
+PIO_PWM pwm(pio, sm, PULSE_PIN);
 SW_PWM sw_PWM(PULSE_PIN);
 Communications comms = Communications();
 Memory memory = Memory(FRAM_SPI, FRAM_SPI_CS);
 MCP4725_PICO MCP(DAC_VREF);
 
+bool sw_pwm_enabled = false;
 bool estop = false;             // emergency stop flag
 bool eeprom_fault = false;      // eeprom fault flag
 uint32_t pwm_period;
@@ -44,9 +48,14 @@ void pollADC();
 void gpio_callback(uint gpio, uint32_t events);
 void stop();
 
+uint32_t time_0 = 0;
+uint32_t time_1 = 0;
+
+// TODO bring back soft PWM for frequencies >50Hz
+
 int main() {
     vreg_set_voltage(VREG_VOLTAGE_MAX);
-    set_sys_clock_khz(400000, true);
+    set_sys_clock_khz(200000, true);
     stdio_init_all();
 
     gpio_init(25);
@@ -79,7 +88,10 @@ int main() {
     gpio_set_dir(FAULT_LED, GPIO_OUT);
 
     sw_PWM.init();
-    sw_PWM.set_enabled(true);
+    sw_PWM.set_enabled(false);
+    pwm.init();
+    pwm.pause();
+    pwm.set_enabled(true);      // TODO check if this produces pulse
 
     gpio_init(INTERRUPT_PIN);
     gpio_set_dir(INTERRUPT_PIN, GPIO_IN);
@@ -112,7 +124,11 @@ int main() {
         sleep_ms(100);
     }
     gpio_put(25, 1);
-    sleep_ms(3000);
+    sleep_ms(1000);
+
+    if (watchdog_caused_reboot()) {
+        printf("wdcr\n");
+    }
 
     if(memory.loadCurrent() == true){
         // read values from memory
@@ -150,14 +166,24 @@ int main() {
 
     bool stopped = false;
 
-    while (true) {
+    watchdog_enable(3000, 1);
 
+    while (true) {
+        watchdog_update();
         pollADC();
         comms.readSerial();
         comms.parseBuffer();
         EEPROM_service();
         if(!estop){
             if(comms.valuesChanged){
+                bool oldEnabled = comms.data.outputEnabled;
+                comms.data.outputEnabled = false;
+                set_values();
+                sleep_ms(10);
+                watchdog_update();
+                sleep_ms(1000/comms.data.setPulseFrequency);
+                watchdog_update();
+                comms.data.outputEnabled = oldEnabled;
                 set_values();
                 comms.valuesChanged = false;
             }
@@ -188,6 +214,7 @@ int main() {
         if(get_bootsel_button()){
             reset_usb_boot(0, 0);
         }
+        // printf("%d\n", time_1 - time_0);
     }
 }
 
@@ -259,16 +286,38 @@ void set_values(){
             // printf("Pulse Frequency: ");
             // printf("%d\n", comms.data.setPulseFrequency);
 
-            sw_PWM.set_freq(comms.data.setPulseFrequency);
-            sw_PWM.set_duty_cycle_us(comms.data.setPulseDuration);
-            if(comms.data.pulseMode == 1){
-                sw_PWM.single_shot = true;
+
+            if(comms.data.setPulseFrequency <= 50){
+                pwm.set_enabled(false);
+                pwm.pause();
+
+                sw_pwm_enabled = true;
+
+                sw_PWM.init();
+                sw_PWM.set_enabled(true);
+                sw_PWM.pause();
+                sw_PWM.set_freq(comms.data.setPulseFrequency);
+                sw_PWM.set_duty_cycle_us(comms.data.setPulseDuration);
+                if(comms.data.pulseMode == 1){
+                    sw_PWM.single_shot = true;
+                }else{
+                    sw_PWM.single_shot = false;
+                }
+                sw_PWM.pause();
+
             }else{
-                sw_PWM.single_shot = false;
+                sw_PWM.set_enabled(false);
+                sw_PWM.pause();
+
+                sw_pwm_enabled = false;
+
+                pwm.set_enabled(false);
+                pwm.set_all(comms.data.setPulseFrequency, comms.data.setPulseDuration); // TODO check if this produces pulse
+                pwm.set_single_shot(comms.data.pulseMode);
+                pwm.pause();
+                pwm.set_enabled(true);
+            
             }
-            sw_PWM.pause();
-        }else{
-            // printf("Pulse duration is longer than period");
         }
 
         if(!enabled){
@@ -281,7 +330,9 @@ void set_values(){
         gpio_put(EN_PIN, 1);
 
     }else{
-        sw_PWM.pause();
+        //sw_PWM.pause();
+        pwm.pause();
+
         gpio_put(PULSE_PIN, 0);
         gpio_put(TRIG_LED, 0);
         gpio_set_dir(EN_PIN, GPIO_IN);
@@ -309,8 +360,13 @@ void stop(){
     gpio_set_irq_enabled(INTERRUPT_PIN, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, false);
     gpio_set_irq_enabled(PULSE_COUNT_PIN, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, false);
     // stop the PWM
-    sw_PWM.pause();
-    sw_PWM.set_enabled(false);
+
+    // sw_PWM.pause();
+    // sw_PWM.set_enabled(false);
+
+    pwm.pause();
+    pwm.set_enabled(false);
+
     // set error flag
     comms.error2 = true;
     // turn off GPIO
@@ -336,12 +392,24 @@ void trg(){
     static bool running = false;
     // if trigger is HIGH and output is enabled we start PWM
     if (gpio_get(INTERRUPT_PIN) == 1 && running == false){
+        if(sw_pwm_enabled){
+            sw_PWM.resume();
+        }else{
+            pwm.resume();
+        }
         gpio_put(TRIG_LED, 1);
-        sw_PWM.resume();
+        //pwm.start();
+        //pwm.set_enabled(true);
         running = true;
     } else {
         // stop the PWM
-        sw_PWM.pause();
+        if(sw_pwm_enabled){
+            sw_PWM.pause();
+        }else{
+            pwm.pause();
+        }
+        //pwm.stop();
+        //pwm.set_enabled(true);
         gpio_put(TRIG_LED, 0);
         gpio_put(PULSE_PIN, 0);
         running = false;
@@ -355,6 +423,8 @@ void pulse(){
 }
 
 void gpio_callback(uint gpio, uint32_t events){
+    uint32_t status = save_and_disable_interrupts();
+    watchdog_update();
     if(gpio == ESTOP_PIN){
         stop();
     } else if(gpio == INTERRUPT_PIN){
@@ -362,4 +432,5 @@ void gpio_callback(uint gpio, uint32_t events){
     } else if(gpio == PULSE_COUNT_PIN){
         pulse();
     }
+    restore_interrupts(status);
 }

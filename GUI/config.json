@@ -7,7 +7,7 @@
         "CC": true,
         "CV": false,
         "CP": false,
-        "MinPulseWidth_us": 1000,
+        "MinPulseWidth_us": 500,
         "MaxPulseWidth_us": 2000000,
         "MaxFrequency_Hz": 1000,
         "protocol":{
@@ -364,7 +364,7 @@
         "CC": true,
         "CV": false,
         "CP": false,
-        "MinPulseWidth_us": 1000,
+        "MinPulseWidth_us": 500,
         "MaxPulseWidth_us": 2000000,
         "MaxFrequency_Hz": 1000,
         "protocol":{

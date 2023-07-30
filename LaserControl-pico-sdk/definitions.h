@@ -6,6 +6,7 @@
 #define ESTOP_PIN 19                        // emergency stop pin, active low
 #define EN_PIN 20                           // enable pin, active high
 #define PULSE_PIN 14                        // pin used to generate the pulses
+#define PWM_SLICE_NUM 7                     // PWM slice number
 #define PULSE_COUNT_PIN 15                  // pin used to count the pulses
 #define GPIO_BASE_PIN 10                    // base pin for the GPIO outputs
 #define GPIO_NUM 4                          // number of GPIO pins

@@ -1,0 +1,26 @@
+.program pwm
+.side_set 1 opt
+
+    ; TODO invert polarity?
+    irq 0       side 0      ;                                                                [8]
+    pull block              ; Pull from FIFO to OSR if available, else copy X to OSR.        [1]
+    mov x, osr              ; Copy most-recently-pulled value back to scratch X              [2]
+    mov y, isr  side 1      ; ISR contains PWM period. Y used as counter.                    [3]
+countloop:
+    nop                     ; Single dummy cycle to make it 4 cycles and an even number      [4]
+    jmp x!=y noset          ; Set pin high if X == Y, keep the two paths length matched      [5]
+    jmp skip        side 0  ;                                                                [6]
+noset:
+    nop                     ; Single dummy cycle to keep the two paths the same length       [6]
+skip:
+    jmp y-- countloop       ; Loop until Y hits 0, then pull a fresh PWM value from FIFO     [7]
+
+% c-sdk {
+static inline void pwm_program_init(PIO pio, uint sm, uint offset, uint pin) {
+   pio_gpio_init(pio, pin);
+   pio_sm_set_consecutive_pindirs(pio, sm, pin, 1, true);
+   pio_sm_config c = pwm_program_get_default_config(offset);
+   sm_config_set_sideset_pins(&c, pin);
+   pio_sm_init(pio, sm, offset, &c);
+}
+%}
