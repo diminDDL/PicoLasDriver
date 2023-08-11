@@ -35,7 +35,7 @@ This repository houses the necessary components for a touchscreen-based controll
 - **"Enable/Disable"**: Control the pulse output.
 - **Error readout**: Reads out the errors and other state information.
 
-⚠️ **Important**: Always turn off the output when adjusting settings to prevent potential microcontroller glitches.
+⚠️ **Important**: It is recommended to turn off the output when adjusting settings to prevent potential glitches on the output.
 
 ## Hardware & Communication
 
