@@ -24,18 +24,21 @@
 6. **Change Serial Port to PL011**:
    - Refer to the solution provided in this [StackOverflow post](https://stackoverflow.com/questions/65900026/pyserial-readline-is-blocking-although-timeout-is-defined).
 
-7. **Disable Serial in raspi-config**:
+7. **Install libraries**:
+   - Go to the `GUI` folder and run ```pip3 install -r requirements.txt```
+
+8. **Disable Serial in raspi-config**:
    - Re-access `raspi-config` and navigate to disable the serial port.
 
-8. **Add a Startup Script**:
+9. **Add a Startup Script**:
    - Create a script to automatically run the provided Python program on startup:
      ```bash
      python /path/to/file/run.py -f
      ```
 
-9. **Manage Touchscreen Functionality**:
+10. **Manage Touchscreen Functionality**:
    - Use the provided script to disable the touchscreen as the X11 session starts.
    - Utilize another script to re-enable the touchscreen from within the Python program.
    
-10. **Enable overlay filesystem**:
+11. **Enable overlay filesystem**:
    - After ensuring that everything works, enable an overlay read only filesystem to prevent damage to the filesysem from sudden power cuts.
