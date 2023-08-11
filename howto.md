@@ -37,3 +37,5 @@
    - Use the provided script to disable the touchscreen as the X11 session starts.
    - Utilize another script to re-enable the touchscreen from within the Python program.
    
+10. **Enable overlay filesystem**:
+   - After ensuring that everything works, enable an overlay read only filesystem to prevent damage to the filesysem from sudden power cuts.
