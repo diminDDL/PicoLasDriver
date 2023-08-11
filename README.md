@@ -24,7 +24,7 @@ This repository houses the necessary components for a touchscreen-based controll
 
 ## GUI Layout & Functions
 
-**Image** *(to be replaced with an actual image)*
+![GUI](https://github.com/diminDDL/PicoLasDriver/blob/main/images/GUI.png?raw=true)
 
 - **"+" and "-" buttons**: Increase or decrease values. They accelerate when held.
 - **"Single/Pulsed" modes**: Toggle single pulse operation.
@@ -33,10 +33,13 @@ This repository houses the necessary components for a touchscreen-based controll
 - **"Lock icon"**: Lock or unlock the device to prevent accidental value changes.
 - **"IO1-4"**: IO pin toggle buttons.
 - **"Enable/Disable"**: Control the pulse output.
+- **Error readout**: Reads out the errors and other state information.
 
 ⚠️ **Important**: Always turn off the output when adjusting settings to prevent potential microcontroller glitches.
 
 ## Hardware & Communication
+
+![Schematic](https://github.com/diminDDL/PicoLasDriver/blob/main/images/schematic.png?raw=true)
 
 - The board connects to the Raspberry Pi via USB, with a communication frequency of every 100ms.
 - Auto-reconnect and fault indications in the Python GUI.
@@ -45,7 +48,9 @@ This repository houses the necessary components for a touchscreen-based controll
 - Over-voltage protection up to 5V.
 - Photodiode amplifier module design and guidance provided.
 
-**Image** *(to be replaced with an actual image showcasing the pinout)*
+### Pinout of the connector:
+![Schematic](https://github.com/diminDDL/PicoLasDriver/blob/main/images/pinout.png?raw=true)
+
 
 ## Operating Mechanism
 
@@ -53,14 +58,4 @@ The board keeps the Picolas driver's enable pin high and uses the trigger pin to
 
 ## License
 
-This project is licensed under the MIT License:
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
----
-
-**Note**: Remember to replace the placeholder **Image** with the actual images showcasing the GUI layout and board pinout for clarity.
+This project is licensed under the MIT License.
